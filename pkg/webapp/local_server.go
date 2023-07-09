@@ -1,0 +1,92 @@
+package webapp
+
+import (
+	"context"
+	"fmt"
+	"io"
+	"net"
+	"net/http"
+)
+
+// CodeResponse represents the code received by the local server's callback handler.
+type CodeResponse struct {
+	Code  string
+	State string
+}
+
+// bindLocalServer initializes a LocalServer that will listen on a randomly available TCP port.
+func bindLocalServer() (*localServer, error) {
+	listener, err := net.Listen("tcp4", "127.0.0.1:0")
+	if err != nil {
+		return nil, err
+	}
+
+	return &localServer{
+		listener:   listener,
+		resultChan: make(chan CodeResponse, 1),
+	}, nil
+}
+
+type localServer struct {
+	CallbackPath     string
+	WriteSuccessHTML func(w io.Writer)
+
+	resultChan chan CodeResponse
+	listener   net.Listener
+}
+
+func (s *localServer) Port() int {
+	return s.listener.Addr().(*net.TCPAddr).Port
+}
+
+func (s *localServer) Close() error {
+	return s.listener.Close()
+}
+
+func (s *localServer) Serve() error {
+	return http.Serve(s.listener, s)
+}
+
+func (s *localServer) WaitForCode(ctx context.Context) (CodeResponse, error) {
+	select {
+	case <-ctx.Done():
+		return CodeResponse{}, ctx.Err()
+	case code := <-s.resultChan:
+		return code, nil
+	}
+}
+
+// ServeHTTP implements http.Handler.
+func (s *localServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if s.CallbackPath != "" && r.URL.Path != s.CallbackPath {
+		w.WriteHeader(404)
+		return
+	}
+	defer func() {
+		_ = s.Close()
+	}()
+
+	params := r.URL.Query()
+	s.resultChan <- CodeResponse{
+		Code:  params.Get("code"),
+		State: params.Get("state"),
+	}
+
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+	w.Header().Add("content-type", "text/html")
+	if s.WriteSuccessHTML != nil {
+		s.WriteSuccessHTML(w)
+	} else {
+		if err := defaultSuccessHTML(w); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}
+}
+
+func defaultSuccessHTML(w io.Writer) error {
+	_, err := fmt.Fprintf(w, "<p>You may now close this page and return to the client app.</p>")
+	return err
+}
