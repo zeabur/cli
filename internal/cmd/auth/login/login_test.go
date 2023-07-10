@@ -10,9 +10,9 @@ import (
 	"go.uber.org/zap/zaptest"
 	"golang.org/x/oauth2"
 
-	mockapiclient "github.com/zeabur/cli/mocks/pkg/api"
-
 	"github.com/zeabur/cli/internal/cmdutil"
+	mockapiclient "github.com/zeabur/cli/mocks/pkg/api"
+	mockauthclient "github.com/zeabur/cli/mocks/pkg/auth"
 	mockconfig "github.com/zeabur/cli/mocks/pkg/config"
 	apiClient "github.com/zeabur/cli/pkg/api"
 	"github.com/zeabur/cli/pkg/log"
@@ -35,6 +35,11 @@ var _ = Describe("LoggedIn", func() {
 			Expiry:       expiry,
 			TokenType:    tokenType,
 			RefreshToken: refreshToken,
+		}
+
+		userModel = &model.User{
+			Name:  user,
+			Email: "support@zeabur.com",
 		}
 	)
 
@@ -71,9 +76,7 @@ var _ = Describe("LoggedIn", func() {
 
 			// to mock client.GetUserInfo
 			client := mockapiclient.NewClient(GinkgoT())
-			client.On("GetUserInfo", mock.Anything).Return(&model.User{
-				Name: user,
-			}, nil)
+			client.On("GetUserInfo", mock.Anything).Return(userModel, nil)
 			f.ApiClient = client
 
 			// to mock client.New
@@ -100,7 +103,7 @@ var _ = Describe("LoggedIn", func() {
 				GinkgoT().Log(gotten)
 			}
 
-			Expect(len(expectedLogs)).To(Equal(len(gottenLogs)))
+			Expect(len(gottenLogs)).To(Equal(len(expectedLogs)))
 			for i, expected := range expectedLogs {
 				Expect(gottenLogs[i]).To(Equal(expected))
 			}
@@ -112,7 +115,7 @@ var _ = Describe("LoggedIn", func() {
 
 				expectedLogs = []string{
 					`DEBUG	Running login in non-interactive mode`,
-					`DEBUG	Already logged in	{"token string": "this_is_a_token", "token detail": {"access_token":"this_is_a_token","token_type":"Bearer","refresh_token":"this_is_a_refresh_token","expiry":"2020-01-01T00:00:00Z"}, "user": {"_id":"000000000000000000000000","name":"Bird","email":"","username":"","language":"","githubID":0,"avatarUrl":"","createdAt":"0001-01-01T00:00:00Z","bannedAt":null,"agreedAt":null,"lastCheckedInAt":null,"discordID":null}}`,
+					`DEBUG	Already logged in	{"token string": "this_is_a_token", "token detail": {"access_token":"this_is_a_token","token_type":"Bearer","refresh_token":"this_is_a_refresh_token","expiry":"2020-01-01T00:00:00Z"}, "user": {"_id":"000000000000000000000000","name":"Bird","email":"support@zeabur.com","username":"","language":"","githubID":0,"avatarUrl":"","createdAt":"0001-01-01T00:00:00Z","bannedAt":null,"agreedAt":null,"lastCheckedInAt":null,"discordID":null}}`,
 					`INFO	Already logged in as Bird, if you want to use a different account, please logout first`,
 				}
 			})
@@ -138,56 +141,88 @@ var _ = Describe("LoggedIn", func() {
 		})
 	})
 
-	// not completed yet
-	//When("the user is not logged in(log level is info)", func() {
-	//	BeforeEach(func() {
-	//		mc := mockconfig.NewConfig(GinkgoT())
-	//		mc.On("GetTokenString").Return("")
-	//		mc.On("GetUser").Return("")
-	//		mc.On("GetToken").Return(nil)
-	//		f.Config = mc
-	//
-	//		buffer = &zaptest.Buffer{}
-	//		f.Log = log.NewForUT(buffer, zapcore.InfoLevel)
-	//	})
-	//
-	//	JustBeforeEach(func() {
-	//		err := runLogin(f, opts)
-	//		Expect(err).ToNot(HaveOccurred())
-	//		gottenLogs = buffer.Lines()
-	//	})
-	//
-	//	JustAfterEach(func() {
-	//		GinkgoT().Log("gotten logs:")
-	//		for _, gotten := range gottenLogs {
-	//			GinkgoT().Log(gotten)
-	//		}
-	//
-	//		Expect(len(expectedLogs)).To(Equal(len(gottenLogs)))
-	//		for i, expected := range expectedLogs {
-	//			Expect(gottenLogs[i]).To(Equal(expected))
-	//		}
-	//	})
-	//
-	//	Context("login with token in flag, env, or config file", func() {
-	//		It("should log the correct messages", func() {
-	//
-	//		})
-	//	})
-	//
-	//	Context("login with browser", func() {
-	//		BeforeEach(func() {
-	//			expectedLogs = []string{
-	//				`INFO	A browser window will be opened for you to login, please confirm`,
-	//				`INFO	LoggedIn successful!`,
-	//				`INFO	Logged in as	{"user": "Bird", "email": "1606251360@qq.com"}`,
-	//			}
-	//		})
-	//
-	//		It("should log the correct messages", func() {
-	//
-	//		})
-	//
-	//	})
-	//})
+	When("the user is not logged in(log level is info)", func() {
+
+		JustBeforeEach(func() {
+			buffer = &zaptest.Buffer{}
+			f.Log = log.NewForUT(buffer, zapcore.InfoLevel)
+
+			// to mock client.GetUserInfo
+			client := mockapiclient.NewClient(GinkgoT())
+			client.On("GetUserInfo", mock.Anything).Return(userModel, nil)
+			f.ApiClient = client
+
+			// to mock client.New
+			newClientFunc := func(string) apiClient.Client {
+				return client
+			}
+			opts = &LoginOptions{
+				newClient: newClientFunc,
+			}
+
+			err := runLogin(f, opts)
+			Expect(err).ToNot(HaveOccurred())
+			gottenLogs = buffer.Lines()
+		})
+
+		JustAfterEach(func() {
+			GinkgoT().Log("gotten logs:")
+			for _, gotten := range gottenLogs {
+				GinkgoT().Log(gotten)
+			}
+
+			Expect(len(gottenLogs)).To(Equal(len(expectedLogs)))
+			for i, expected := range expectedLogs {
+				Expect(gottenLogs[i]).To(Equal(expected))
+			}
+		})
+
+		Context("login with token in flag, env, or config file", func() {
+			BeforeEach(func() {
+				mc := mockconfig.NewConfig(GinkgoT())
+				mc.On("GetTokenString").Return(token)
+				mc.On("SetTokenString", mock.Anything).Return(nil)
+				mc.On("GetUser").Return("")
+				mc.On("SetUser", user).Return(nil)
+				f.Config = mc
+
+				expectedLogs = []string{
+					`INFO	LoggedIn successful!`,
+					`INFO	Logged in as	{"user": "Bird", "email": "support@zeabur.com"}`,
+				}
+			})
+			It("should log the correct messages", func() {
+			})
+		})
+
+		Context("login with browser", func() {
+			BeforeEach(func() {
+				mc := mockconfig.NewConfig(GinkgoT())
+				mc.On("GetTokenString").Return("")
+				mc.On("SetTokenString", mock.Anything).Return(nil)
+				mc.On("GetUser").Return("")
+				mc.On("SetUser", user).Return(nil)
+				mc.On("SetToken", oauthToken).Return(nil)
+				f.Config = mc
+
+				expectedLogs = []string{
+					`INFO	A browser window will be opened for you to login, please confirm`,
+					`INFO	LoggedIn successful!`,
+					`INFO	Logged in as	{"user": "Bird", "email": "support@zeabur.com"}`,
+				}
+
+				authClient := mockauthclient.NewClient(GinkgoT())
+				authClient.On("Login").Return(oauthToken, nil)
+
+				f.AuthClient = authClient
+
+				f.Interactive = true
+			})
+
+			It("should log the correct messages", func() {
+
+			})
+
+		})
+	})
 })

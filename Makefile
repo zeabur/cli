@@ -1,4 +1,8 @@
+build: mock
+	go build -o zc ./cmd/main.go
 
+test:
+	go test ./...
 
 mock:
 	rm -rf mocks

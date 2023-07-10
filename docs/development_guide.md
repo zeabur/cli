@@ -49,6 +49,7 @@ I think it is better to re-define the different models in everywhere we need.
   * [ ] CI/CD
   * [ ] Release(go-releaser)
   * [ ] Download Script(or Homebrew, Scoop, etc.)
+* [ ] Pretty Print
 * golangci-lint
   * [ ] Lint itself(lint config, CI/CD)
   * [ ] Lint the code
@@ -72,10 +73,30 @@ If you also know the following tools, it will be better.
 
 ## Development
 
-`make mock` first to generate mock code.
+1. Run from source code(Recommended)
 
-e.g. `go run cmd/main.go auth login`
+`make mock` first to generate mock code.(Regenerate mock code when you change the interface)
+
+then run the cmd you want, e.g. `go run cmd/main.go auth login --debug`
+
+2. Build and run
+
+`make build` to build the binary.
+
+`./zc auth login --debug` to run the binary.
 
 ## Test
 
-`ginkgo ./...`
+Run Tests:
+
+* all tests: `make test`
+* specific pkg test: `cd xxx && go test ./...` or `cd xxx && ginkgo .`
+* specific test: `cd xxx && ginkgo -focus xxx` (xxx is `Describe` name)
+
+Add Tests(`ineternal/cmd/auth/login` as example):
+
+1. `cd internal/cmd/auth/login`
+2. `ginkgo bootstrap` to generate suite file `login_suite_test.go`
+3. `ginkgo generate login` to generate test file `login_test.go`
+
+
