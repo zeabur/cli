@@ -3,8 +3,6 @@ package api
 import (
 	"context"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
-
 	"github.com/zeabur/cli/pkg/model"
 )
 
@@ -34,16 +32,41 @@ func (c *client) ListProjects(ctx context.Context, skip, limit int) (*model.Proj
 }
 
 // GetProject returns a project by (its ID), or (owner name and project name).
-func (c *client) GetProject(ctx context.Context, id primitive.ObjectID, ownerName string, name string) (*model.Project, error) {
+func (c *client) GetProject(ctx context.Context, id string, ownerUsername string, projectName string) (*model.Project, error) {
+	if id == "" {
+		return c.getProjectByOwnerUsernameAndProject(ctx, ownerUsername, projectName)
+	}
+
+	return c.getProjectByID(ctx, id)
+}
+
+func (c *client) getProjectByID(ctx context.Context, id string) (*model.Project, error) {
 	var query struct {
-		Project model.Project `graphql:"project(id: $id, owner: $owner, name: $name)"`
+		Project model.Project `graphql:"project(_id: $id)"`
 	}
 
 	err := c.Query(ctx, &query, V{
-		"_id":   id,
-		"owner": ownerName,
-		"name":  name,
+		"id": ObjectID(id),
 	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &query.Project, nil
+}
+
+func (c *client) getProjectByOwnerUsernameAndProject(ctx context.Context,
+	ownerUsername string, projectName string) (*model.Project, error) {
+	var query struct {
+		Project model.Project `graphql:"project(owner: $owner, name: $name)"`
+	}
+
+	err := c.Query(ctx, &query, V{
+		"owner": ownerUsername,
+		"name":  projectName,
+	})
+
 	if err != nil {
 		return nil, err
 	}

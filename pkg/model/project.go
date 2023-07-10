@@ -2,14 +2,12 @@ package model
 
 import (
 	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Project struct {
-	ID          primitive.ObjectID `bson:"_id" json:"id" graphql:"_id"`
-	Name        string             `bson:"name" json:"name" graphql:"name"`
-	Description string             `bson:"description" json:"description" graphql:"description"`
+	ID          string `bson:"_id" json:"id" graphql:"_id"`
+	Name        string `bson:"name" json:"name" graphql:"name"`
+	Description string `bson:"description" json:"description" graphql:"description"`
 	// todo: model environment
 	//Environments []Environment     `bson:"environments" json:"environments" graphql:"environments"`
 	CreatedAt     time.Time `bson:"createdAt" json:"createdAt" graphql:"createdAt"`
