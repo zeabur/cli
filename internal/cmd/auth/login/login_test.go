@@ -21,8 +21,9 @@ import (
 
 var _ = Describe("LoggedIn", func() {
 	const (
-		token = "this_is_a_token"
-		user  = "Bird"
+		token    = "this_is_a_token"
+		user     = "Bird"
+		username = "aFlyBird0"
 
 		refreshToken = "this_is_a_refresh_token"
 		tokenType    = "Bearer"
@@ -38,8 +39,9 @@ var _ = Describe("LoggedIn", func() {
 		}
 
 		userModel = &model.User{
-			Name:  user,
-			Email: "support@zeabur.com",
+			Name:     user,
+			Username: username,
+			Email:    "support@zeabur.com",
 		}
 	)
 
@@ -71,6 +73,7 @@ var _ = Describe("LoggedIn", func() {
 			mc := mockconfig.NewConfig(GinkgoT())
 			mc.On("GetTokenString").Return(token)
 			mc.On("GetUser").Return(user)
+			mc.On("GetUsername").Return(username)
 			mc.On("GetToken").Return(oauthToken)
 			f.Config = mc
 
@@ -115,7 +118,7 @@ var _ = Describe("LoggedIn", func() {
 
 				expectedLogs = []string{
 					`DEBUG	Running login in non-interactive mode`,
-					`DEBUG	Already logged in	{"token string": "this_is_a_token", "token detail": {"access_token":"this_is_a_token","token_type":"Bearer","refresh_token":"this_is_a_refresh_token","expiry":"2020-01-01T00:00:00Z"}, "user": {"_id":"000000000000000000000000","name":"Bird","email":"support@zeabur.com","username":"","language":"","githubID":0,"avatarUrl":"","createdAt":"0001-01-01T00:00:00Z","bannedAt":null,"agreedAt":null,"lastCheckedInAt":null,"discordID":null}}`,
+					`DEBUG	Already logged in	{"token string": "this_is_a_token", "token detail": {"access_token":"this_is_a_token","token_type":"Bearer","refresh_token":"this_is_a_refresh_token","expiry":"2020-01-01T00:00:00Z"}, "user": {"_id":"000000000000000000000000","name":"Bird","email":"support@zeabur.com","username":"aFlyBird0","language":"","githubID":0,"avatarUrl":"","createdAt":"0001-01-01T00:00:00Z","bannedAt":null,"agreedAt":null,"lastCheckedInAt":null,"discordID":null}}`,
 					`INFO	Already logged in as Bird, if you want to use a different account, please logout first`,
 				}
 			})
@@ -183,11 +186,12 @@ var _ = Describe("LoggedIn", func() {
 				mc.On("GetTokenString").Return(token)
 				mc.On("SetTokenString", mock.Anything).Return(nil)
 				mc.On("GetUser").Return("")
+				mc.On("GetUsername").Return("")
+				mc.On("SetUsername", username).Return(nil)
 				mc.On("SetUser", user).Return(nil)
 				f.Config = mc
 
 				expectedLogs = []string{
-					`INFO	LoggedIn successful!`,
 					`INFO	Logged in as	{"user": "Bird", "email": "support@zeabur.com"}`,
 				}
 			})
@@ -201,13 +205,14 @@ var _ = Describe("LoggedIn", func() {
 				mc.On("GetTokenString").Return("")
 				mc.On("SetTokenString", mock.Anything).Return(nil)
 				mc.On("GetUser").Return("")
+				mc.On("GetUsername").Return("")
 				mc.On("SetUser", user).Return(nil)
+				mc.On("SetUsername", username).Return(nil)
 				mc.On("SetToken", oauthToken).Return(nil)
 				f.Config = mc
 
 				expectedLogs = []string{
 					`INFO	A browser window will be opened for you to login, please confirm`,
-					`INFO	LoggedIn successful!`,
 					`INFO	Logged in as	{"user": "Bird", "email": "support@zeabur.com"}`,
 				}
 

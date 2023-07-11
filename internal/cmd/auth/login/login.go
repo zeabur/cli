@@ -88,8 +88,6 @@ func runLogin(f *cmdutil.Factory, opts *LoginOptions) error {
 
 	f.Log.Debugw("Token", "token", tokenString, "token detail", token)
 
-	f.Log.Info("LoggedIn successful!")
-
 	// because we just logged in, we need to create a new client
 	f.ApiClient = opts.newClient(tokenString)
 
@@ -98,7 +96,8 @@ func runLogin(f *cmdutil.Factory, opts *LoginOptions) error {
 		return fmt.Errorf("failed to get user info: %w", err)
 	}
 
-	f.Config.SetUser(user.Name)
+	f.Config.SetUser(user.Name)         // nickname
+	f.Config.SetUsername(user.Username) // username(same as GitHub id)
 
 	f.Log.Infow("Logged in as", "user", user.Name, "email", user.Email)
 

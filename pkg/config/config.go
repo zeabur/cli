@@ -3,11 +3,14 @@ package config
 import (
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
+
+	"github.com/zeabur/cli/pkg/context"
 )
 
 const (
 	KeyTokenString = "token"
 	KeyUser        = "user"
+	KeyUsername    = "username"
 
 	// if we use "token.access_token" as key, the env ZEABUR_TOKEN will override all token details,
 	// because "token" is the prefix of "token.access_token".
@@ -32,14 +35,20 @@ type Config interface {
 	GetToken() *oauth2.Token // token is the detail of token, if the token is from OAuth2, it will be set
 	SetToken(token *oauth2.Token)
 
-	GetUser() string
+	GetUser() string // nickname of user
 	SetUser(user string)
+	GetUsername() string // it is kind like id of user
+	SetUsername(username string)
+
+	GetContext() context.Context
 
 	Write() error
 }
 
 type config struct {
-	path string
+	path  string
+	viper *viper.Viper
+	ctx   context.Context
 }
 
 func New(path string) Config {
@@ -48,6 +57,7 @@ func New(path string) Config {
 
 	return &config{
 		path: path,
+		ctx:  context.NewViperContext(viper.GetViper()),
 	}
 }
 
@@ -88,6 +98,18 @@ func (c *config) GetUser() string {
 
 func (c *config) SetUser(user string) {
 	viper.Set(KeyUser, user)
+}
+
+func (c *config) GetUsername() string {
+	return viper.GetString(KeyUsername)
+}
+
+func (c *config) SetUsername(username string) {
+	viper.Set(KeyUsername, username)
+}
+
+func (c *config) GetContext() context.Context {
+	return c.ctx
 }
 
 func (c *config) Write() error {

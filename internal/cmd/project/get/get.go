@@ -18,12 +18,14 @@ type Options struct {
 }
 
 func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
-	opts := &Options{}
+	opts := &Options{
+		OwnerName: f.Config.GetUsername(),
+	}
 
 	cmd := &cobra.Command{
 		Use:   "get",
 		Short: "Get project",
-		Long:  "Get project, use --id or both --owner and --project",
+		Long:  "Get project, use --id or --name to specify the project",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGet(f, opts)
 		},
@@ -31,8 +33,7 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&opts.ID, "id", "", "Project ID")
 
-	cmd.Flags().StringVarP(&opts.OwnerName, "owner", "o", "", "Owner name")
-	cmd.Flags().StringVarP(&opts.ProjectName, "project", "p", "", "Project name")
+	cmd.Flags().StringVarP(&opts.ProjectName, "name", "n", "", "Project name")
 
 	return cmd
 }
@@ -101,8 +102,8 @@ func runGetNonInteractive(f *cmdutil.Factory, opts *Options) error {
 }
 
 func paramCheck(opts *Options) error {
-	if opts.ID == "" && (opts.OwnerName == "" && opts.ProjectName == "") {
-		return fmt.Errorf("please specify --id or both --owner and --project")
+	if opts.ID == "" && opts.ProjectName == "" {
+		return fmt.Errorf("please specify --id or --name")
 	}
 
 	return nil
