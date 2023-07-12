@@ -8,8 +8,12 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/spf13/cobra"
 
+	completionCmd "github.com/zeabur/cli/internal/cmd/completion"
+
 	authCmd "github.com/zeabur/cli/internal/cmd/auth"
+	contextCmd "github.com/zeabur/cli/internal/cmd/context"
 	projectCmd "github.com/zeabur/cli/internal/cmd/project"
+	serviceCmd "github.com/zeabur/cli/internal/cmd/service"
 	versionCmd "github.com/zeabur/cli/internal/cmd/version"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/pkg/api"
@@ -90,6 +94,11 @@ func NewCmdRoot(f *cmdutil.Factory, version string) (*cobra.Command, error) {
 	cmd.AddCommand(versionCmd.NewCmdVersion(f, version))
 	cmd.AddCommand(authCmd.NewCmdAuth(f))
 	cmd.AddCommand(projectCmd.NewCmdProject(f))
+	cmd.AddCommand(serviceCmd.NewCmdService(f))
+
+	cmd.AddCommand(contextCmd.NewCmdContext(f))
+
+	cmd.AddCommand(completionCmd.NewCmdCompletion(f))
 
 	return cmd, nil
 }

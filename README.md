@@ -2,6 +2,23 @@
 
 ## Overview
 
+Core Features:
+
+1. Login with browser or token
+2. Manage your Zeabur resources with CLI
+3. The design of the context makes it easier for you to manage services.
+
+## Usage
+
+1. login: `./zc auth login`
+2. manage your resources, such as `./zc project ls`, `./zc service get`
+
+Tips: you could you `./zc context set <context-type>`
+
+1. set project context: `./zc context set project`
+2. set environment context: `./zc cpntext set env`
+3. set service context: `./zc context set service`
+
 ## Development Guide
 
 [Development Guide](docs/development_guide.md)

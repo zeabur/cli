@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 
-	"github.com/zeabur/cli/pkg/context"
+	"github.com/zeabur/cli/pkg/zcontext"
 )
 
 const (
@@ -40,7 +40,7 @@ type Config interface {
 	GetUsername() string // it is kind like id of user
 	SetUsername(username string)
 
-	GetContext() context.Context
+	GetContext() zcontext.Context
 
 	Write() error
 }
@@ -48,7 +48,7 @@ type Config interface {
 type config struct {
 	path  string
 	viper *viper.Viper
-	ctx   context.Context
+	ctx   zcontext.Context
 }
 
 func New(path string) Config {
@@ -57,7 +57,7 @@ func New(path string) Config {
 
 	return &config{
 		path: path,
-		ctx:  context.NewViperContext(viper.GetViper()),
+		ctx:  zcontext.NewViperContext(viper.GetViper()),
 	}
 }
 
@@ -108,7 +108,7 @@ func (c *config) SetUsername(username string) {
 	viper.Set(KeyUsername, username)
 }
 
-func (c *config) GetContext() context.Context {
+func (c *config) GetContext() zcontext.Context {
 	return c.ctx
 }
 

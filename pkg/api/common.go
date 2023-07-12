@@ -12,3 +12,13 @@ type ObjectID string
 func (id ObjectID) GetGraphQLType() string {
 	return fmt.Sprintf(`ObjectID`)
 }
+
+func normalizePagination(skip, limit int) (int, int) {
+	if skip < 0 {
+		skip = 0
+	}
+	if limit <= 0 || limit > 100 {
+		limit = 5
+	}
+	return skip, limit
+}

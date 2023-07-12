@@ -9,12 +9,7 @@ import (
 // ListProjects returns projects owned by the current user.
 // Note: the backend hasn't implemented pagination yet, currently we return all projects at once.
 func (c *client) ListProjects(ctx context.Context, skip, limit int) (*model.ProjectConnection, error) {
-	if skip < 0 {
-		skip = 0
-	}
-	if limit <= 0 || limit > 100 {
-		limit = 5
-	}
+	skip, limit = normalizePagination(skip, limit)
 
 	var query struct {
 		Projects model.ProjectConnection `graphql:"projects(skip: $skip, limit: $limit)"`
@@ -29,6 +24,28 @@ func (c *client) ListProjects(ctx context.Context, skip, limit int) (*model.Proj
 	}
 
 	return &query.Projects, nil
+}
+
+func (c *client) ListAllProjects(ctx context.Context) ([]*model.Project, error) {
+	skip := 0
+	next := true
+
+	var projects []*model.Project
+
+	for next {
+		projectCon, err := c.ListProjects(context.Background(), skip, 100)
+		if err != nil {
+			return nil, err
+		}
+		for _, project := range projectCon.Edges {
+			projects = append(projects, project.Node)
+		}
+
+		skip += 5
+		next = projectCon.PageInfo.HasNextPage
+	}
+
+	return projects, nil
 }
 
 // GetProject returns a project by (its ID), or (owner name and project name).

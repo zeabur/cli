@@ -31,9 +31,10 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&opts.ID, "id", "", "Project ID")
+	projectCtx := f.Config.GetContext().GetProject()
 
-	cmd.Flags().StringVarP(&opts.ProjectName, "name", "n", "", "Project name")
+	cmd.Flags().StringVar(&opts.ID, "id", projectCtx.GetID(), "Project ID")
+	cmd.Flags().StringVarP(&opts.ProjectName, "name", "n", projectCtx.GetName(), "Project name")
 
 	return cmd
 }
@@ -42,6 +43,17 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 // If you want to add new dependencies, please add them in the Options struct
 
 func runGet(f *cmdutil.Factory, opts *Options) error {
+	// set project name and id from context if not specified in flags
+	project := f.Config.GetContext().GetProject()
+	if !project.Empty() {
+		if opts.ID == "" && project.GetID() != "" {
+			opts.ID = project.GetID()
+		}
+		if opts.ProjectName == "" && project.GetName() != "" {
+			opts.ProjectName = project.GetName()
+		}
+	}
+
 	// if param check passed, run non-interactive mode first
 	if err := paramCheck(opts); err == nil {
 		return runGetNonInteractive(f, opts)
@@ -109,6 +121,7 @@ func paramCheck(opts *Options) error {
 	return nil
 }
 
+// todo: move to to a "common" package
 func getAllProjects(f *cmdutil.Factory) ([]*model.Project, error) {
 	skip := 0
 	next := true

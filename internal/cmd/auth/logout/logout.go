@@ -32,13 +32,18 @@ func runLogout(f *cmdutil.Factory, opts *logoutOptions) error {
 		return nil
 	}
 
+	// reset token string and user
 	f.Config.SetTokenString("")
 	f.Config.SetUser("")
+	f.Config.SetUsername("")
 
 	// reset token detail if exists
 	if f.Config.GetToken() != nil {
 		f.Config.SetToken(nil)
 	}
+
+	// reset context
+	f.Config.GetContext().ClearAll()
 
 	f.Log.Info("Logout successful!")
 	return nil

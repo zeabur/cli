@@ -1,5 +1,6 @@
-package context
+package zcontext
 
+// Context represents the current context of the CLI, including the current project, environment, service, etc.
 type Context interface {
 	GetProject() BasicInfo
 	SetProject(project BasicInfo)
@@ -16,6 +17,7 @@ type Context interface {
 	ClearAll()
 }
 
+// BasicInfo represents the basic information of a resource.
 type BasicInfo interface {
 	GetID() string
 	GetName() string

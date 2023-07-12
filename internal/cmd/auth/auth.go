@@ -12,7 +12,7 @@ import (
 func NewCmdAuth(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "auth <command>",
-		Short: "Authenticate Zeabur with Dashboard or Token",
+		Short: "Authenticate Zeabur with browser or token",
 	}
 
 	// all sub-commands do not require authentication

@@ -1,4 +1,4 @@
-package context
+package zcontext
 
 type basicInfo struct {
 	id   string
@@ -14,7 +14,14 @@ func (b *basicInfo) GetName() string {
 }
 
 func (b *basicInfo) Empty() bool {
-	return b.id == "" || b.name == ""
+	return b == nil || b.id == "" || b.name == ""
+}
+
+func NewBasicInfo(id, name string) BasicInfo {
+	return &basicInfo{
+		id:   id,
+		name: name,
+	}
 }
 
 var _ BasicInfo = &basicInfo{}
