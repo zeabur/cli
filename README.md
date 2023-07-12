@@ -13,7 +13,7 @@ Core Features:
 1. login: `./zc auth login`
 2. manage your resources, such as `./zc project ls`, `./zc service get`
 
-Tips: you could you `./zc context set <context-type>`
+Tips: you could use `./zc context set <context-type>` to set the context.
 
 1. set project context: `./zc context set project`
 2. set environment context: `./zc cpntext set env`

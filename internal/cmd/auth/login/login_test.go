@@ -118,7 +118,7 @@ var _ = Describe("LoggedIn", func() {
 
 				expectedLogs = []string{
 					`DEBUG	Running login in non-interactive mode`,
-					`DEBUG	Already logged in	{"token string": "this_is_a_token", "token detail": {"access_token":"this_is_a_token","token_type":"Bearer","refresh_token":"this_is_a_refresh_token","expiry":"2020-01-01T00:00:00Z"}, "user": {"_id":"000000000000000000000000","name":"Bird","email":"support@zeabur.com","username":"aFlyBird0","language":"","githubID":0,"avatarUrl":"","createdAt":"0001-01-01T00:00:00Z","bannedAt":null,"agreedAt":null,"lastCheckedInAt":null,"discordID":null}}`,
+					`DEBUG	Already logged in	{"token string": "this_is_a_token", "token detail": {"access_token":"this_is_a_token","token_type":"Bearer","refresh_token":"this_is_a_refresh_token","expiry":"2020-01-01T00:00:00Z"}, "user": {"_id":"","name":"Bird","email":"support@zeabur.com","username":"aFlyBird0","language":"","githubID":0,"avatarUrl":"","createdAt":"0001-01-01T00:00:00Z","bannedAt":null,"agreedAt":null,"lastCheckedInAt":null,"discordID":null}}`,
 					`INFO	Already logged in as Bird, if you want to use a different account, please logout first`,
 				}
 			})
