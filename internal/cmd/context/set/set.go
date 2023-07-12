@@ -38,12 +38,12 @@ func NewCmdSet(f *cmdutil.Factory) *cobra.Command {
 		Short: "Set Contexts(project, environment, service), either by ID or by name",
 		Long: heredoc.Doc(`Set Contexts either by ID or by name,
 			For example:
-				zc context set project --id=1234567890
-				zc context set proj --id=1234567890
-				zc context set environment --name=dev
-				zc context set env --id=1234567890
-				zc context set service --name=svc1
-				zc context set svc --name=svc1`,
+				zeabur context set project --id=1234567890
+				zeabur context set proj --id=1234567890
+				zeabur context set environment --name=dev
+				zeabur context set env --id=1234567890
+				zeabur context set service --name=svc1
+				zeabur context set svc --name=svc1`,
 		),
 		Args:       cobra.ExactArgs(1),
 		ValidArgs:  []string{project, environment, service},

@@ -1,5 +1,5 @@
 build: mock
-	go build -o zc ./cmd/main.go
+	go build -o zeabur ./cmd/main.go
 
 test:
 	go test ./...

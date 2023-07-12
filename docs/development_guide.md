@@ -83,7 +83,7 @@ then run the cmd you want, e.g. `go run cmd/main.go auth login --debug`
 
 `make build` to build the binary.
 
-`./zc auth login --debug` to run the binary.
+`./zeabur auth login --debug` to run the binary.
 
 ## Test
 
