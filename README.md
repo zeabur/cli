@@ -10,14 +10,14 @@ Core Features:
 
 ## Usage
 
-1. login: `./zc auth login`
-2. manage your resources, such as `./zc project ls`, `./zc service get`
+1. login: `./zeabur auth login`
+2. manage your resources, such as `./zeabur project ls`, `./zeabur service get`
 
-Tips: you could use `./zc context set <context-type>` to set the context.
+Tips: you could use `./zeabur context set <context-type>` to set the context.
 
-1. set project context: `./zc context set project`
-2. set environment context: `./zc cpntext set env`
-3. set service context: `./zc context set service`
+1. set project context: `./zeabur context set project`
+2. set environment context: `./zeabur cpntext set env`
+3. set service context: `./zeabur context set service`
 
 ## Development Guide
 

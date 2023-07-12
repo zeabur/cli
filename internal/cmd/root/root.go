@@ -23,13 +23,13 @@ import (
 
 func NewCmdRoot(f *cmdutil.Factory, version string) (*cobra.Command, error) {
 	cmd := &cobra.Command{
-		Use:   "zc <command> <subcommand> [flags]",
+		Use:   "zeabur <command> <subcommand> [flags]",
 		Short: "Zeabur CLI",
 		Long:  `Zeabur CLI is the official command line tool for Zeabur.`,
 		Example: heredoc.Doc(`
-			$ zc auth login
-			$ zc project list
-			$ zc service create
+			$ zeabur auth login
+			$ zeabur project list
+			$ zeabur service create
 		`),
 		Annotations: map[string]string{
 			"versionInfo": version,
