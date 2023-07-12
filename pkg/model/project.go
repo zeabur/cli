@@ -4,17 +4,25 @@ import (
 	"time"
 )
 
+// Note: it's not recommended to embed other models in a model,
+// because graphql will query them recursively.
+// If you want to take advantage of graphql's nested query, you can define a new type,
+// such as ProjectWithEnvironments, or xxxProjectResponse.
+
+// Therefor, if the name of model doesn't has any prefix or suffix,
+// we regard it as a basic model, to which we can add some basic methods and reuse them.
+
+// if the name of model has a prefix or suffix, we only use it in the specific query.
+
 type Project struct {
 	ID          string `bson:"_id" json:"id" graphql:"_id"`
 	Name        string `bson:"name" json:"name" graphql:"name"`
 	Description string `bson:"description" json:"description" graphql:"description"`
-	// todo: model environment
 	//Environments []Environment     `bson:"environments" json:"environments" graphql:"environments"`
-	CreatedAt     time.Time `bson:"createdAt" json:"createdAt" graphql:"createdAt"`
-	Owner         User      `bson:"owner" json:"owner" graphql:"owner"`
-	Collaborators []User    `bson:"collaborators" json:"collaborators" graphql:"collaborators"`
-	IconUrl       string    `bson:"iconUrl" json:"iconUrl" graphql:"iconURL"`
-	// todo: model service
+	CreatedAt time.Time `bson:"createdAt" json:"createdAt" graphql:"createdAt"`
+	//Owner         User      `bson:"owner" json:"owner" graphql:"owner"`
+	//Collaborators []User    `bson:"collaborators" json:"collaborators" graphql:"collaborators"`
+	IconUrl string `bson:"iconUrl" json:"iconUrl" graphql:"iconURL"`
 	//Services []Service `bson:"services" json:"services" graphql:"services"`
 }
 
