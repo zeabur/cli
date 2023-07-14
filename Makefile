@@ -5,8 +5,5 @@ test:
 	go test ./...
 
 mock:
-	# if mocks dir exists, remove it
-	if [ -d "./mocks" ]; then \
-		rm -rf ./mocks; \
-	fi
+	rm -rf mocks
 	mockery --dir=./pkg --output=./mocks/pkg --unroll-variadic=false
