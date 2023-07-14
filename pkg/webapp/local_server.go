@@ -22,13 +22,15 @@ func bindLocalServer() (*localServer, error) {
 	}
 
 	return &localServer{
-		listener:   listener,
-		resultChan: make(chan CodeResponse, 1),
+		SuccessPath: "/success",
+		listener:    listener,
+		resultChan:  make(chan CodeResponse, 1),
 	}, nil
 }
 
 type localServer struct {
 	CallbackPath     string
+	SuccessPath      string
 	WriteSuccessHTML func(w io.Writer)
 
 	resultChan chan CodeResponse
@@ -58,14 +60,20 @@ func (s *localServer) WaitForCode(ctx context.Context) (CodeResponse, error) {
 
 // ServeHTTP implements http.Handler.
 func (s *localServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if s.CallbackPath != "" && r.URL.Path != s.CallbackPath {
-		w.WriteHeader(404)
-		return
-	}
-	defer func() {
-		_ = s.Close()
-	}()
+	//fmt.Printf("method: %s, url: %s\n", r.Method, r.URL.String())
 
+	path := r.URL.Path
+	switch path {
+	case s.CallbackPath:
+		s.ServeCallback(w, r)
+	case s.SuccessPath:
+		s.ServeSuccess(w, r)
+	default:
+		w.WriteHeader(404)
+	}
+}
+
+func (s *localServer) ServeCallback(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	s.resultChan <- CodeResponse{
 		Code:  params.Get("code"),
@@ -76,7 +84,36 @@ func (s *localServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
-	w.Header().Add("content-type", "text/html")
+	if r.Method == http.MethodOptions {
+		return
+	}
+
+	successURL := fmt.Sprintf("http://localhost:%d%s", s.Port(), s.SuccessPath)
+	http.Redirect(w, r, successURL, http.StatusFound)
+}
+
+func (s *localServer) ServeSuccess(w http.ResponseWriter, r *http.Request) {
+	if s.SuccessPath != "" && r.URL.Path != s.SuccessPath {
+		w.WriteHeader(404)
+		return
+	}
+	//fmt.Printf("method: %s, url: %s\n", r.Method, r.URL.String())
+
+	defer func() {
+		// if method is GET, close (to ignore Options)
+		if r.Method == http.MethodGet {
+			err := s.Close()
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+	}()
+
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	w.Header().Set("Content-Type", "text/html")
+
 	if s.WriteSuccessHTML != nil {
 		s.WriteSuccessHTML(w)
 	} else {
