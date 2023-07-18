@@ -27,6 +27,7 @@ func (c *client) ListServices(ctx context.Context, projectID string, skip, limit
 	return &query.Services, nil
 }
 
+// ListAllServices returns all services owned by the current user.
 func (c *client) ListAllServices(ctx context.Context, projectID string) ([]*model.Service, error) {
 	skip := 0
 	next := true

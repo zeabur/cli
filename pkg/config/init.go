@@ -15,6 +15,7 @@ const (
 	configFile         = "cli.yaml"
 )
 
+// DefaultConfigFilePath returns the default config file path($HOME/.config/zeabur/cli.yaml)
 func DefaultConfigFilePath() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -32,7 +33,6 @@ func initViper(configPath string) {
 	viper.SetConfigType("yaml")
 	viper.SetEnvPrefix(envPrefix)
 	viper.AutomaticEnv()
-	viper.BindEnv("token", "token")
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file
 		panic(fmt.Errorf("fatal error config file: %w", err))

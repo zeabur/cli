@@ -1,3 +1,4 @@
+// Package login provides the login command
 package login
 
 import (
@@ -13,36 +14,40 @@ import (
 	"github.com/zeabur/cli/pkg/config"
 )
 
-// LoginOptions is the struct for the login command
-type LoginOptions struct {
-	newClient func(string) api.Client // to mock in tests
+// Options is the struct for the login command
+type Options struct {
+	NewClient func(string) api.Client // to mock in tests
 }
 
+// NewCmdLogin creates the login command
 func NewCmdLogin(f *cmdutil.Factory) *cobra.Command {
-	opts := &LoginOptions{
-		newClient: api.New,
+	opts := &Options{
+		NewClient: api.New,
 	}
 	cmd := &cobra.Command{
 		Use:   "login",
 		Short: "LoggedIn to Zeabur",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runLogin(f, opts)
+			return RunLogin(f, opts)
 		},
 	}
 
 	cmd.Flags().String(config.KeyTokenString, "", "Zeabur token to use for authentication")
-	viper.BindPFlag(config.KeyTokenString, cmd.Flags().Lookup(config.KeyTokenString))
+	err := viper.BindPFlag(config.KeyTokenString, cmd.Flags().Lookup(config.KeyTokenString))
+	if err != nil {
+		return nil
+	}
 
 	return cmd
 }
 
 // Note: don't import other packages directly in this function, or it will be hard to mock and test
-// If you want to add new dependencies, please add them in the LoginOptions struct, like `newClient func(string) client.Client`
+// If you want to add new dependencies, please add them in the Options struct, like `NewClient func(string) client.Client`
 
-// runLogin is the actual execution of the login command
+// RunLogin is the actual execution of the login command
 // Note: it needn't auth, so f.ApiClient is nil
-func runLogin(f *cmdutil.Factory, opts *LoginOptions) error {
+func RunLogin(f *cmdutil.Factory, opts *Options) error {
 	if f.Interactive {
 		f.Log.Debug("Running login in interactive mode")
 	} else {
@@ -50,7 +55,7 @@ func runLogin(f *cmdutil.Factory, opts *LoginOptions) error {
 	}
 
 	if f.LoggedIn() {
-		f.ApiClient = opts.newClient(f.Config.GetTokenString())
+		f.ApiClient = opts.NewClient(f.Config.GetTokenString())
 		user, err := f.ApiClient.GetUserInfo(context.Background())
 		if err != nil {
 			return fmt.Errorf("failed to get user info: %w", err)
@@ -89,7 +94,7 @@ func runLogin(f *cmdutil.Factory, opts *LoginOptions) error {
 	f.Log.Debugw("Token", "token", tokenString, "token detail", token)
 
 	// because we just logged in, we need to create a new client
-	f.ApiClient = opts.newClient(tokenString)
+	f.ApiClient = opts.NewClient(tokenString)
 
 	user, err := f.ApiClient.GetUserInfo(context.Background())
 	if err != nil {

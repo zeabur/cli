@@ -29,12 +29,12 @@ func bindLocalServer() (*localServer, error) {
 }
 
 type localServer struct {
-	CallbackPath     string
-	SuccessPath      string
+	listener         net.Listener
 	WriteSuccessHTML func(w io.Writer)
+	resultChan       chan CodeResponse
 
-	resultChan chan CodeResponse
-	listener   net.Listener
+	CallbackPath string
+	SuccessPath  string
 }
 
 func (s *localServer) Port() int {

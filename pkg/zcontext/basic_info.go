@@ -1,3 +1,4 @@
+// Package zcontext is used to store the context information for the application.
 package zcontext
 
 type basicInfo struct {

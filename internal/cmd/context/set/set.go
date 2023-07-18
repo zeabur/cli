@@ -1,3 +1,4 @@
+// Package set is the subcommand to set the context for the CLI.
 package set
 
 import (
@@ -64,9 +65,9 @@ func NewCmdSet(f *cmdutil.Factory) *cobra.Command {
 func runSet(f *cmdutil.Factory, opts *Options) error {
 	if f.Interactive {
 		return runSetInteractive(f, opts)
-	} else {
-		return runSetNonInteractive(f, opts)
 	}
+
+	return runSetNonInteractive(f, opts)
 }
 
 func runSetInteractive(f *cmdutil.Factory, opts *Options) error {

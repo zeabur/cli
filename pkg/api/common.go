@@ -1,16 +1,14 @@
 package api
 
-import (
-	"fmt"
-)
-
 // V means graphql variables, it's a alias of map[string]interface{}
 type V map[string]interface{}
 
+// ObjectID is the alias of string, it's used to represent the ObjectID defined in GraphQL schema.
 type ObjectID string
 
+// GetGraphQLType returns the GraphQL type name of ObjectID.
 func (id ObjectID) GetGraphQLType() string {
-	return fmt.Sprintf(`ObjectID`)
+	return `ObjectID`
 }
 
 func normalizePagination(skip, limit int) (int, int) {

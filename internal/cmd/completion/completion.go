@@ -1,3 +1,4 @@
+// Package completion contains the cmd for generating shell completion scripts
 package completion
 
 import (

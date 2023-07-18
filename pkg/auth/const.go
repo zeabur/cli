@@ -1,5 +1,6 @@
 package auth
 
+// Zeabur OAuth constants
 const (
 	ZeaburOAuthServerURL    = "https://gateway.zeabur.dev"
 	ZeaburOAuthAuthorizeURL = ZeaburOAuthServerURL + "/oauth/authorize"

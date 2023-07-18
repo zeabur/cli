@@ -1,3 +1,4 @@
+// Package root provides the root command
 package root
 
 import (
@@ -21,6 +22,7 @@ import (
 	"github.com/zeabur/cli/pkg/log"
 )
 
+// NewCmdRoot creates the root command
 func NewCmdRoot(f *cmdutil.Factory, version string) (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:   "zeabur <command> <subcommand> [flags]",
