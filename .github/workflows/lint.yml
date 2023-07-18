@@ -20,6 +20,10 @@ jobs:
         with:
           go-version: '1.20'
           cache: false
+      - name: install mockery
+        run: go install github.com/vektra/mockery/v2@v2.32.0
+      - name: generate mocks
+        run: make mock
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
