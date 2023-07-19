@@ -1,3 +1,4 @@
+// Package context contains the cmd for managing contexts
 package context
 
 import (
@@ -9,6 +10,7 @@ import (
 	contextSetCmd "github.com/zeabur/cli/internal/cmd/context/set"
 )
 
+// NewCmdContext creates the context command
 func NewCmdContext(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "context <command>",

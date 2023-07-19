@@ -1,4 +1,4 @@
-package login
+package login_test
 
 import (
 	"testing"

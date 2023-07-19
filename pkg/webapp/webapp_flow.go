@@ -9,16 +9,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
 	"strings"
 
 	"golang.org/x/oauth2"
 )
-
-type httpClient interface {
-	PostForm(string, url.Values) (*http.Response, error)
-}
 
 // Flow holds the state for the steps of OAuth Web Application flow.
 type Flow struct {
@@ -41,6 +36,7 @@ func InitFlow() (*Flow, error) {
 	}, nil
 }
 
+// RedirectURIWithPort completes the redirect url with the port number of the local server.
 func (flow *Flow) RedirectURIWithPort(redirectURIWithoutPort string) (string, error) {
 	ru, err := url.Parse(redirectURIWithoutPort)
 	if err != nil {

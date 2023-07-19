@@ -1,3 +1,4 @@
+// Package log contains the loggers for the CLI
 package log
 
 import (
@@ -8,14 +9,17 @@ import (
 	"go.uber.org/zap/zaptest"
 )
 
+// NewDebugLevel returns a logger with debug level
 func NewDebugLevel() *zap.SugaredLogger {
 	return New(zapcore.DebugLevel)
 }
 
+// NewInfoLevel returns a logger with info level
 func NewInfoLevel() *zap.SugaredLogger {
 	return New(zapcore.InfoLevel)
 }
 
+// New returns a logger with the given level
 func New(level zapcore.Level) *zap.SugaredLogger {
 	conf := zap.NewDevelopmentConfig()
 	conf.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
@@ -27,6 +31,7 @@ func New(level zapcore.Level) *zap.SugaredLogger {
 	return zap.New(logger.Core()).Sugar()
 }
 
+// NewForUT returns a logger with the given level and buffer for unit testing
 func NewForUT(buffer *zaptest.Buffer, level zapcore.Level) *zap.SugaredLogger {
 	conf := zap.NewDevelopmentEncoderConfig()
 	conf.EncodeLevel = zapcore.CapitalLevelEncoder // note: without color

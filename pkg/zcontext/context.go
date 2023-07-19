@@ -2,6 +2,7 @@ package zcontext
 
 import "github.com/spf13/viper"
 
+// Keys for context
 const (
 	KeyContext = "context"
 
@@ -22,6 +23,7 @@ type viperContext struct {
 	viper *viper.Viper
 }
 
+// NewViperContext creates a new Context based on viper
 func NewViperContext(viper *viper.Viper) Context {
 	return &viperContext{viper: viper}
 }

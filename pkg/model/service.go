@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// Service is the simplest model of service, which is used in most queries.
 type Service struct {
 	ID   string `bson:"_id" json:"id" graphql:"_id"`
 	Name string `bson:"name" json:"name" graphql:"name"`
@@ -34,11 +35,13 @@ type Service struct {
 	//Contexts []AgentContextInstallation `bson:"contexts" json:"contexts" graphql:"contexts"`
 }
 
+// ServiceConnection is a connection to a list of items.
 type ServiceConnection struct {
 	PageInfo *PageInfo      `json:"pageInfo" graphql:"pageInfo"`
 	Edges    []*ServiceEdge `json:"edges" graphql:"edges"`
 }
 
+// ServiceEdge is an edge in a connection.
 type ServiceEdge struct {
 	Node   *Service `json:"node" graphql:"node"`
 	Cursor string   `json:"cursor" graphql:"cursor"`

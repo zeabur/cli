@@ -1,3 +1,4 @@
+// Package cmdutil provides utilities for working with cobra commands
 package cmdutil
 
 import (

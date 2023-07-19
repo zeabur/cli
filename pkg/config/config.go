@@ -1,3 +1,4 @@
+// Package config provides the config of cli
 package config
 
 import (
@@ -7,6 +8,7 @@ import (
 	"github.com/zeabur/cli/pkg/zcontext"
 )
 
+// Keys about auth
 const (
 	KeyTokenString = "token"
 	KeyUser        = "user"
@@ -23,6 +25,7 @@ const (
 	KeyTokenRefresh = KeyTokenDetail + ".refresh_token"
 )
 
+// Keys about CLI behavior
 const (
 	KeyInteractive      = "interactive"
 	KeyAutoRefreshToken = "auto_refresh_token"
@@ -46,9 +49,8 @@ type Config interface {
 }
 
 type config struct {
-	path  string
-	viper *viper.Viper
-	ctx   zcontext.Context
+	ctx  zcontext.Context
+	path string
 }
 
 func New(path string) Config {

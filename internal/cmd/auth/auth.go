@@ -1,3 +1,4 @@
+// Package auth contains the cmd for managing authentication
 package auth
 
 import (

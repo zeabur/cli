@@ -13,6 +13,7 @@ import (
 type prompter struct {
 }
 
+// New creates a new prompter
 func New() Prompter {
 	return &prompter{}
 }

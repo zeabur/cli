@@ -14,6 +14,7 @@ import (
 
 // if the name of model has a prefix or suffix, we only use it in the specific query.
 
+// Project is the simplest model of project, which is used in most queries.
 type Project struct {
 	ID          string `bson:"_id" json:"id" graphql:"_id"`
 	Name        string `bson:"name" json:"name" graphql:"name"`
@@ -22,15 +23,17 @@ type Project struct {
 	CreatedAt time.Time `bson:"createdAt" json:"createdAt" graphql:"createdAt"`
 	//Owner         User      `bson:"owner" json:"owner" graphql:"owner"`
 	//Collaborators []User    `bson:"collaborators" json:"collaborators" graphql:"collaborators"`
-	IconUrl string `bson:"iconUrl" json:"iconUrl" graphql:"iconURL"`
+	IconURL string `bson:"iconUrl" json:"iconUrl" graphql:"iconURL"`
 	//Services []Service `bson:"services" json:"services" graphql:"services"`
 }
 
+// ProjectConnection is a connection to a list of items.
 type ProjectConnection struct {
 	PageInfo *PageInfo      `json:"pageInfo"`
 	Edges    []*ProjectEdge `json:"edges"`
 }
 
+// ProjectEdge is an edge in a connection.
 type ProjectEdge struct {
 	Node   *Project `json:"node"`
 	Cursor string   `json:"cursor"`

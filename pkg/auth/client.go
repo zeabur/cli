@@ -1,3 +1,4 @@
+// Package auth implements the authentication flow for the CLI
 package auth
 
 import (
@@ -12,33 +13,35 @@ import (
 )
 
 type (
+	// WebAppClient is a client for OAuth2 authorization code flow.
 	WebAppClient struct {
+		httpClient *http.Client
+
 		ClientID               string
 		ClientSecret           string
 		RedirectURIWithoutPort string
 		RedirectURIWithPort    string // we will fill port after local server is started
+		AuthorizeURL           string
+		TokenURL               string
 		Scopes                 []string
 
-		AuthorizeURL string
-		TokenURL     string
-
 		config oauth2.Config
-
-		httpClient *http.Client
 	}
 
+	// Options is the options for WebAppClient.
 	Options struct {
 		ClientID               string
 		ClientSecret           string
 		RedirectURIWithoutPort string
-		Scopes                 []string
 
 		AuthorizeURL string
 		TokenURL     string
-		HttpClient   *http.Client
+		HTTPClient   *http.Client
+		Scopes       []string
 	}
 )
 
+// NewZeaburWebAppOAuthClient creates a new WebAppClient for Zeabur OAuth server.
 func NewZeaburWebAppOAuthClient() *WebAppClient {
 	opts := Options{
 		ClientID:               ZeaburOAuthCLIClientID,
@@ -53,6 +56,7 @@ func NewZeaburWebAppOAuthClient() *WebAppClient {
 	return NewWebAppClient(opts)
 }
 
+// NewWebAppClient creates a new WebAppClient.
 func NewWebAppClient(opts Options) *WebAppClient {
 	c := &WebAppClient{
 		ClientID:               opts.ClientID,
@@ -64,8 +68,8 @@ func NewWebAppClient(opts Options) *WebAppClient {
 		TokenURL:     opts.TokenURL,
 	}
 
-	if opts.HttpClient != nil {
-		c.httpClient = opts.HttpClient
+	if opts.HTTPClient != nil {
+		c.httpClient = opts.HTTPClient
 	} else {
 		c.httpClient = http.DefaultClient
 	}
@@ -84,6 +88,7 @@ func NewWebAppClient(opts Options) *WebAppClient {
 	return c
 }
 
+// Login helps the user to login to the OAuth server with a web browser.
 func (c *WebAppClient) Login() (token *oauth2.Token, err error) {
 	flow, err := webapp.InitFlow()
 	if err != nil {
@@ -121,13 +126,14 @@ func (c *WebAppClient) Login() (token *oauth2.Token, err error) {
 	return accessToken, nil
 }
 
-func (c *WebAppClient) RefreshToken(old *oauth2.Token) (new *oauth2.Token, err error) {
-	new, err = c.config.TokenSource(context.Background(), old).Token()
+// RefreshToken refreshes the token.
+func (c *WebAppClient) RefreshToken(old *oauth2.Token) (newToken *oauth2.Token, err error) {
+	newToken, err = c.config.TokenSource(context.Background(), old).Token()
 	if err != nil {
 		return nil, fmt.Errorf("failed to refresh token: %w", err)
 	}
 
-	return new, nil
+	return newToken, nil
 }
 
 var _ Client = (*WebAppClient)(nil)

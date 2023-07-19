@@ -1,3 +1,4 @@
+// Package project contains the cmd for managing projects
 package project
 
 import (
@@ -9,6 +10,7 @@ import (
 	projectListCmd "github.com/zeabur/cli/internal/cmd/project/list"
 )
 
+// NewCmdProject creates the project command
 func NewCmdProject(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "project <command>",

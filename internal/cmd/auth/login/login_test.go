@@ -1,4 +1,5 @@
-package login
+// Package login_test provides the tests for the login command
+package login_test
 
 import (
 	"time"
@@ -10,6 +11,7 @@ import (
 	"go.uber.org/zap/zaptest"
 	"golang.org/x/oauth2"
 
+	"github.com/zeabur/cli/internal/cmd/auth/login"
 	"github.com/zeabur/cli/internal/cmdutil"
 	mockapiclient "github.com/zeabur/cli/mocks/pkg/api"
 	mockauthclient "github.com/zeabur/cli/mocks/pkg/auth"
@@ -47,7 +49,7 @@ var _ = Describe("LoggedIn", func() {
 
 	var (
 		f      *cmdutil.Factory
-		opts   *LoginOptions
+		opts   *login.Options
 		buffer *zaptest.Buffer
 
 		expectedLogs []string
@@ -86,8 +88,8 @@ var _ = Describe("LoggedIn", func() {
 			newClientFunc := func(string) apiClient.Client {
 				return client
 			}
-			opts = &LoginOptions{
-				newClient: newClientFunc,
+			opts = &login.Options{
+				NewClient: newClientFunc,
 			}
 
 			// reset the buffer
@@ -95,7 +97,7 @@ var _ = Describe("LoggedIn", func() {
 		})
 
 		JustBeforeEach(func() {
-			err := runLogin(f, opts)
+			err := login.RunLogin(f, opts)
 			Expect(err).ToNot(HaveOccurred())
 			gottenLogs = buffer.Lines()
 		})
@@ -159,11 +161,11 @@ var _ = Describe("LoggedIn", func() {
 			newClientFunc := func(string) apiClient.Client {
 				return client
 			}
-			opts = &LoginOptions{
-				newClient: newClientFunc,
+			opts = &login.Options{
+				NewClient: newClientFunc,
 			}
 
-			err := runLogin(f, opts)
+			err := login.RunLogin(f, opts)
 			Expect(err).ToNot(HaveOccurred())
 			gottenLogs = buffer.Lines()
 		})

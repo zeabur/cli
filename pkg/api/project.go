@@ -26,6 +26,7 @@ func (c *client) ListProjects(ctx context.Context, skip, limit int) (*model.Proj
 	return &query.Projects, nil
 }
 
+// ListAllProjects returns all projects owned by the current user.
 func (c *client) ListAllProjects(ctx context.Context) ([]*model.Project, error) {
 	skip := 0
 	next := true

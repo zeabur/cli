@@ -1,3 +1,4 @@
+// Package service provides the entry point of the service command
 package service
 
 import (
@@ -7,6 +8,7 @@ import (
 	"github.com/zeabur/cli/internal/cmdutil"
 )
 
+// NewCmdService creates the service command
 func NewCmdService(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "service <command>",

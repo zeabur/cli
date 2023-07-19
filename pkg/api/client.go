@@ -1,3 +1,4 @@
+// Package api provides a client for the Zeabur API.
 package api
 
 import (
@@ -7,6 +8,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// ZeaburGraphQLAPIEndpoint is the endpoint for the Zeabur GraphQL API.
 const ZeaburGraphQLAPIEndpoint = "https://gateway.zeabur.dev/graphql"
 
 type client struct {
