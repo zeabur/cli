@@ -1,4 +1,4 @@
-build: mock
+build:
 	go build -o zeabur ./cmd/main.go
 
 test:

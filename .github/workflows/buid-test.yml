@@ -1,0 +1,24 @@
+name: build-test
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+          cache: false
+      - name: install mockery
+        run: go install github.com/vektra/mockery/v2@v2.32.0
+      - name: generate mocks
+        run: make mock
+      - name: test
+        run: make test
+      - name: build
+        run: make build
