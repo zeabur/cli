@@ -6,6 +6,8 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"sync"
+	"time"
 )
 
 // CodeResponse represents the code received by the local server's callback handler.
@@ -35,6 +37,8 @@ type localServer struct {
 
 	CallbackPath string
 	SuccessPath  string
+
+	once sync.Once
 }
 
 func (s *localServer) Port() int {
@@ -97,15 +101,19 @@ func (s *localServer) ServeSuccess(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
-	//fmt.Printf("method: %s, url: %s\n", r.Method, r.URL.String())
 
 	defer func() {
 		// if method is GET, close (to ignore Options)
 		if r.Method == http.MethodGet {
-			err := s.Close()
-			if err != nil {
-				fmt.Println(err)
+			closeServer := func() {
+				err := s.Close()
+				if err != nil {
+					fmt.Println(err)
+				}
 			}
+			s.once.Do(func() {
+				time.AfterFunc(1*time.Second, closeServer)
+			})
 		}
 	}()
 
@@ -124,6 +132,6 @@ func (s *localServer) ServeSuccess(w http.ResponseWriter, r *http.Request) {
 }
 
 func defaultSuccessHTML(w io.Writer) error {
-	_, err := fmt.Fprintf(w, "<p>You may now close this page and return to the client app.</p>")
+	_, err := fmt.Fprintf(w, "<p>You may now close this page and return to the Zeabur CLI.</p>")
 	return err
 }
