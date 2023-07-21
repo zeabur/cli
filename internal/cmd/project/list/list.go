@@ -3,6 +3,7 @@ package list
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -60,7 +61,6 @@ func runList(f *cmdutil.Factory, opts Options) error {
 
 		if f.Interactive {
 			if firstPage {
-				f.Log.Infof("Total %d project(s)", projectCon.PageInfo.TotalCount)
 				firstPage = false
 			}
 			logProjects(f, projects)
@@ -76,16 +76,25 @@ func runList(f *cmdutil.Factory, opts Options) error {
 	}
 
 	if !f.Interactive {
-		f.Log.Infof("Total %d projects", len(projects))
+		logProjects(f, projects)
 	}
-	logProjects(f, projects)
 
 	return nil
 }
 
+type Project struct {
+	ID          string
+	Name        string
+	Description string
+	CreatedAt   string
+}
+
 func logProjects(f *cmdutil.Factory, projects []*model.Project) {
-	for _, project := range projects {
-		// todo: pretty print
-		f.Log.Info(project)
+	header := []string{"ID", "Name", "Description", "Created At"}
+	rows := make([][]string, len(projects))
+	for i, project := range projects {
+		rows[i] = []string{project.ID, project.Name, project.Description, project.CreatedAt.Format(time.DateTime)}
 	}
+
+	cmdutil.PrintTable(header, rows)
 }
