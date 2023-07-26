@@ -6,6 +6,7 @@ import (
 
 	"github.com/zeabur/cli/internal/cmdutil"
 
+	contextClearCmd "github.com/zeabur/cli/internal/cmd/context/clear"
 	contextGetCmd "github.com/zeabur/cli/internal/cmd/context/get"
 	contextSetCmd "github.com/zeabur/cli/internal/cmd/context/set"
 )
@@ -20,7 +21,7 @@ func NewCmdContext(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.AddCommand(contextGetCmd.NewCmdGet(f))
 	cmd.AddCommand(contextSetCmd.NewCmdSet(f))
-	cmd.AddCommand(contextGetCmd.NewCmdGet(f))
+	cmd.AddCommand(contextClearCmd.NewCmdClear(f))
 
 	return cmd
 }
