@@ -2,6 +2,7 @@ package webapp
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"io"
 	"net"
@@ -9,6 +10,9 @@ import (
 	"sync"
 	"time"
 )
+
+//go:embed login_success_page.html
+var loginSuccessHTML []byte
 
 // CodeResponse represents the code received by the local server's callback handler.
 type CodeResponse struct {
@@ -132,6 +136,6 @@ func (s *localServer) ServeSuccess(w http.ResponseWriter, r *http.Request) {
 }
 
 func defaultSuccessHTML(w io.Writer) error {
-	_, err := fmt.Fprintf(w, "<p>You may now close this page and return to the Zeabur CLI.</p>")
+	_, err := w.Write(loginSuccessHTML)
 	return err
 }
