@@ -46,3 +46,11 @@ type ServiceEdge struct {
 	Node   *Service `json:"node" graphql:"node"`
 	Cursor string   `json:"cursor" graphql:"cursor"`
 }
+
+type TempTCPPort struct {
+	ServiceID     string `json:"serviceID" graphql:"serviceID"`
+	EnvironmentID string `json:"environmentID" graphql:"environmentID"`
+	TargetPort    int    `json:"targetPort" graphql:"targetPort"`
+	NodePort      int    `json:"nodePort" graphql:"nodePort"`
+	RemainSeconds int    `json:"remainSeconds" graphql:"remainSeconds"`
+}

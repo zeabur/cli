@@ -3,13 +3,14 @@ package api
 
 import (
 	"context"
+	"github.com/zeabur/cli/pkg/constant"
 
 	"github.com/hasura/go-graphql-client"
 	"golang.org/x/oauth2"
 )
 
 // ZeaburGraphQLAPIEndpoint is the endpoint for the Zeabur GraphQL API.
-const ZeaburGraphQLAPIEndpoint = "https://gateway.zeabur.dev/graphql"
+const ZeaburGraphQLAPIEndpoint = constant.ZeaburServerURL + "/graphql"
 
 type client struct {
 	*graphql.Client
