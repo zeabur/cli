@@ -33,6 +33,8 @@ type (
 	ServiceAPI interface {
 		ListServices(ctx context.Context, projectID string, skip, limit int) (*model.ServiceConnection, error)
 		ListAllServices(ctx context.Context, projectID string) ([]*model.Service, error)
+		ListServicesDetailByEnvironment(ctx context.Context, projectID, environmentID string, skip, limit int) (*model.ServiceDetailConnection, error)
+		ListAllServicesDetailByEnvironment(ctx context.Context, projectID, environmentID string) ([]*model.ServiceDetail, error)
 		GetService(ctx context.Context, id string, ownerName string, projectName string, name string) (*model.Service, error)
 		ExposeService(ctx context.Context, id string, environmentID string, projectID string, name string) (*model.TempTCPPort, error)
 	}

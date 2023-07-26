@@ -21,18 +21,16 @@ type Service struct {
 	OutputDir          *string  `bson:"outputDir" json:"outputDir" graphql:"outputDir"`
 	RootDirectory      string   `bson:"rootDirectory" json:"rootDirectory" graphql:"rootDirectory"`
 	WatchPaths         []string `bson:"watchPaths" json:"watchPaths" graphql:"watchPaths"`
+	Template           string   `bson:"template" json:"template" graphql:"template"`
+}
 
-	// PrePrompt is a prompt appended to the beginning of each session between the user and the agent.
-	// only used if Template is ServiceTemplateAgent.
-	//PrePrompt *string `bson:"prePrompt" json:"prePrompt" graphql:"prePrompt"`
-
-	// Plugins is a list of plugins that are installed in the service.
-	// only used if Template is ServiceTemplateAgent.
-	//Plugins []AgentPluginInstallation `bson:"plugins" json:"plugins" graphql:"plugins"`
-
-	// Contexts is a list of contexts that are installed in the service.
-	// only used if Template is ServiceTemplateAgent.
-	//Contexts []AgentContextInstallation `bson:"contexts" json:"contexts" graphql:"contexts"`
+// ServiceDetail has more information related to specific environment.
+type ServiceDetail struct {
+	Service    `bson:",inline" graphql:"... on Service"`
+	ConsoleURL string      `bson:"consoleURL" json:"consoleURL" graphql:"consoleURL(environmentID: $environmentID)"`
+	Domains    []Domain    `bson:"domains" json:"domains" graphql:"domains(environmentID: $environmentID)"`
+	GitTrigger *GitTrigger `bson:"gitTrigger" json:"gitTrigger" graphql:"gitTrigger(environmentID: $environmentID)"`
+	Status     string      `bson:"status" json:"status" graphql:"status(environmentID: $environmentID)"`
 }
 
 // ServiceConnection is a connection to a list of items.
@@ -47,10 +45,26 @@ type ServiceEdge struct {
 	Cursor string   `json:"cursor" graphql:"cursor"`
 }
 
+type ServiceDetailConnection struct {
+	PageInfo *PageInfo            `json:"pageInfo" graphql:"pageInfo"`
+	Edges    []*ServiceDetailEdge `json:"edges" graphql:"edges"`
+}
+
+type ServiceDetailEdge struct {
+	Node   *ServiceDetail `json:"node" graphql:"node"`
+	Cursor string         `json:"cursor" graphql:"cursor"`
+}
+
 type TempTCPPort struct {
 	ServiceID     string `json:"serviceID" graphql:"serviceID"`
 	EnvironmentID string `json:"environmentID" graphql:"environmentID"`
 	TargetPort    int    `json:"targetPort" graphql:"targetPort"`
 	NodePort      int    `json:"nodePort" graphql:"nodePort"`
 	RemainSeconds int    `json:"remainSeconds" graphql:"remainSeconds"`
+}
+
+type GitTrigger struct {
+	BranchName string `json:"branchName" graphql:"branchName"`
+	Provider   string `json:"provider" graphql:"provider"`
+	RepoID     int    `json:"repoID" graphql:"repoID"`
 }

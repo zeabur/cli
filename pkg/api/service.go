@@ -50,6 +50,50 @@ func (c *client) ListAllServices(ctx context.Context, projectID string) ([]*mode
 	return services, nil
 }
 
+func (c *client) ListServicesDetailByEnvironment(ctx context.Context, projectID, environmentID string,
+	skip, limit int) (*model.ServiceDetailConnection, error) {
+	skip, limit = normalizePagination(skip, limit)
+
+	var query struct {
+		Services model.ServiceDetailConnection `graphql:"services(projectID: $projectID, skip: $skip, limit: $limit)"`
+	}
+
+	err := c.Query(ctx, &query, V{
+		"projectID":     ObjectID(projectID),
+		"environmentID": ObjectID(environmentID),
+		"skip":          skip,
+		"limit":         limit,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &query.Services, nil
+}
+
+func (c *client) ListAllServicesDetailByEnvironment(ctx context.Context, projectID, environmentID string) ([]*model.ServiceDetail, error) {
+	skip := 0
+	next := true
+
+	var services []*model.ServiceDetail
+
+	for next {
+		serviceCon, err := c.ListServicesDetailByEnvironment(ctx, projectID, environmentID, skip, 100)
+		if err != nil {
+			return nil, err
+		}
+		for _, service := range serviceCon.Edges {
+			services = append(services, service.Node)
+		}
+
+		skip += 5
+		next = serviceCon.PageInfo.HasNextPage
+	}
+
+	return services, nil
+}
+
 func (c *client) GetService(ctx context.Context, id string, ownerName string, projectName string, name string) (*model.Service, error) {
 	if id != "" {
 		return c.getServiceByID(ctx, id)
