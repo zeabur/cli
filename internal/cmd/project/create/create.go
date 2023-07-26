@@ -47,7 +47,10 @@ func runCreateInteractive(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
-	createProject(f, projectName)
+	if err := createProject(f, projectName); err != nil {
+		f.Log.Error(err)
+		return err
+	}
 
 	return nil
 }
@@ -73,7 +76,7 @@ func createProject(f *cmdutil.Factory, projectName string) error {
 		return err
 	}
 
-	f.Log.Info(fmt.Sprintf("Project %s created", project.Name))
+	f.Log.Infof("Project %s created", project.Name)
 
 	return nil
 }
