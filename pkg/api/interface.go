@@ -13,6 +13,7 @@ type Client interface {
 	ListProjects(ctx context.Context, skip, limit int) (*model.ProjectConnection, error)
 	ListAllProjects(ctx context.Context) ([]*model.Project, error)
 	GetProject(ctx context.Context, id string, ownerName string, name string) (*model.Project, error)
+	CreateProject(ctx context.Context, name string) (*model.Project, error)
 
 	ListEnvironments(ctx context.Context, projectID string) ([]*model.Environment, error)
 	GetEnvironment(ctx context.Context, id string) (*model.Environment, error)

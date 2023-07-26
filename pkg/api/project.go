@@ -91,3 +91,20 @@ func (c *client) getProjectByOwnerUsernameAndProject(ctx context.Context,
 
 	return &query.Project, nil
 }
+
+// Create a project with the given name.
+func (c *client) CreateProject(ctx context.Context, name string) (*model.Project, error) {
+	var mutation struct {
+		CreateProject model.Project `graphql:"createProject(name: $name)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{
+		"name": name,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &mutation.CreateProject, nil
+}
