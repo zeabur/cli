@@ -106,7 +106,7 @@ func listServicesBrief(f *cmdutil.Factory, projectID string) error {
 		rows = append(rows, row)
 	}
 
-	cmdutil.PrintTable(header, rows)
+	f.Printer.Table(header, rows)
 
 	return nil
 }
@@ -147,7 +147,7 @@ func listServicesDetailByEnvironment(f *cmdutil.Factory, projectID, environmentI
 		rows = append(rows, row)
 	}
 
-	cmdutil.PrintTable(header, rows)
+	f.Printer.Table(header, rows)
 
 	return nil
 }

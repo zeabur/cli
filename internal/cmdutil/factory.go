@@ -1,6 +1,7 @@
 package cmdutil
 
 import (
+	"github.com/zeabur/cli/pkg/printer"
 	"go.uber.org/zap"
 
 	"github.com/zeabur/cli/pkg/api"
@@ -15,6 +16,7 @@ type (
 	// It is kind of like a "context" for commands.
 	Factory struct {
 		Log        *zap.SugaredLogger // logger
+		Printer    printer.Printer    // printer
 		Config     config.Config      // config(flag, env, file)
 		ApiClient  api.Client         // query api
 		AuthClient auth.Client        // login, refresh token

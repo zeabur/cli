@@ -1,6 +1,7 @@
 package model
 
 import (
+	"strconv"
 	"time"
 )
 
@@ -45,16 +46,19 @@ type ServiceEdge struct {
 	Cursor string   `json:"cursor" graphql:"cursor"`
 }
 
+// ServiceDetailConnection is a connection to a list of items.
 type ServiceDetailConnection struct {
 	PageInfo *PageInfo            `json:"pageInfo" graphql:"pageInfo"`
 	Edges    []*ServiceDetailEdge `json:"edges" graphql:"edges"`
 }
 
+// ServiceDetailEdge is an edge in a connection.
 type ServiceDetailEdge struct {
 	Node   *ServiceDetail `json:"node" graphql:"node"`
 	Cursor string         `json:"cursor" graphql:"cursor"`
 }
 
+// TempTCPPort is a temporary TCP port.
 type TempTCPPort struct {
 	ServiceID     string `json:"serviceID" graphql:"serviceID"`
 	EnvironmentID string `json:"environmentID" graphql:"environmentID"`
@@ -63,8 +67,51 @@ type TempTCPPort struct {
 	RemainSeconds int    `json:"remainSeconds" graphql:"remainSeconds"`
 }
 
+// GitTrigger represents a git trigger.
 type GitTrigger struct {
 	BranchName string `json:"branchName" graphql:"branchName"`
 	Provider   string `json:"provider" graphql:"provider"`
 	RepoID     int    `json:"repoID" graphql:"repoID"`
+}
+
+// ServiceMetric is a metric of a service.
+type ServiceMetric struct {
+	Metrics []struct {
+		Value     float64   `json:"value" graphql:"value"`
+		Timestamp time.Time `json:"timestamp" graphql:"timestamp"`
+	} `json:"metrics" graphql:"metrics(environmentID: $environmentID, metricType: $metricType, startTime: $startTime, endTime: $endTime)"`
+}
+
+// MetricType is the type of metric.
+type MetricType string
+
+// valid metric types
+const (
+	MetricTypeCPU     MetricType = "CPU"
+	MetricTypeMemory  MetricType = "MEMORY"
+	MetricTypeNetwork MetricType = "NETWORK"
+	MetricTypeDisk    MetricType = "DISK"
+)
+
+func (m MetricType) GetGraphQLType() string {
+	return "MetricType"
+}
+
+func (m MetricType) WithMeasureUnit(v float64) string {
+	switch m {
+	case MetricTypeCPU:
+		return formatFloat64(v*100) + "%"
+	case MetricTypeMemory:
+		return formatFloat64(v) + "MB"
+		//case MetricTypeNetwork:
+		//	return formatFloat64(v) + "MB"
+		//case MetricTypeDisk:
+		//	return formatFloat64(v) + "MB"
+	default:
+		return formatFloat64(v)
+	}
+}
+
+func formatFloat64(v float64) string {
+	return strconv.FormatFloat(v, 'f', 6, 64)
 }

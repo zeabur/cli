@@ -1,12 +1,18 @@
-package cmdutil
+package printer
 
 import (
-	"os"
-
 	"github.com/olekukonko/tablewriter"
+	"os"
 )
 
-func PrintTable(header []string, rows [][]string) {
+type defaultPrinter struct {
+}
+
+func New() Printer {
+	return &defaultPrinter{}
+}
+
+func (p *defaultPrinter) Table(header []string, rows [][]string) {
 	columnsCount := len(header)
 
 	colors := []tablewriter.Colors{
@@ -40,3 +46,5 @@ func PrintTable(header []string, rows [][]string) {
 
 	table.Render()
 }
+
+var _ Printer = &defaultPrinter{}

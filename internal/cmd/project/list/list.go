@@ -96,5 +96,5 @@ func logProjects(f *cmdutil.Factory, projects []*model.Project) {
 		rows[i] = []string{project.ID, project.Name, project.Description, project.CreatedAt.Format(time.DateTime)}
 	}
 
-	cmdutil.PrintTable(header, rows)
+	f.Printer.Table(header, rows)
 }
