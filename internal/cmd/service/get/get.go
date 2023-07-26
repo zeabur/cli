@@ -3,11 +3,11 @@ package get
 import (
 	"context"
 	"fmt"
+	"github.com/zeabur/cli/pkg/model"
 
 	"github.com/spf13/cobra"
 
 	"github.com/zeabur/cli/internal/cmdutil"
-	"github.com/zeabur/cli/pkg/model"
 )
 
 type Options struct {
@@ -64,7 +64,7 @@ func runGetNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return fmt.Errorf("get service failed: %w", err)
 	}
 
-	logService(f, service)
+	f.Log.Infof("Selected service: %s(%s)", service.Name, service.ID)
 
 	return nil
 }
@@ -75,38 +75,15 @@ func runGetInteractive(f *cmdutil.Factory, opts *Options) error {
 		return fmt.Errorf("please use `zc project set` to set the project context first")
 	}
 
-	projectID, projectName := projectCtx.GetID(), projectCtx.GetName()
-
 	// if id or (projectName and name) is specified, we have used non-interactive mode
 	// therefore, now the id and name must be empty
 
-	services, err := f.ApiClient.ListAllServices(context.Background(), projectID)
+	_, service, err := f.Selector.SelectService(projectCtx.GetID())
 	if err != nil {
-		return fmt.Errorf("list services failed: %w", err)
+		return fmt.Errorf("failed to select service: %w", err)
 	}
 
-	if len(services) == 0 {
-		return fmt.Errorf("no service found in project %s", projectName)
-	}
-
-	var index int
-
-	if len(services) == 1 {
-		index = 0
-		f.Log.Info("Only one service found, select it by default")
-	} else {
-		serviceNames := make([]string, 0, len(services))
-		for _, service := range services {
-			serviceNames = append(serviceNames, service.Name)
-		}
-
-		index, err = f.Prompter.Select("Select a service", serviceNames[0], serviceNames)
-		if err != nil {
-			return fmt.Errorf("select service failed: %w", err)
-		}
-	}
-
-	logService(f, services[index])
+	logService(f, service)
 
 	return nil
 }
@@ -119,7 +96,7 @@ func paramCheck(opts *Options) error {
 	return fmt.Errorf("please specify --id or (--project-name and --name)")
 }
 
-// todo: pretty print service
 func logService(f *cmdutil.Factory, service *model.Service) {
-	f.Log.Info(service)
+	services := model.Services{service}
+	f.Printer.Table(services.Header(), services.Rows())
 }

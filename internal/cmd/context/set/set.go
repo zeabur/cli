@@ -9,7 +9,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zeabur/cli/internal/cmdutil"
-	"github.com/zeabur/cli/pkg/model"
 	"github.com/zeabur/cli/pkg/zcontext"
 )
 
@@ -127,6 +126,8 @@ func setProject(f *cmdutil.Factory, id, name string, shouldCheck bool) error {
 	f.Config.GetContext().ClearService()
 	f.Config.GetContext().ClearEnvironment()
 
+	f.Log.Infof("Project context is set to <%s>", name)
+
 	return nil
 }
 
@@ -167,6 +168,8 @@ func setEnvironment(f *cmdutil.Factory, id, name string, shouldCheck bool) error
 		f.Config.GetContext().SetEnvironment(zcontext.NewBasicInfo(id, name))
 	}
 
+	f.Log.Infof("Environment context is set to <%s>", name)
+
 	return nil
 }
 
@@ -201,6 +204,8 @@ func setService(f *cmdutil.Factory, id, name string, shouldCheck bool) error {
 		f.Config.GetContext().SetService(zcontext.NewBasicInfo(id, name))
 	}
 
+	f.Log.Infof("Service context is set to <%s>", name)
+
 	return nil
 }
 
@@ -211,36 +216,10 @@ func selectProject(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	// else, show a list of projects to select
-	projects, err := f.ApiClient.ListAllProjects(context.Background())
+	projectInfo, _, err := f.Selector.SelectProject()
 	if err != nil {
-		return fmt.Errorf("failed to get projects: %w", err)
+		return err
 	}
-
-	if len(projects) == 0 {
-		return fmt.Errorf("no project found in your account")
-	}
-
-	var index int
-
-	// if there is only one project, no need to ask
-	if len(projects) == 1 {
-		f.Log.Info("There is only one project in your account, select it automatically")
-		index = 0
-	} else {
-		projectNames := make([]string, len(projects))
-		for i, project := range projects {
-			projectNames[i] = project.Name
-		}
-
-		index, err = f.Prompter.Select("Select a project", projects[0].Name, projectNames)
-		if err != nil {
-			return err
-		}
-
-		f.Log.Info("Project selected: ")
-	}
-
-	logProject(f, projects[index])
 
 	confirm := true
 
@@ -257,10 +236,11 @@ func selectProject(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	if confirm {
-		err = setProject(f, projects[index].ID, projects[index].Name, false)
+		err = setProject(f, projectInfo.GetID(), projectInfo.GetName(), false)
 		if err != nil {
 			return err
 		}
+		f.Log.Infof("Project %s is set, id: %s", projectInfo.GetName(), projectInfo.GetID())
 	}
 
 	return nil
@@ -276,40 +256,14 @@ func selectEnvironment(f *cmdutil.Factory, opts *Options) error {
 		return setEnvironment(f, opts.id, opts.name, true)
 	}
 
-	var (
-		ctx       = context.Background()
-		projectID = f.Config.GetContext().GetProject().GetID()
-	)
+	projectID := f.Config.GetContext().GetProject().GetID()
 
-	environments, err := f.ApiClient.ListEnvironments(ctx, projectID)
+	environmentInfo, _, err := f.Selector.SelectEnvironment(projectID)
 	if err != nil {
-		return fmt.Errorf("failed to get environments of project %s: %w", projectID, err)
+		return err
 	}
 
-	if len(environments) == 0 {
-		return fmt.Errorf("there are no environments in project %s", projectID)
-	}
-
-	var index int
-
-	if len(environments) == 1 {
-		f.Log.Info("There is only one environment in your project, select it automatically")
-		index = 0
-	} else {
-		environmentNames := make([]string, len(environments))
-		for i, environment := range environments {
-			environmentNames[i] = environment.Name
-		}
-
-		index, err = f.Prompter.Select("Select an environment", environments[0].Name, environmentNames)
-		if err != nil {
-			return err
-		}
-	}
-
-	logEnvironment(f, environments[index])
-
-	err = setEnvironment(f, environments[index].ID, environments[index].Name, false)
+	err = setEnvironment(f, environmentInfo.GetID(), environmentInfo.GetName(), false)
 	if err != nil {
 		return err
 	}
@@ -329,35 +283,12 @@ func selectService(f *cmdutil.Factory, opts *Options) error {
 
 	projectID := f.Config.GetContext().GetProject().GetID()
 
-	services, err := f.ApiClient.ListAllServices(context.Background(), projectID)
+	serviceInfo, _, err := f.Selector.SelectService(projectID)
 	if err != nil {
-		return fmt.Errorf("failed to get services of project %s, %w", projectID, err)
+		return err
 	}
 
-	if len(services) == 0 {
-		return fmt.Errorf("there are no services in project %s", projectID)
-	}
-
-	var index int
-
-	if len(services) == 1 {
-		f.Log.Info("There is only one service in your project, select it automatically")
-		index = 0
-	} else {
-		serviceNames := make([]string, len(services))
-		for i, service := range services {
-			serviceNames[i] = service.Name
-		}
-
-		index, err = f.Prompter.Select("Select a service", services[0].Name, serviceNames)
-		if err != nil {
-			return err
-		}
-	}
-
-	logService(f, services[index])
-
-	err = setService(f, services[index].ID, services[index].Name, false)
+	err = setService(f, serviceInfo.GetID(), serviceInfo.GetName(), false)
 	if err != nil {
 		return err
 	}
@@ -370,18 +301,4 @@ func checkProjectHasBeenSet(f *cmdutil.Factory) error {
 		return fmt.Errorf("you must set project context first")
 	}
 	return nil
-}
-
-// todo: pretty print
-func logProject(f *cmdutil.Factory, project *model.Project) {
-	f.Log.Info(project)
-}
-
-// todo: pretty print
-func logEnvironment(f *cmdutil.Factory, environment *model.Environment) {
-	f.Log.Info(environment)
-}
-
-func logService(f *cmdutil.Factory, service *model.Service) {
-	f.Log.Info(service)
 }

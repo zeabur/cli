@@ -3,8 +3,6 @@ package list
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"github.com/spf13/cobra"
 
 	"github.com/zeabur/cli/internal/cmdutil"
@@ -43,7 +41,7 @@ func runList(f *cmdutil.Factory, opts Options) error {
 	skip := 0
 	next := true
 
-	var projects []*model.Project
+	var projects model.Projects
 
 	firstPage := true
 
@@ -63,7 +61,7 @@ func runList(f *cmdutil.Factory, opts Options) error {
 			if firstPage {
 				firstPage = false
 			}
-			logProjects(f, projects)
+			f.Printer.Table(projects.Header(), projects.Rows())
 			projects = nil // reset projects
 			if next {
 				var err error
@@ -76,25 +74,8 @@ func runList(f *cmdutil.Factory, opts Options) error {
 	}
 
 	if !f.Interactive {
-		logProjects(f, projects)
+		f.Printer.Table(projects.Header(), projects.Rows())
 	}
 
 	return nil
-}
-
-type Project struct {
-	ID          string
-	Name        string
-	Description string
-	CreatedAt   string
-}
-
-func logProjects(f *cmdutil.Factory, projects []*model.Project) {
-	header := []string{"ID", "Name", "Description", "Created At"}
-	rows := make([][]string, len(projects))
-	for i, project := range projects {
-		rows[i] = []string{project.ID, project.Name, project.Description, project.CreatedAt.Format(time.DateTime)}
-	}
-
-	f.Printer.Table(header, rows)
 }

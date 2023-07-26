@@ -29,7 +29,7 @@ func (c *client) ListServices(ctx context.Context, projectID string, skip, limit
 }
 
 // ListAllServices returns all services owned by the current user.
-func (c *client) ListAllServices(ctx context.Context, projectID string) ([]*model.Service, error) {
+func (c *client) ListAllServices(ctx context.Context, projectID string) (model.Services, error) {
 	skip := 0
 	next := true
 
@@ -73,7 +73,7 @@ func (c *client) ListServicesDetailByEnvironment(ctx context.Context, projectID,
 	return &query.Services, nil
 }
 
-func (c *client) ListAllServicesDetailByEnvironment(ctx context.Context, projectID, environmentID string) ([]*model.ServiceDetail, error) {
+func (c *client) ListAllServicesDetailByEnvironment(ctx context.Context, projectID, environmentID string) (model.ServiceDetails, error) {
 	skip := 0
 	next := true
 

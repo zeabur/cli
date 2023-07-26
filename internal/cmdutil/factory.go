@@ -2,6 +2,7 @@ package cmdutil
 
 import (
 	"github.com/zeabur/cli/pkg/printer"
+	"github.com/zeabur/cli/pkg/selector"
 	"go.uber.org/zap"
 
 	"github.com/zeabur/cli/pkg/api"
@@ -21,6 +22,7 @@ type (
 		ApiClient  api.Client         // query api
 		AuthClient auth.Client        // login, refresh token
 		Prompter   prompt.Prompter    // interactive prompter
+		Selector   selector.Selector  // interactive selector
 		PersistentFlags
 	}
 	// PersistentFlags are flags that are common to all commands

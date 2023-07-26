@@ -3,7 +3,6 @@ package get
 import (
 	"context"
 	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/zeabur/cli/internal/cmdutil"
@@ -43,17 +42,6 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 // If you want to add new dependencies, please add them in the Options struct
 
 func runGet(f *cmdutil.Factory, opts *Options) error {
-	// set project name and id from context if not specified in flags
-	project := f.Config.GetContext().GetProject()
-	if !project.Empty() {
-		if opts.ID == "" && project.GetID() != "" {
-			opts.ID = project.GetID()
-		}
-		if opts.ProjectName == "" && project.GetName() != "" {
-			opts.ProjectName = project.GetName()
-		}
-	}
-
 	// if param check passed, run non-interactive mode first
 	if err := paramCheck(opts); err == nil {
 		return runGetNonInteractive(f, opts)
@@ -67,33 +55,12 @@ func runGet(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runGetInteractive(f *cmdutil.Factory, opts *Options) error {
-	projects, err := getAllProjects(f)
+	_, project, err := f.Selector.SelectProject()
 	if err != nil {
 		return err
 	}
 
-	if len(projects) == 0 {
-		f.Log.Info("There are no projects in your account")
-		return nil
-	}
-
-	// if there is only one project, no need to ask
-	if len(projects) == 1 {
-		logProject(f, projects[0])
-		return nil
-	}
-
-	projectNames := make([]string, len(projects))
-	for i, project := range projects {
-		projectNames[i] = project.Name
-	}
-
-	index, err := f.Prompter.Select("Select a project", projects[0].Name, projectNames)
-	if err != nil {
-		return err
-	}
-
-	logProject(f, projects[index])
+	logProject(f, project)
 
 	return nil
 }
@@ -121,30 +88,8 @@ func paramCheck(opts *Options) error {
 	return nil
 }
 
-// todo: move to to a "common" package
-func getAllProjects(f *cmdutil.Factory) ([]*model.Project, error) {
-	skip := 0
-	next := true
+func logProject(f *cmdutil.Factory, p *model.Project) {
+	projects := model.Projects{p}
 
-	var projects []*model.Project
-
-	for next {
-		projectCon, err := f.ApiClient.ListProjects(context.Background(), skip, 5)
-		if err != nil {
-			return nil, err
-		}
-		for _, project := range projectCon.Edges {
-			projects = append(projects, project.Node)
-		}
-
-		skip += 5
-		next = projectCon.PageInfo.HasNextPage
-	}
-
-	return projects, nil
-}
-
-// todo: pretty print
-func logProject(f *cmdutil.Factory, project *model.Project) {
-	f.Log.Info(project)
+	f.Printer.Table(projects.Header(), projects.Rows())
 }

@@ -4,6 +4,7 @@ package root
 import (
 	"errors"
 	"fmt"
+	"github.com/zeabur/cli/pkg/selector"
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
@@ -52,6 +53,7 @@ func NewCmdRoot(f *cmdutil.Factory, version string) (*cobra.Command, error) {
 				}
 				// set up the client
 				f.ApiClient = api.New(f.Config.GetTokenString())
+				f.Selector = selector.New(f.ApiClient, f.Log, f.Prompter)
 			}
 
 			return nil
