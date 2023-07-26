@@ -6,6 +6,7 @@ import (
 
 	serviceExposeCmd "github.com/zeabur/cli/internal/cmd/service/expose"
 	serviceGetCmd "github.com/zeabur/cli/internal/cmd/service/get"
+	serviceListCmd "github.com/zeabur/cli/internal/cmd/service/list"
 	"github.com/zeabur/cli/internal/cmdutil"
 )
 
@@ -18,6 +19,7 @@ func NewCmdService(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.AddCommand(serviceGetCmd.NewCmdGet(f))
+	cmd.AddCommand(serviceListCmd.NewCmdList(f))
 	cmd.AddCommand(serviceExposeCmd.NewCmdExpose(f))
 
 	return cmd
