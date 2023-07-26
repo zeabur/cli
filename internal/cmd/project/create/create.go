@@ -63,9 +63,13 @@ func runCreateNonInteractive(f *cmdutil.Factory, opts *Options) error {
 }
 
 func createProject(f *cmdutil.Factory, projectName string) error {
-	f.ApiClient.CreateProject(context.Background(), projectName)
+	project, err := f.ApiClient.CreateProject(context.Background(), projectName)
+	if err != nil {
+		f.Log.Error(err)
+		return err
+	}
 
-	f.Log.Info("Project created successfully")
+	f.Log.Info(fmt.Sprintf("Project %s created", project.Name))
 
 	return nil
 }
