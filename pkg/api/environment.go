@@ -6,7 +6,7 @@ import (
 	"github.com/zeabur/cli/pkg/model"
 )
 
-func (c *client) ListEnvironments(ctx context.Context, projectID string) ([]*model.Environment, error) {
+func (c *client) ListEnvironments(ctx context.Context, projectID string) (model.Environments, error) {
 	var query struct {
 		Environments []*model.Environment `graphql:"environments(projectID: $projectID)"`
 	}

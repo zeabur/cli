@@ -22,21 +22,21 @@ type (
 
 	ProjectAPI interface {
 		ListProjects(ctx context.Context, skip, limit int) (*model.ProjectConnection, error)
-		ListAllProjects(ctx context.Context) ([]*model.Project, error)
+		ListAllProjects(ctx context.Context) (model.Projects, error)
 		GetProject(ctx context.Context, id string, ownerName string, name string) (*model.Project, error)
 		CreateProject(ctx context.Context, name string) (*model.Project, error)
 	}
 
 	EnvironmentAPI interface {
-		ListEnvironments(ctx context.Context, projectID string) ([]*model.Environment, error)
+		ListEnvironments(ctx context.Context, projectID string) (model.Environments, error)
 		GetEnvironment(ctx context.Context, id string) (*model.Environment, error)
 	}
 
 	ServiceAPI interface {
 		ListServices(ctx context.Context, projectID string, skip, limit int) (*model.ServiceConnection, error)
-		ListAllServices(ctx context.Context, projectID string) ([]*model.Service, error)
+		ListAllServices(ctx context.Context, projectID string) (model.Services, error)
 		ListServicesDetailByEnvironment(ctx context.Context, projectID, environmentID string, skip, limit int) (*model.ServiceDetailConnection, error)
-		ListAllServicesDetailByEnvironment(ctx context.Context, projectID, environmentID string) ([]*model.ServiceDetail, error)
+		ListAllServicesDetailByEnvironment(ctx context.Context, projectID, environmentID string) (model.ServiceDetails, error)
 		GetService(ctx context.Context, id string, ownerName string, projectName string, name string) (*model.Service, error)
 		ServiceMetric(ctx context.Context, id, environmentID, metricType string, startTime, endTime time.Time) (*model.ServiceMetric, error)
 		ExposeService(ctx context.Context, id string, environmentID string, projectID string, name string) (*model.TempTCPPort, error)

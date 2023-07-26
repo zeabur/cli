@@ -52,3 +52,25 @@ type ProjectUsage struct {
 	// the total number of memory used (in MB-minutes)
 	Memory int `json:"memory"`
 }
+
+type Projects []*Project
+
+func (p Projects) Header() []string {
+	return []string{"ID", "Name", "Description", "Created At"}
+}
+
+func (p Projects) Rows() [][]string {
+	rows := make([][]string, len(p))
+	headerLen := len(p.Header())
+	for i, project := range p {
+		row := make([]string, headerLen)
+		row[0] = project.ID
+		row[1] = project.Name
+		row[2] = project.Description
+		row[3] = project.CreatedAt.Format(time.RFC3339)
+		rows[i] = row
+	}
+	return rows
+}
+
+var _ Tabler = (Projects)(nil)

@@ -76,78 +76,31 @@ func runExposeInteractive(f *cmdutil.Factory, opts *Options) error {
 	// if serviceID is not set, we need to find services by projectID, so projectID is required
 	if opts.id == "" {
 		if opts.projectID == "" {
-			projects, err := f.ApiClient.ListAllProjects(context.Background())
+			projectInfo, _, err := f.Selector.SelectProject()
 			if err != nil {
-				return fmt.Errorf("failed to list projects: %w", err)
+				return err
 			}
-			if len(projects) == 0 {
-				return fmt.Errorf("no project found")
-			}
-			if len(projects) == 1 {
-				opts.projectID = projects[0].ID
-				f.Log.Infof("Only one project found, select <%s> automatically\n", projects[0].Name)
-			} else {
-				projectNames := make([]string, len(projects))
-				for i, project := range projects {
-					projectNames[i] = project.Name
-				}
-				index, err := f.Prompter.Select("Select project", projects[0].Name, projectNames)
-				if err != nil {
-					return fmt.Errorf("failed to select project: %w", err)
-				}
-				opts.projectID = projects[index].ID
-			}
+			opts.projectID = projectInfo.GetID()
 		}
 	}
 	// if environmentID is not set, list environments and select one
 	if opts.environmentID == "" {
-		envs, err := f.ApiClient.ListEnvironments(context.Background(), opts.projectID)
+		environmentInfo, _, err := f.Selector.SelectEnvironment(opts.projectID)
 		if err != nil {
-			return fmt.Errorf("failed to list environments: %w", err)
+			return err
 		}
-		if len(envs) == 0 {
-			return fmt.Errorf("no environment found")
-		}
-		if len(envs) == 1 {
-			opts.environmentID = envs[0].ID
-			f.Log.Infof("Only one environment found, select <%s> automatically\n", envs[0].Name)
-		} else {
-			envNames := make([]string, len(envs))
-			for i, env := range envs {
-				envNames[i] = env.Name
-			}
-			index, err := f.Prompter.Select("Select environment", envs[0].Name, envNames)
-			if err != nil {
-				return fmt.Errorf("failed to select environment: %w", err)
-			}
-			opts.environmentID = envs[index].ID
-		}
+		opts.environmentID = environmentInfo.GetID()
 	}
 
 	// either serviceID or (projectID and serviceName) is required
 	if opts.id == "" && opts.name == "" {
-		services, err := f.ApiClient.ListAllServices(context.Background(), opts.projectID)
+		serviceInfo, _, err := f.Selector.SelectService(opts.projectID)
 		if err != nil {
-			return fmt.Errorf("failed to list services: %w", err)
+			return err
 		}
-		if len(services) == 0 {
-			return fmt.Errorf("no service found")
-		}
-		if len(services) == 1 {
-			opts.id = services[0].ID
-			f.Log.Infof("Only one service found, select <%s> automatically\n", services[0].Name)
-		} else {
-			serviceNames := make([]string, len(services))
-			for i, service := range services {
-				serviceNames[i] = service.Name
-			}
-			index, err := f.Prompter.Select("Select service", services[0].Name, serviceNames)
-			if err != nil {
-				return fmt.Errorf("failed to select service: %w", err)
-			}
-			opts.id = services[index].ID
-		}
+		opts.id = serviceInfo.GetID()
 	}
+
 	return runExposeNonInteractive(f, opts)
 }
 

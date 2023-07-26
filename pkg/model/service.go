@@ -1,7 +1,9 @@
 package model
 
 import (
+	"fmt"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -21,18 +23,33 @@ type Service struct {
 	CustomStartCommand *string  `bson:"customStartCommand" json:"customStartCommand" graphql:"customStartCommand"`
 	OutputDir          *string  `bson:"outputDir" json:"outputDir" graphql:"outputDir"`
 	RootDirectory      string   `bson:"rootDirectory" json:"rootDirectory" graphql:"rootDirectory"`
-	WatchPaths         []string `bson:"watchPaths" json:"watchPaths" graphql:"watchPaths"`
 	Template           string   `bson:"template" json:"template" graphql:"template"`
+	WatchPaths         []string `bson:"watchPaths" json:"watchPaths" graphql:"watchPaths"`
 }
 
-// ServiceDetail has more information related to specific environment.
-type ServiceDetail struct {
-	Service    `bson:",inline" graphql:"... on Service"`
-	ConsoleURL string      `bson:"consoleURL" json:"consoleURL" graphql:"consoleURL(environmentID: $environmentID)"`
-	Domains    []Domain    `bson:"domains" json:"domains" graphql:"domains(environmentID: $environmentID)"`
-	GitTrigger *GitTrigger `bson:"gitTrigger" json:"gitTrigger" graphql:"gitTrigger(environmentID: $environmentID)"`
-	Status     string      `bson:"status" json:"status" graphql:"status(environmentID: $environmentID)"`
+type Services []*Service
+
+func (s Services) Header() []string {
+	return []string{"ID", "Name", "Type", "CreatedAt"}
 }
+
+func (s Services) Rows() [][]string {
+	rows := make([][]string, 0, len(s))
+	headerLen := len(s.Header())
+
+	for _, service := range s {
+		row := make([]string, headerLen)
+		row[0] = service.ID
+		row[1] = service.Name
+		row[2] = service.Template
+		row[3] = service.CreatedAt.Format(time.RFC3339)
+		rows = append(rows, row)
+	}
+
+	return rows
+}
+
+var _ Tabler = (Services)(nil)
 
 // ServiceConnection is a connection to a list of items.
 type ServiceConnection struct {
@@ -44,6 +61,50 @@ type ServiceConnection struct {
 type ServiceEdge struct {
 	Node   *Service `json:"node" graphql:"node"`
 	Cursor string   `json:"cursor" graphql:"cursor"`
+}
+
+// ServiceDetail has more information related to specific environment.
+type ServiceDetail struct {
+	Service    `bson:",inline" graphql:"... on Service"`
+	GitTrigger *GitTrigger `bson:"gitTrigger" json:"gitTrigger" graphql:"gitTrigger(environmentID: $environmentID)"`
+	ConsoleURL string      `bson:"consoleURL" json:"consoleURL" graphql:"consoleURL(environmentID: $environmentID)"`
+	Status     string      `bson:"status" json:"status" graphql:"status(environmentID: $environmentID)"`
+	Domains    []Domain    `bson:"domains" json:"domains" graphql:"domains(environmentID: $environmentID)"`
+}
+
+type ServiceDetails []*ServiceDetail
+
+func (s ServiceDetails) Header() []string {
+	return []string{"ID", "Name", "Status", "Domains", "Type", "GitTrigger", "CreatedAt"}
+}
+
+func (s ServiceDetails) Rows() [][]string {
+	rows := make([][]string, 0, len(s))
+	headerLen := len(s.Header())
+
+	for _, service := range s {
+		row := make([]string, headerLen)
+		row[0] = service.ID
+		row[1] = service.Name
+		row[2] = service.Status
+		domains := make([]string, len(service.Domains))
+		for i, domain := range service.Domains {
+			domains[i] = domain.Domain
+		}
+		row[3] = strings.Join(domains, ",")
+		row[4] = service.Template
+		gitTrigger := ""
+		if service.GitTrigger != nil {
+			gitTrigger = fmt.Sprintf("%s(%s)", service.GitTrigger.BranchName, service.GitTrigger.Provider)
+		} else {
+			gitTrigger = "None"
+		}
+		row[5] = gitTrigger
+		row[6] = service.CreatedAt.Format(time.RFC3339)
+		rows = append(rows, row)
+	}
+
+	return rows
 }
 
 // ServiceDetailConnection is a connection to a list of items.
@@ -77,8 +138,8 @@ type GitTrigger struct {
 // ServiceMetric is a metric of a service.
 type ServiceMetric struct {
 	Metrics []struct {
-		Value     float64   `json:"value" graphql:"value"`
 		Timestamp time.Time `json:"timestamp" graphql:"timestamp"`
+		Value     float64   `json:"value" graphql:"value"`
 	} `json:"metrics" graphql:"metrics(environmentID: $environmentID, metricType: $metricType, startTime: $startTime, endTime: $endTime)"`
 }
 

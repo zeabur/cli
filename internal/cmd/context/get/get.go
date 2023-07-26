@@ -25,25 +25,26 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 
 func runGet(f *cmdutil.Factory, opts *Options) error {
 	project := f.Config.GetContext().GetProject()
-	if project.Empty() {
-		f.Log.Info("Project: None")
-	} else {
-		f.Log.Infof("Project: Name: %s, ID: %s", project.GetName(), project.GetID())
-	}
-
 	environment := f.Config.GetContext().GetEnvironment()
-	if environment.Empty() {
-		f.Log.Info("Environment: None")
-	} else {
-		f.Log.Infof("Environment: Name: %s, ID: %s", environment.GetName(), environment.GetID())
+	service := f.Config.GetContext().GetService()
+
+	header := []string{"Context", "Name", "ID"}
+	data := [][]string{
+		{"Project", project.GetName(), project.GetID()},
+		{"Environment", environment.GetName(), environment.GetID()},
+		{"Service", service.GetName(), service.GetID()},
 	}
 
-	service := f.Config.GetContext().GetService()
-	if service.Empty() {
-		f.Log.Info("Service: None")
-	} else {
-		f.Log.Infof("Service: Name: %s, ID: %s", service.GetName(), service.GetID())
+	for _, line := range data {
+		if line[1] == "" {
+			line[1] = "<not set>"
+		}
+		if line[2] == "" {
+			line[2] = "<not set>"
+		}
 	}
+
+	f.Printer.Table(header, data)
 
 	return nil
 }

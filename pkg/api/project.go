@@ -27,7 +27,7 @@ func (c *client) ListProjects(ctx context.Context, skip, limit int) (*model.Proj
 }
 
 // ListAllProjects returns all projects owned by the current user.
-func (c *client) ListAllProjects(ctx context.Context) ([]*model.Project, error) {
+func (c *client) ListAllProjects(ctx context.Context) (model.Projects, error) {
 	skip := 0
 	next := true
 
