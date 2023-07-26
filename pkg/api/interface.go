@@ -11,6 +11,7 @@ type Client interface {
 	UserAPI
 	ProjectAPI
 	ServiceAPI
+	EnvironmentAPI
 }
 
 type (
