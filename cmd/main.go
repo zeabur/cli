@@ -6,6 +6,7 @@ import (
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/pkg/auth"
 	"github.com/zeabur/cli/pkg/config"
+	"github.com/zeabur/cli/pkg/printer"
 	"github.com/zeabur/cli/pkg/prompt"
 )
 
@@ -32,6 +33,8 @@ func initFactory() *cmdutil.Factory {
 		panic(err)
 	}
 	factory.Config = config.New(configPath)
+
+	factory.Printer = printer.New()
 
 	factory.AuthClient = auth.NewZeaburWebAppOAuthClient()
 

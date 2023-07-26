@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/zeabur/cli/pkg/model"
 )
@@ -138,6 +139,26 @@ func (c *client) getServiceByOwnerAndProjectAndName(ctx context.Context, ownerNa
 	}
 
 	return &query.Service, nil
+}
+
+func (c *client) ServiceMetric(ctx context.Context, id, environmentID, metricType string, startTime, endTime time.Time) (*model.ServiceMetric, error) {
+	var query struct {
+		ServiceMetric model.ServiceMetric `graphql:"service(_id: $serviceID)"`
+	}
+
+	err := c.Query(ctx, &query, V{
+		"serviceID":     ObjectID(id),
+		"environmentID": ObjectID(environmentID),
+		"metricType":    model.MetricType(metricType),
+		"startTime":     startTime,
+		"endTime":       endTime,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &query.ServiceMetric, nil
 }
 
 func (c *client) ExposeService(ctx context.Context, id string, environmentID string, projectID string, name string) (*model.TempTCPPort, error) {
