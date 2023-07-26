@@ -20,4 +20,5 @@ type Client interface {
 	ListServices(ctx context.Context, projectID string, skip, limit int) (*model.ServiceConnection, error)
 	ListAllServices(ctx context.Context, projectID string) ([]*model.Service, error)
 	GetService(ctx context.Context, id string, ownerName string, projectName string, name string) (*model.Service, error)
+	ExposeService(ctx context.Context, id string, environmentID string, projectID string, name string) (*model.TempTCPPort, error)
 }

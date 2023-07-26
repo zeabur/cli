@@ -95,3 +95,22 @@ func (c *client) getServiceByOwnerAndProjectAndName(ctx context.Context, ownerNa
 
 	return &query.Service, nil
 }
+
+func (c *client) ExposeService(ctx context.Context, id string, environmentID string, projectID string, name string) (*model.TempTCPPort, error) {
+	var mutation struct {
+		ExposeService model.TempTCPPort `graphql:"exposeTempTcpPort(serviceID: $serviceID, environmentID: $environmentID, projectID: $projectID, serviceName: $name)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{
+		"serviceID":     ObjectID(id),
+		"environmentID": ObjectID(environmentID),
+		"projectID":     ObjectID(projectID),
+		"name":          name,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &mutation.ExposeService, nil
+}

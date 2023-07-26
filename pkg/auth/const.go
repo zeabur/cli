@@ -1,10 +1,12 @@
 package auth
 
+import "github.com/zeabur/cli/pkg/constant"
+
 // Zeabur OAuth constants
 const (
-	ZeaburOAuthServerURL    = "https://gateway.zeabur.dev"
-	ZeaburOAuthAuthorizeURL = ZeaburOAuthServerURL + "/oauth/authorize"
-	ZeaburOAuthTokenURL     = ZeaburOAuthServerURL + "/oauth/token"
+	ZeaburOAuthServerURL    = constant.ZeaburServerURL + "/oauth"
+	ZeaburOAuthAuthorizeURL = ZeaburOAuthServerURL + "/authorize"
+	ZeaburOAuthTokenURL     = ZeaburOAuthServerURL + "/token"
 
 	ZeaburOAuthCLIClientID     = "64880903673438f7c30bcc87"
 	ZeaburOAuthCLIClientSecret = "999999"
