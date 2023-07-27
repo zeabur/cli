@@ -8,6 +8,7 @@ import (
 )
 
 type Options struct {
+	//todo: support project name
 	projectID     string
 	environmentID string
 }
