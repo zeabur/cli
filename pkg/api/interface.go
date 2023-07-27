@@ -25,6 +25,7 @@ type (
 		ListAllProjects(ctx context.Context) (model.Projects, error)
 		GetProject(ctx context.Context, id string, ownerName string, name string) (*model.Project, error)
 		CreateProject(ctx context.Context, name string) (*model.Project, error)
+		DeleteProject(ctx context.Context, id string) error
 	}
 
 	EnvironmentAPI interface {
