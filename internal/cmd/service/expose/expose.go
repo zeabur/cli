@@ -18,7 +18,9 @@ type Options struct {
 }
 
 func NewCmdExpose(f *cmdutil.Factory) *cobra.Command {
-	opts := &Options{}
+	opts := &Options{
+		projectID: f.Config.GetContext().GetProject().GetID(),
+	}
 
 	cmd := &cobra.Command{
 		Use:   "expose",
@@ -27,7 +29,6 @@ func NewCmdExpose(f *cmdutil.Factory) *cobra.Command {
 example:
       zeabur service expose # cli will try to get service from context or prompt to select one
 	  zeabur service expose --id xxxxx --environment-id xxxx # use id and environment-id to expose service
-      zeabur service expose --name xxxxx --project-id xxxx --environment-id xxxx # use name, project-id and environment-id to expose service
       zeabur service expose --name xxxxx --environment-id xxxx # if project context is set, use name, environment-id to expose service
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -39,7 +40,6 @@ example:
 
 	cmd.Flags().StringVar(&opts.id, "id", ctx.GetService().GetID(), "Service ID")
 	cmd.Flags().StringVar(&opts.name, "name", ctx.GetService().GetName(), "Service name")
-	cmd.Flags().StringVar(&opts.projectID, "project-id", ctx.GetProject().GetID(), "Service project name")
 	cmd.Flags().StringVar(&opts.environmentID, "environment-id", ctx.GetEnvironment().GetID(), "Service environment ID")
 
 	return cmd
@@ -57,6 +57,14 @@ func runExposeNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	err := paramCheck(opts)
 	if err != nil {
 		return err
+	}
+
+	if opts.id == "" && opts.name != "" {
+		projectCtx := f.Config.GetContext().GetProject()
+		if projectCtx.Empty() {
+			return fmt.Errorf("since service name is specified, project context must be set")
+		}
+		opts.projectID = projectCtx.GetID()
 	}
 
 	ctx := context.Background()
@@ -83,6 +91,7 @@ func runExposeInteractive(f *cmdutil.Factory, opts *Options) error {
 			opts.projectID = projectInfo.GetID()
 		}
 	}
+
 	// if environmentID is not set, list environments and select one
 	if opts.environmentID == "" {
 		environmentInfo, _, err := f.Selector.SelectEnvironment(opts.projectID)
@@ -99,14 +108,15 @@ func runExposeInteractive(f *cmdutil.Factory, opts *Options) error {
 			return err
 		}
 		opts.id = serviceInfo.GetID()
+		opts.name = serviceInfo.GetName()
 	}
 
 	return runExposeNonInteractive(f, opts)
 }
 
 func paramCheck(opts *Options) error {
-	if !(opts.id != "" || (opts.projectID != "" && opts.name != "")) {
-		return fmt.Errorf("please specify --id or (--project-id and --name)")
+	if opts.id == "" && opts.name == "" {
+		return fmt.Errorf("please specify --id or --name")
 	}
 
 	if opts.environmentID == "" {
