@@ -20,8 +20,10 @@ func main() {
 		panic(err)
 	}
 
-	// cobra will handle the error
-	_ = rootCmd.Execute()
+	// log errors
+	if err := rootCmd.Execute(); err != nil {
+		factory.Log.Error(err)
+	}
 }
 
 // init factory, including config, auth, etc.

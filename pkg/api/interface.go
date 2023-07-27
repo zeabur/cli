@@ -39,6 +39,10 @@ type (
 		ListAllServicesDetailByEnvironment(ctx context.Context, projectID, environmentID string) (model.ServiceDetails, error)
 		GetService(ctx context.Context, id string, ownerName string, projectName string, name string) (*model.Service, error)
 		ServiceMetric(ctx context.Context, id, environmentID, metricType string, startTime, endTime time.Time) (*model.ServiceMetric, error)
+
+		RestartService(ctx context.Context, id string, environmentID string) error
+		RedeployService(ctx context.Context, id string, environmentID string) error
+		SuspendService(ctx context.Context, id string, environmentID string) error
 		ExposeService(ctx context.Context, id string, environmentID string, projectID string, name string) (*model.TempTCPPort, error)
 	}
 )

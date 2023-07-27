@@ -17,6 +17,8 @@ type Options struct {
 	name string
 
 	ct contextType
+
+	skipConfirm bool // skip confirmation
 }
 
 type contextType = string
@@ -57,6 +59,7 @@ func NewCmdSet(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&opts.id, "id", "", "ID of the project, environment, or service")
 	cmd.Flags().StringVar(&opts.name, "name", "", "Name of the project, environment, or service")
+	cmd.Flags().BoolVarP(&opts.skipConfirm, "yes", "y", false, "Skip confirmation")
 
 	return cmd
 }
@@ -225,7 +228,7 @@ func selectProject(f *cmdutil.Factory, opts *Options) error {
 
 	// if project is already set, we need to clear the environment and service, and set the project.
 	// So we need to ask user to confirm.
-	if !f.Config.GetContext().GetProject().Empty() {
+	if !opts.skipConfirm && !f.Config.GetContext().GetProject().Empty() {
 		oldProject := f.Config.GetContext().GetProject().GetName()
 		prompt := fmt.Sprintf("Project is already set(%s), do you want to change it?"+
 			"(Once changed, the environment and service will be cleared.)", oldProject)
