@@ -55,6 +55,16 @@ func runDeleteInteractive(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
+	confirm, err := f.Prompter.Confirm(fmt.Sprintf("Are you sure you want to delete project %q?", project.Name), true)
+	if err != nil {
+		return err
+	}
+
+	if !confirm {
+		f.Log.Info("Delete project canceled")
+		return nil
+	}
+
 	if err := deleteProject(f, project.ID); err != nil {
 		return err
 	}
