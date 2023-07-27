@@ -50,12 +50,12 @@ func runDeleteNonInteractive(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runDeleteInteractive(f *cmdutil.Factory, opts *Options) error {
-	projectID, err := f.Prompter.Input("Please input project id:", "")
+	_, project, err := f.Selector.SelectProject()
 	if err != nil {
 		return err
 	}
 
-	if err := deleteProject(f, projectID); err != nil {
+	if err := deleteProject(f, project.ID); err != nil {
 		return err
 	}
 
