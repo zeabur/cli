@@ -161,6 +161,44 @@ func (c *client) ServiceMetric(ctx context.Context, id, environmentID, metricTyp
 	return &query.ServiceMetric, nil
 }
 
+func (c *client) RestartService(ctx context.Context, id string, environmentID string) error {
+	var mutation struct {
+		RestartService bool `graphql:"restartService(serviceID: $serviceID, environmentID: $environmentID)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{
+		"serviceID":     ObjectID(id),
+		"environmentID": ObjectID(environmentID),
+	})
+
+	return err
+}
+func (c *client) RedeployService(ctx context.Context, id string, environmentID string) error {
+	var mutation struct {
+		RedeployService bool `graphql:"redeployService(serviceID: $serviceID, environmentID: $environmentID)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{
+		"serviceID":     ObjectID(id),
+		"environmentID": ObjectID(environmentID),
+	})
+
+	return err
+
+}
+func (c *client) SuspendService(ctx context.Context, id string, environmentID string) error {
+	var mutation struct {
+		SuspendService bool `graphql:"suspendService(serviceID: $serviceID, environmentID: $environmentID)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{
+		"serviceID":     ObjectID(id),
+		"environmentID": ObjectID(environmentID),
+	})
+
+	return err
+}
+
 func (c *client) ExposeService(ctx context.Context, id string, environmentID string, projectID string, name string) (*model.TempTCPPort, error) {
 	var mutation struct {
 		ExposeService model.TempTCPPort `graphql:"exposeTempTcpPort(serviceID: $serviceID, environmentID: $environmentID, projectID: $projectID, serviceName: $name)"`

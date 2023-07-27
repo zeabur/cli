@@ -88,6 +88,11 @@ func NewCmdRoot(f *cmdutil.Factory, version string) (*cobra.Command, error) {
 		},
 	}
 
+	// don't print usage when error happens
+	cmd.SilenceUsage = true
+	// don't print error when error happens(we will print it ourselves)
+	cmd.SilenceErrors = true
+
 	// Persistent flags
 	cmd.PersistentFlags().BoolVar(&f.Debug, "debug", false, "Enable debug logging")
 	cmd.PersistentFlags().BoolVarP(&f.Interactive, config.KeyInteractive, "i", true, "use interactive mode")
