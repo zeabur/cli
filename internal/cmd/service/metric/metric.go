@@ -18,7 +18,9 @@ type Options struct {
 }
 
 func NewCmdMetric(f *cmdutil.Factory) *cobra.Command {
-	opts := &Options{}
+	opts := &Options{
+		projectID: f.Config.GetContext().GetProject().GetID(),
+	}
 
 	cmd := &cobra.Command{
 		Use:   "metric <metric-type>",
@@ -46,8 +48,6 @@ func NewCmdMetric(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVarP(&opts.metricType, "metric-type", "t", "", "Metric type, one of CPU, MEMORY, NETWORK, DISK")
 	cmd.Flags().UintVarP(&opts.hour, "hour", "H", 2, "Metric history in hour")
 
-	cmd.Flags().StringVar(&opts.projectID, "project-id", ctx.GetProject().GetID(), "Project ID")
-
 	return cmd
 }
 
@@ -60,7 +60,9 @@ func runMetric(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runMetricInteractive(f *cmdutil.Factory, opts *Options) error {
-	if opts.environmentID == "" {
+	// if service id or environment id is not provided,
+	// we should use project id to select service and environment
+	if opts.id == "" || opts.environmentID == "" {
 		if opts.projectID == "" {
 			projectInfo, _, err := f.Selector.SelectProject()
 			if err != nil {
@@ -68,28 +70,24 @@ func runMetricInteractive(f *cmdutil.Factory, opts *Options) error {
 			}
 			opts.projectID = projectInfo.GetID()
 		}
-		envInfo, _, err := f.Selector.SelectEnvironment(opts.projectID)
-		if err != nil {
-			return err
-		}
-		opts.environmentID = envInfo.GetID()
 	}
 
+	// fill service id
 	if opts.id == "" {
-		if opts.projectID == "" {
-			projectInfo, _, err := f.Selector.SelectProject()
-			if err != nil {
-				return err
-			}
-			opts.projectID = projectInfo.GetID()
-		}
-
 		serviceInfo, _, err := f.Selector.SelectService(opts.projectID)
 		if err != nil {
 			return err
 		}
 		opts.id = serviceInfo.GetID()
+	}
 
+	// fill environment id
+	if opts.environmentID == "" {
+		envInfo, _, err := f.Selector.SelectEnvironment(opts.projectID)
+		if err != nil {
+			return err
+		}
+		opts.environmentID = envInfo.GetID()
 	}
 
 	return runMetricNonInteractive(f, opts)
