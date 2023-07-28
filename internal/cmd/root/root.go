@@ -14,6 +14,7 @@ import (
 
 	authCmd "github.com/zeabur/cli/internal/cmd/auth"
 	contextCmd "github.com/zeabur/cli/internal/cmd/context"
+	deploymentCmd "github.com/zeabur/cli/internal/cmd/deployment"
 	projectCmd "github.com/zeabur/cli/internal/cmd/project"
 	serviceCmd "github.com/zeabur/cli/internal/cmd/service"
 	versionCmd "github.com/zeabur/cli/internal/cmd/version"
@@ -104,6 +105,7 @@ func NewCmdRoot(f *cmdutil.Factory, version string) (*cobra.Command, error) {
 	cmd.AddCommand(authCmd.NewCmdAuth(f))
 	cmd.AddCommand(projectCmd.NewCmdProject(f))
 	cmd.AddCommand(serviceCmd.NewCmdService(f))
+	cmd.AddCommand(deploymentCmd.NewCmdDeployment(f))
 
 	cmd.AddCommand(contextCmd.NewCmdContext(f))
 

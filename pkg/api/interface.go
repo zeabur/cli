@@ -13,6 +13,7 @@ type Client interface {
 	ProjectAPI
 	ServiceAPI
 	EnvironmentAPI
+	DeploymentAPI
 }
 
 type (
@@ -33,9 +34,9 @@ type (
 	}
 
 	ServiceAPI interface {
-		ListServices(ctx context.Context, projectID string, skip, limit int) (*model.ServiceConnection, error)
+		ListServices(ctx context.Context, projectID string, skip, limit int) (*model.Connection[model.Service], error)
 		ListAllServices(ctx context.Context, projectID string) (model.Services, error)
-		ListServicesDetailByEnvironment(ctx context.Context, projectID, environmentID string, skip, limit int) (*model.ServiceDetailConnection, error)
+		ListServicesDetailByEnvironment(ctx context.Context, projectID, environmentID string, skip, limit int) (*model.Connection[model.ServiceDetail], error)
 		ListAllServicesDetailByEnvironment(ctx context.Context, projectID, environmentID string) (model.ServiceDetails, error)
 		GetService(ctx context.Context, id string, ownerName string, projectName string, name string) (*model.Service, error)
 		ServiceMetric(ctx context.Context, id, environmentID, metricType string, startTime, endTime time.Time) (*model.ServiceMetric, error)
@@ -44,5 +45,12 @@ type (
 		RedeployService(ctx context.Context, id string, environmentID string) error
 		SuspendService(ctx context.Context, id string, environmentID string) error
 		ExposeService(ctx context.Context, id string, environmentID string, projectID string, name string) (*model.TempTCPPort, error)
+	}
+
+	DeploymentAPI interface {
+		ListDeployments(ctx context.Context, serviceID string, environmentID string, skip, limit int) (*model.Connection[model.Deployment], error)
+		ListAllDeployments(ctx context.Context, serviceID string, environmentID string) (model.Deployments, error)
+		GetDeployment(ctx context.Context, id string) (*model.Deployment, error)
+		GetLatestDeployment(ctx context.Context, serviceID string, environmentID string) (*model.Deployment, bool, error)
 	}
 )
