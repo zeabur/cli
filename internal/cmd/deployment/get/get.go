@@ -45,32 +45,10 @@ func runGet(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runGetInteractive(f *cmdutil.Factory, opts *Options) error {
-	// if missing service-id or environment-id, we need to use project id to get them
-	if err := paramCheck(opts); err != nil {
-		if opts.projectID == "" {
-			basicInfo, _, err := f.Selector.SelectProject()
-			if err != nil {
-				return err
-			}
-			opts.projectID = basicInfo.GetID()
-		}
+	if _, err := f.ParamFiller.ServiceWithEnvironment(&opts.projectID, &opts.serviceID, &opts.environmentID); err != nil {
+		return err
 	}
 
-	if opts.serviceID == "" {
-		basicInfo, _, err := f.Selector.SelectService(opts.projectID)
-		if err != nil {
-			return err
-		}
-		opts.serviceID = basicInfo.GetID()
-	}
-
-	if opts.environmentID == "" {
-		basicInfo, _, err := f.Selector.SelectEnvironment(opts.projectID)
-		if err != nil {
-			return err
-		}
-		opts.environmentID = basicInfo.GetID()
-	}
 	return runGetNonInteractive(f, opts)
 }
 

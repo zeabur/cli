@@ -1,6 +1,7 @@
 package cmdutil
 
 import (
+	"github.com/zeabur/cli/pkg/fill"
 	"github.com/zeabur/cli/pkg/printer"
 	"github.com/zeabur/cli/pkg/selector"
 	"go.uber.org/zap"
@@ -16,13 +17,14 @@ type (
 	// It is used to pass common dependencies to commands.
 	// It is kind of like a "context" for commands.
 	Factory struct {
-		Log        *zap.SugaredLogger // logger
-		Printer    printer.Printer    // printer
-		Config     config.Config      // config(flag, env, file)
-		ApiClient  api.Client         // query api
-		AuthClient auth.Client        // login, refresh token
-		Prompter   prompt.Prompter    // interactive prompter
-		Selector   selector.Selector  // interactive selector
+		Log         *zap.SugaredLogger // logger
+		Printer     printer.Printer    // printer
+		Config      config.Config      // config(flag, env, file)
+		ApiClient   api.Client         // query api
+		AuthClient  auth.Client        // login, refresh token
+		Prompter    prompt.Prompter    // interactive prompter
+		Selector    selector.Selector  // interactive selector
+		ParamFiller fill.ParamFiller   // fill params
 		PersistentFlags
 	}
 	// PersistentFlags are flags that are common to all commands

@@ -4,6 +4,7 @@ package root
 import (
 	"errors"
 	"fmt"
+	"github.com/zeabur/cli/pkg/fill"
 	"github.com/zeabur/cli/pkg/selector"
 	"time"
 
@@ -55,6 +56,7 @@ func NewCmdRoot(f *cmdutil.Factory, version string) (*cobra.Command, error) {
 				// set up the client
 				f.ApiClient = api.New(f.Config.GetTokenString())
 				f.Selector = selector.New(f.ApiClient, f.Log, f.Prompter)
+				f.ParamFiller = fill.NewParamFiller(f.Selector)
 			}
 
 			return nil
