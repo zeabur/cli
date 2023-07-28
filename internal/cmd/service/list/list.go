@@ -43,12 +43,8 @@ func runList(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runListInteractive(f *cmdutil.Factory, opts *Options) error {
-	if opts.projectID == "" {
-		basicInfo, _, err := f.Selector.SelectProject()
-		if err != nil {
-			return err
-		}
-		opts.projectID = basicInfo.GetID()
+	if _, err := f.ParamFiller.Project(&opts.projectID); err != nil {
+		return err
 	}
 
 	return runListNonInteractive(f, opts)

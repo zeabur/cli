@@ -42,11 +42,6 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 // If you want to add new dependencies, please add them in the Options struct
 
 func runGet(f *cmdutil.Factory, opts *Options) error {
-	// if param check passed, run non-interactive mode first
-	if err := paramCheck(opts); err == nil {
-		return runGetNonInteractive(f, opts)
-	}
-
 	if f.Interactive {
 		return runGetInteractive(f, opts)
 	} else {
@@ -55,14 +50,11 @@ func runGet(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runGetInteractive(f *cmdutil.Factory, opts *Options) error {
-	_, project, err := f.Selector.SelectProject()
-	if err != nil {
+	if _, err := f.ParamFiller.Project(&opts.ID); err != nil {
 		return err
 	}
 
-	logProject(f, project)
-
-	return nil
+	return runGetNonInteractive(f, opts)
 }
 
 func runGetNonInteractive(f *cmdutil.Factory, opts *Options) error {
