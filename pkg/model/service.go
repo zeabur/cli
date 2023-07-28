@@ -9,22 +9,22 @@ import (
 
 // Service is the simplest model of service, which is used in most queries.
 type Service struct {
-	ID   string `bson:"_id" json:"id" graphql:"_id"`
-	Name string `bson:"name" json:"name" graphql:"name"`
-	//Template  ServiceTemplate    `bson:"template" json:"template" graphql:"template"`
-	//Project *Project `bson:"project" json:"project" graphql:"project"`
+	ID   string `graphql:"_id"`
+	Name string `graphql:"name"`
+	//Template  ServiceTemplate    `graphql:"template"`
+	//Project *Project `graphql:"project"`
 
-	CreatedAt time.Time `bson:"createdAt" json:"createdAt" graphql:"createdAt"`
+	CreatedAt time.Time `graphql:"createdAt"`
 
 	// MarketItemCode is the code of the item in the marketplace. Only used if Template is ServiceTemplateMarketplace.
-	MarketItemCode *string `bson:"marketItemCode" json:"marketItemCode" graphql:"marketItemCode"`
+	MarketItemCode *string `graphql:"marketItemCode"`
 
-	CustomBuildCommand *string  `bson:"customBuildCommand" json:"customBuildCommand" graphql:"customBuildCommand"`
-	CustomStartCommand *string  `bson:"customStartCommand" json:"customStartCommand" graphql:"customStartCommand"`
-	OutputDir          *string  `bson:"outputDir" json:"outputDir" graphql:"outputDir"`
-	RootDirectory      string   `bson:"rootDirectory" json:"rootDirectory" graphql:"rootDirectory"`
-	Template           string   `bson:"template" json:"template" graphql:"template"`
-	WatchPaths         []string `bson:"watchPaths" json:"watchPaths" graphql:"watchPaths"`
+	CustomBuildCommand *string  `graphql:"customBuildCommand"`
+	CustomStartCommand *string  `graphql:"customStartCommand"`
+	OutputDir          *string  `graphql:"outputDir"`
+	RootDirectory      string   `graphql:"rootDirectory"`
+	Template           string   `graphql:"template"`
+	WatchPaths         []string `graphql:"watchPaths"`
 }
 
 type Services []*Service
@@ -38,11 +38,12 @@ func (s Services) Rows() [][]string {
 	headerLen := len(s.Header())
 
 	for _, service := range s {
-		row := make([]string, headerLen)
-		row[0] = service.ID
-		row[1] = service.Name
-		row[2] = service.Template
-		row[3] = service.CreatedAt.Format(time.RFC3339)
+		row := make([]string, 0, headerLen)
+		row = append(row, service.ID)
+		row = append(row, service.Name)
+		row = append(row, service.Template)
+		row = append(row, service.CreatedAt.Format(time.RFC3339))
+
 		rows = append(rows, row)
 	}
 
@@ -51,25 +52,13 @@ func (s Services) Rows() [][]string {
 
 var _ Tabler = (Services)(nil)
 
-// ServiceConnection is a connection to a list of items.
-type ServiceConnection struct {
-	PageInfo *PageInfo      `json:"pageInfo" graphql:"pageInfo"`
-	Edges    []*ServiceEdge `json:"edges" graphql:"edges"`
-}
-
-// ServiceEdge is an edge in a connection.
-type ServiceEdge struct {
-	Node   *Service `json:"node" graphql:"node"`
-	Cursor string   `json:"cursor" graphql:"cursor"`
-}
-
 // ServiceDetail has more information related to specific environment.
 type ServiceDetail struct {
-	Service    `bson:",inline" graphql:"... on Service"`
-	GitTrigger *GitTrigger `bson:"gitTrigger" json:"gitTrigger" graphql:"gitTrigger(environmentID: $environmentID)"`
-	ConsoleURL string      `bson:"consoleURL" json:"consoleURL" graphql:"consoleURL(environmentID: $environmentID)"`
-	Status     string      `bson:"status" json:"status" graphql:"status(environmentID: $environmentID)"`
-	Domains    []Domain    `bson:"domains" json:"domains" graphql:"domains(environmentID: $environmentID)"`
+	Service    `graphql:"... on Service"`
+	GitTrigger *GitTrigger `graphql:"gitTrigger(environmentID: $environmentID)"`
+	ConsoleURL string      `graphql:"consoleURL(environmentID: $environmentID)"`
+	Status     string      `graphql:"status(environmentID: $environmentID)"`
+	Domains    []Domain    `graphql:"domains(environmentID: $environmentID)"`
 }
 
 type ServiceDetails []*ServiceDetail
@@ -83,40 +72,29 @@ func (s ServiceDetails) Rows() [][]string {
 	headerLen := len(s.Header())
 
 	for _, service := range s {
-		row := make([]string, headerLen)
-		row[0] = service.ID
-		row[1] = service.Name
-		row[2] = service.Status
+		row := make([]string, 0, headerLen)
+		row = append(row, service.ID)
+		row = append(row, service.Name)
+		row = append(row, service.Status)
 		domains := make([]string, len(service.Domains))
 		for i, domain := range service.Domains {
 			domains[i] = domain.Domain
 		}
-		row[3] = strings.Join(domains, ",")
-		row[4] = service.Template
+		row = append(row, strings.Join(domains, ","))
+		row = append(row, service.Template)
 		gitTrigger := ""
 		if service.GitTrigger != nil {
 			gitTrigger = fmt.Sprintf("%s(%s)", service.GitTrigger.BranchName, service.GitTrigger.Provider)
 		} else {
 			gitTrigger = "None"
 		}
-		row[5] = gitTrigger
-		row[6] = service.CreatedAt.Format(time.RFC3339)
+		row = append(row, gitTrigger)
+		row = append(row, service.CreatedAt.Format(time.RFC3339))
+
 		rows = append(rows, row)
 	}
 
 	return rows
-}
-
-// ServiceDetailConnection is a connection to a list of items.
-type ServiceDetailConnection struct {
-	PageInfo *PageInfo            `json:"pageInfo" graphql:"pageInfo"`
-	Edges    []*ServiceDetailEdge `json:"edges" graphql:"edges"`
-}
-
-// ServiceDetailEdge is an edge in a connection.
-type ServiceDetailEdge struct {
-	Node   *ServiceDetail `json:"node" graphql:"node"`
-	Cursor string         `json:"cursor" graphql:"cursor"`
 }
 
 // TempTCPPort is a temporary TCP port.

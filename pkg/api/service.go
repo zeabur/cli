@@ -8,11 +8,10 @@ import (
 	"github.com/zeabur/cli/pkg/model"
 )
 
-func (c *client) ListServices(ctx context.Context, projectID string, skip, limit int) (*model.ServiceConnection, error) {
-	skip, limit = normalizePagination(skip, limit)
+func (c *client) ListServices(ctx context.Context, projectID string, skip, limit int) (*model.Connection[model.Service], error) {
 
 	var query struct {
-		Services model.ServiceConnection `graphql:"services(projectID: $projectID, skip: $skip, limit: $limit)"`
+		Services *model.Connection[model.Service] `graphql:"services(projectID: $projectID, skip: $skip, limit: $limit)"`
 	}
 
 	err := c.Query(ctx, &query, V{
@@ -25,38 +24,24 @@ func (c *client) ListServices(ctx context.Context, projectID string, skip, limit
 		return nil, err
 	}
 
-	return &query.Services, nil
+	return query.Services, nil
 }
 
 // ListAllServices returns all services owned by the current user.
 func (c *client) ListAllServices(ctx context.Context, projectID string) (model.Services, error) {
-	skip := 0
-	next := true
-
-	var services []*model.Service
-
-	for next {
-		serviceCon, err := c.ListServices(context.Background(), projectID, skip, 100)
-		if err != nil {
-			return nil, err
-		}
-		for _, service := range serviceCon.Edges {
-			services = append(services, service.Node)
-		}
-
-		skip += 5
-		next = serviceCon.PageInfo.HasNextPage
+	query := func(skip, limit int) (*model.Connection[model.Service], error) {
+		return c.ListServices(ctx, projectID, skip, limit)
 	}
 
-	return services, nil
+	return listAll(query)
 }
 
 func (c *client) ListServicesDetailByEnvironment(ctx context.Context, projectID, environmentID string,
-	skip, limit int) (*model.ServiceDetailConnection, error) {
+	skip, limit int) (*model.Connection[model.ServiceDetail], error) {
 	skip, limit = normalizePagination(skip, limit)
 
 	var query struct {
-		Services model.ServiceDetailConnection `graphql:"services(projectID: $projectID, skip: $skip, limit: $limit)"`
+		Services *model.Connection[model.ServiceDetail] `graphql:"services(projectID: $projectID, skip: $skip, limit: $limit)"`
 	}
 
 	err := c.Query(ctx, &query, V{
@@ -70,29 +55,15 @@ func (c *client) ListServicesDetailByEnvironment(ctx context.Context, projectID,
 		return nil, err
 	}
 
-	return &query.Services, nil
+	return query.Services, nil
 }
 
 func (c *client) ListAllServicesDetailByEnvironment(ctx context.Context, projectID, environmentID string) (model.ServiceDetails, error) {
-	skip := 0
-	next := true
-
-	var services []*model.ServiceDetail
-
-	for next {
-		serviceCon, err := c.ListServicesDetailByEnvironment(ctx, projectID, environmentID, skip, 100)
-		if err != nil {
-			return nil, err
-		}
-		for _, service := range serviceCon.Edges {
-			services = append(services, service.Node)
-		}
-
-		skip += 5
-		next = serviceCon.PageInfo.HasNextPage
+	query := func(skip, limit int) (*model.Connection[model.ServiceDetail], error) {
+		return c.ListServicesDetailByEnvironment(ctx, projectID, environmentID, skip, limit)
 	}
 
-	return services, nil
+	return listAll(query)
 }
 
 func (c *client) GetService(ctx context.Context, id string, ownerName string, projectName string, name string) (*model.Service, error) {

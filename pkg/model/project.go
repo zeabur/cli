@@ -16,15 +16,15 @@ import (
 
 // Project is the simplest model of project, which is used in most queries.
 type Project struct {
-	ID          string `bson:"_id" json:"id" graphql:"_id"`
-	Name        string `bson:"name" json:"name" graphql:"name"`
-	Description string `bson:"description" json:"description" graphql:"description"`
-	//Environments []Environment     `bson:"environments" json:"environments" graphql:"environments"`
-	CreatedAt time.Time `bson:"createdAt" json:"createdAt" graphql:"createdAt"`
-	//Owner         User      `bson:"owner" json:"owner" graphql:"owner"`
-	//Collaborators []User    `bson:"collaborators" json:"collaborators" graphql:"collaborators"`
-	IconURL string `bson:"iconUrl" json:"iconUrl" graphql:"iconURL"`
-	//Services []Service `bson:"services" json:"services" graphql:"services"`
+	ID          string `graphql:"_id"`
+	Name        string `graphql:"name"`
+	Description string `graphql:"description"`
+	//Environments []Environment     `graphql:"environments"`
+	CreatedAt time.Time `graphql:"createdAt"`
+	//Owner         User      `graphql:"owner"`
+	//Collaborators []User    `graphql:"collaborators"`
+	IconURL string `graphql:"iconURL"`
+	//Services []Service `graphql:"services"`
 }
 
 // ProjectConnection is a connection to a list of items.
@@ -60,15 +60,16 @@ func (p Projects) Header() []string {
 }
 
 func (p Projects) Rows() [][]string {
-	rows := make([][]string, len(p))
+	rows := make([][]string, 0, len(p))
 	headerLen := len(p.Header())
-	for i, project := range p {
-		row := make([]string, headerLen)
-		row[0] = project.ID
-		row[1] = project.Name
-		row[2] = project.Description
-		row[3] = project.CreatedAt.Format(time.RFC3339)
-		rows[i] = row
+	for _, project := range p {
+		row := make([]string, 0, headerLen)
+		row = append(row, project.ID)
+		row = append(row, project.Name)
+		row = append(row, project.Description)
+		row = append(row, project.CreatedAt.Format(time.RFC3339))
+
+		rows = append(rows, row)
 	}
 	return rows
 }
