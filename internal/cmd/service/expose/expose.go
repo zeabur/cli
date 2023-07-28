@@ -59,14 +59,6 @@ func runExposeNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
-	if opts.id == "" && opts.name != "" {
-		projectCtx := f.Config.GetContext().GetProject()
-		if projectCtx.Empty() {
-			return fmt.Errorf("since service name is specified, project context must be set")
-		}
-		opts.projectID = projectCtx.GetID()
-	}
-
 	ctx := context.Background()
 
 	tempTCPPort, err := f.ApiClient.ExposeService(ctx, opts.id, opts.environmentID, opts.projectID, opts.name)
@@ -81,34 +73,8 @@ func runExposeNonInteractive(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runExposeInteractive(f *cmdutil.Factory, opts *Options) error {
-	// if serviceID is not set, we need to find services by projectID, so projectID is required
-	if opts.id == "" {
-		if opts.projectID == "" {
-			projectInfo, _, err := f.Selector.SelectProject()
-			if err != nil {
-				return err
-			}
-			opts.projectID = projectInfo.GetID()
-		}
-	}
-
-	// if environmentID is not set, list environments and select one
-	if opts.environmentID == "" {
-		environmentInfo, _, err := f.Selector.SelectEnvironment(opts.projectID)
-		if err != nil {
-			return err
-		}
-		opts.environmentID = environmentInfo.GetID()
-	}
-
-	// either serviceID or (projectID and serviceName) is required
-	if opts.id == "" && opts.name == "" {
-		serviceInfo, _, err := f.Selector.SelectService(opts.projectID)
-		if err != nil {
-			return err
-		}
-		opts.id = serviceInfo.GetID()
-		opts.name = serviceInfo.GetName()
+	if _, err := f.ParamFiller.ServiceByNameWithEnvironment(
+		&opts.projectID, &opts.id, &opts.name, &opts.environmentID); err != nil {
 	}
 
 	return runExposeNonInteractive(f, opts)

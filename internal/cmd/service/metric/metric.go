@@ -60,34 +60,8 @@ func runMetric(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runMetricInteractive(f *cmdutil.Factory, opts *Options) error {
-	// if service id or environment id is not provided,
-	// we should use project id to select service and environment
-	if opts.id == "" || opts.environmentID == "" {
-		if opts.projectID == "" {
-			projectInfo, _, err := f.Selector.SelectProject()
-			if err != nil {
-				return err
-			}
-			opts.projectID = projectInfo.GetID()
-		}
-	}
-
-	// fill service id
-	if opts.id == "" {
-		serviceInfo, _, err := f.Selector.SelectService(opts.projectID)
-		if err != nil {
-			return err
-		}
-		opts.id = serviceInfo.GetID()
-	}
-
-	// fill environment id
-	if opts.environmentID == "" {
-		envInfo, _, err := f.Selector.SelectEnvironment(opts.projectID)
-		if err != nil {
-			return err
-		}
-		opts.environmentID = envInfo.GetID()
+	if _, err := f.ParamFiller.ServiceWithEnvironment(&opts.projectID, &opts.id, &opts.environmentID); err != nil {
+		return err
 	}
 
 	return runMetricNonInteractive(f, opts)
