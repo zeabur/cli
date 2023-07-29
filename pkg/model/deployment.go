@@ -54,6 +54,14 @@ func (d Deployments) Rows() [][]string {
 	return rows
 }
 
+func (d *Deployment) Header() []string {
+	return Deployments{d}.Header()
+}
+
+func (d *Deployment) Rows() [][]string {
+	return Deployments{d}.Rows()
+}
+
 func truncateString(s string, maxLen int) string {
 	// convert string to rune slice
 	rs := []rune(s)
@@ -64,4 +72,7 @@ func truncateString(s string, maxLen int) string {
 	return s
 }
 
-var _ Tabler = (Deployments)(nil)
+var (
+	_ Tabler = (Deployments)(nil)
+	_ Tabler = (*Deployment)(nil)
+)

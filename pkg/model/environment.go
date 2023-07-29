@@ -24,3 +24,16 @@ func (e Environments) Rows() [][]string {
 	}
 	return rows
 }
+
+func (e *Environment) Header() []string {
+	return Environments{e}.Header()
+}
+
+func (e *Environment) Rows() [][]string {
+	return Environments{e}.Rows()
+}
+
+var (
+	_ Tabler = (*Environments)(nil)
+	_ Tabler = (*Environment)(nil)
+)

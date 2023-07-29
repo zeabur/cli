@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/spf13/cobra"
-	"github.com/zeabur/cli/internal/cmd/service/util"
+	"github.com/zeabur/cli/internal/util"
 
 	"github.com/zeabur/cli/internal/cmdutil"
 )
