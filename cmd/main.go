@@ -6,6 +6,7 @@ import (
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/pkg/auth"
 	"github.com/zeabur/cli/pkg/config"
+	"github.com/zeabur/cli/pkg/log"
 	"github.com/zeabur/cli/pkg/printer"
 	"github.com/zeabur/cli/pkg/prompt"
 )
@@ -22,6 +23,10 @@ func main() {
 
 	// log errors
 	if err := rootCmd.Execute(); err != nil {
+		// when some errors occur(such as args dis-match), the log may not be initialized
+		if factory.Log == nil {
+			factory.Log = log.NewInfoLevel()
+		}
 		factory.Log.Error(err)
 	}
 }

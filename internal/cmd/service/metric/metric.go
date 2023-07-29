@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/spf13/cobra"
+	"github.com/zeabur/cli/internal/cmd/service/util"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/pkg/model"
 	"time"
@@ -11,6 +12,7 @@ import (
 
 type Options struct {
 	id            string
+	name          string
 	environmentID string
 	metricType    string
 	projectID     string
@@ -33,18 +35,18 @@ func NewCmdMetric(f *cmdutil.Factory) *cobra.Command {
 			//string(model.MetricTypeNetwork), // not supported yet
 			//string(model.MetricTypeDisk),	// not supported yet
 		},
+		PreRunE: util.NeedProjectContext(f),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.metricType = args[0]
 			return runMetric(f, opts)
 		},
 	}
 
-	ctx := f.Config.GetContext()
+	zctx := f.Config.GetContext()
 
-	//todo: support identify service by name
-
-	cmd.Flags().StringVar(&opts.id, "id", ctx.GetService().GetID(), "Service ID")
-	cmd.Flags().StringVar(&opts.environmentID, "environment-id", ctx.GetEnvironment().GetID(), "Environment ID")
+	cmd.Flags().StringVar(&opts.id, "id", zctx.GetService().GetID(), "Service ID")
+	cmd.Flags().StringVar(&opts.name, "name", zctx.GetService().GetName(), "Service name")
+	cmd.Flags().StringVar(&opts.environmentID, "environment-id", zctx.GetEnvironment().GetID(), "Environment ID")
 	cmd.Flags().StringVarP(&opts.metricType, "metric-type", "t", "", "Metric type, one of CPU, MEMORY, NETWORK, DISK")
 	cmd.Flags().UintVarP(&opts.hour, "hour", "H", 2, "Metric history in hour")
 
@@ -60,7 +62,8 @@ func runMetric(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runMetricInteractive(f *cmdutil.Factory, opts *Options) error {
-	if _, err := f.ParamFiller.ServiceWithEnvironment(&opts.projectID, &opts.id, &opts.environmentID); err != nil {
+	zctx := f.Config.GetContext()
+	if _, err := f.ParamFiller.ServiceByNameWithEnvironment(zctx, &opts.id, &opts.name, &opts.environmentID); err != nil {
 		return err
 	}
 
@@ -68,16 +71,17 @@ func runMetricInteractive(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runMetricNonInteractive(f *cmdutil.Factory, opts *Options) error {
-	if opts.id == "" {
-		return fmt.Errorf("--id is required")
+	if err := paramCheck(opts); err != nil {
+		return err
 	}
 
-	if opts.environmentID == "" {
-		return fmt.Errorf("--environment-id is required")
-	}
-
-	if opts.metricType == "" {
-		return fmt.Errorf("metric type is required")
+	// if name is set, get service id by name
+	if opts.id == "" && opts.name != "" {
+		service, err := util.GetServiceByName(f.Config, f.ApiClient, opts.name)
+		if err != nil {
+			return err
+		}
+		opts.id = service.ID
 	}
 
 	mt := model.MetricType(opts.metricType)
@@ -123,6 +127,22 @@ func runMetricNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	f.Printer.Table(header, data)
 
 	// todo: support chart? (add a new method in printer.Printer)
+
+	return nil
+}
+
+func paramCheck(opts *Options) error {
+	if opts.id == "" && opts.name == "" {
+		return fmt.Errorf("--id or --name is required")
+	}
+
+	if opts.environmentID == "" {
+		return fmt.Errorf("--environment-id is required")
+	}
+
+	if opts.metricType == "" {
+		return fmt.Errorf("metric type is required")
+	}
 
 	return nil
 }

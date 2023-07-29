@@ -35,3 +35,22 @@ type User struct {
 	AvatarURL string  `json:"avatarUrl" graphql:"avatarURL"`
 	GitHubID  int64   `json:"githubID" graphql:"githubID"`
 }
+
+func (u *User) Header() []string {
+	return []string{"ID", "Name", "Username", "Email", "Language", "LastCheckInAt", "RegisteredAt"}
+}
+
+func (u *User) Rows() [][]string {
+	row := make([]string, 0, len(u.Header()))
+	row = append(row, u.ID)
+	row = append(row, u.Name)
+	row = append(row, u.Username)
+	row = append(row, u.Email)
+	row = append(row, u.Language)
+	row = append(row, u.LastCheckedInAt.Format(time.RFC3339))
+	row = append(row, u.CreatedAt.Format(time.RFC3339))
+
+	return [][]string{row}
+}
+
+var _ Tabler = (*User)(nil)

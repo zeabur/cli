@@ -8,13 +8,14 @@ import (
 )
 
 type Options struct {
-	//todo: support project name
 	projectID     string
 	environmentID string
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
-	opts := &Options{}
+	opts := &Options{
+		projectID: f.Config.GetContext().GetProject().GetID(),
+	}
 	cmd := &cobra.Command{
 		Use:     "list",
 		Short:   "List environments",
@@ -28,7 +29,6 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	ctx := f.Config.GetContext()
 
-	cmd.Flags().StringVar(&opts.projectID, "project-id", ctx.GetProject().GetID(), "Project ID")
 	cmd.Flags().StringVar(&opts.environmentID, "environment-id", ctx.GetEnvironment().GetID(), "Environment ID")
 
 	return cmd
@@ -43,6 +43,10 @@ func runList(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runListInteractive(f *cmdutil.Factory, opts *Options) error {
+	// fetch project id from context
+	opts.projectID = f.Config.GetContext().GetProject().GetID()
+
+	// if project id is not set, prompt to select one
 	if _, err := f.ParamFiller.Project(&opts.projectID); err != nil {
 		return err
 	}

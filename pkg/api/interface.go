@@ -38,7 +38,8 @@ type (
 		ListAllServices(ctx context.Context, projectID string) (model.Services, error)
 		ListServicesDetailByEnvironment(ctx context.Context, projectID, environmentID string, skip, limit int) (*model.Connection[model.ServiceDetail], error)
 		ListAllServicesDetailByEnvironment(ctx context.Context, projectID, environmentID string) (model.ServiceDetails, error)
-		GetService(ctx context.Context, id string, ownerName string, projectName string, name string) (*model.Service, error)
+		GetService(ctx context.Context, id, ownerName, projectName, name string) (*model.Service, error)
+		GetServiceDetailByEnvironment(ctx context.Context, id, ownerName, projectName, name, environmentID string) (*model.ServiceDetail, error)
 		ServiceMetric(ctx context.Context, id, environmentID, metricType string, startTime, endTime time.Time) (*model.ServiceMetric, error)
 
 		RestartService(ctx context.Context, id string, environmentID string) error
