@@ -2,11 +2,11 @@ package get
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"github.com/zeabur/cli/pkg/model"
-
 	"github.com/spf13/cobra"
+	"github.com/zeabur/cli/internal/cmd/service/util"
+	"github.com/zeabur/cli/pkg/api"
+	"github.com/zeabur/cli/pkg/model"
 
 	"github.com/zeabur/cli/internal/cmdutil"
 )
@@ -15,18 +15,15 @@ type Options struct {
 	id   string
 	name string
 
-	projectID   string
-	projectName string
+	environmentID string
 }
 
 func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
-	opts := &Options{
-		projectID:   f.Config.GetContext().GetProject().GetID(),
-		projectName: f.Config.GetContext().GetProject().GetName(),
-	}
+	opts := &Options{}
 	cmd := &cobra.Command{
-		Use:   "get",
-		Short: "Get a service",
+		Use:     "get",
+		Short:   "Get a service, if environment is specified, get the service details in the environment",
+		PreRunE: util.NeedProjectContext(f),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGet(f, opts)
 		},
@@ -36,83 +33,67 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&opts.id, "id", ctx.GetService().GetID(), "Service ID")
 	cmd.Flags().StringVar(&opts.name, "name", ctx.GetService().GetName(), "Service name")
+	cmd.Flags().StringVar(&opts.environmentID, "environment-id", ctx.GetEnvironment().GetID(), "Environment ID")
 
 	return cmd
 }
 
 func runGet(f *cmdutil.Factory, opts *Options) error {
-	err := paramCheck(opts)
-
 	if f.Interactive {
-		// if param check passed, run non-interactive mode
-		if err == nil {
-			return runGetNonInteractive(f, opts)
-		}
-
 		return runGetInteractive(f, opts)
-	} else {
-		if err != nil {
-			return err
-		}
-		return runGetNonInteractive(f, opts)
 	}
+
+	return runGetNonInteractive(f, opts)
 }
 
 func runGetInteractive(f *cmdutil.Factory, opts *Options) error {
-	// if param missing, we should use project id to select service,
-	// so, the project context must be set
-	if err := paramCheck(opts); err != nil {
-		if opts.projectID == "" || opts.projectName == "" {
-			project, _, err := f.Selector.SelectProject()
-			if err != nil {
-				return err
-			}
-			opts.projectID = project.GetID()
-			opts.projectName = project.GetName()
-		}
+	if _, err := f.ParamFiller.ServiceByName(f.Config.GetContext(), &opts.id, &opts.name); err != nil {
+		return err
 	}
 
-	// if id or (projectName and name) is specified, we have used non-interactive mode
-	// therefore, now the id and name must be empty
-
-	_, service, err := f.Selector.SelectService(opts.projectID)
-	if err != nil {
-		return fmt.Errorf("failed to select service: %w", err)
-	}
-
-	logService(f, service)
-
-	return nil
+	return runGetNonInteractive(f, opts)
 }
 
 func runGetNonInteractive(f *cmdutil.Factory, opts *Options) error {
-	// if only name is specified, user must have set the project context
-	if opts.id == "" && opts.name != "" {
-		if opts.projectID == "" || opts.projectName == "" {
-			return errors.New("since only name is specified, please set project context first")
-		}
+	projectName := f.Config.GetContext().GetProject().GetName()
+	username := f.Config.GetUsername()
+
+	var (
+		t   model.Tabler
+		err error
+	)
+
+	if opts.environmentID == "" {
+		t, err = getServiceBrief(f.ApiClient, opts.id, username, projectName, opts.name)
+	} else {
+		t, err = getServiceDetails(f.ApiClient, opts.id, username, projectName, opts.name, opts.environmentID)
 	}
 
-	ctx := context.Background()
-	service, err := f.ApiClient.GetService(ctx, opts.id, f.Config.GetUsername(), opts.projectName, opts.name)
 	if err != nil {
-		return fmt.Errorf("get service failed: %w", err)
+		return err
 	}
 
-	f.Log.Infof("Selected service: %s(%s)", service.Name, service.ID)
+	f.Printer.Table(t.Header(), t.Rows())
 
 	return nil
 }
 
-func paramCheck(opts *Options) error {
-	if opts.id != "" || opts.name != "" {
-		return nil
+func getServiceBrief(client api.ServiceAPI, id, username, projectName, name string) (t model.Tabler, err error) {
+	ctx := context.Background()
+	service, err := client.GetService(ctx, id, username, projectName, name)
+	if err != nil {
+		return nil, fmt.Errorf("get service failed: %w", err)
 	}
 
-	return fmt.Errorf("please specify --id or --name")
+	return model.Services{service}, nil
 }
 
-func logService(f *cmdutil.Factory, service *model.Service) {
-	services := model.Services{service}
-	f.Printer.Table(services.Header(), services.Rows())
+func getServiceDetails(client api.ServiceAPI, id, username, projectID, name, environmentID string) (t model.Tabler, err error) {
+	ctx := context.Background()
+	serviceDetail, err := client.GetServiceDetailByEnvironment(ctx, id, username, projectID, name, environmentID)
+	if err != nil {
+		return nil, fmt.Errorf("get service failed: %w", err)
+	}
+
+	return model.ServiceDetails{serviceDetail}, nil
 }

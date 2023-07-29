@@ -12,7 +12,7 @@ import (
 
 // statusOptions contains the input to the status command.
 type statusOptions struct {
-	brief bool
+	verbose bool
 }
 
 func NewCmdStatus(f *cmdutil.Factory) *cobra.Command {
@@ -26,7 +26,7 @@ func NewCmdStatus(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVar(&opts.brief, "brief", true, "Show status briefly")
+	cmd.Flags().BoolVarP(&opts.verbose, "verbose", "v", false, "Show more details")
 
 	return cmd
 }
@@ -47,14 +47,11 @@ func runStatus(f *cmdutil.Factory, opts *statusOptions) error {
 		return fmt.Errorf("failed to get user info: %w", err)
 	}
 
-	if opts.brief {
-		f.Log.Infof("Logged in as %s, email: %s", user.Name, user.Email)
-		return nil
-	}
+	f.Log.Infof("Logged in as %s, email: %s", user.Name, user.Email)
 
-	// todo: pretty print
-	f.Log.Infof("Logged in as %s", f.Config.GetUser())
-	f.Log.Infow("User details", "details", user)
+	if opts.verbose {
+		f.Printer.Table(user.Header(), user.Rows())
+	}
 
 	return nil
 }

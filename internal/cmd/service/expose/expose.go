@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/spf13/cobra"
+	"github.com/zeabur/cli/internal/cmd/service/util"
 
 	"github.com/zeabur/cli/internal/cmdutil"
 )
@@ -11,16 +12,13 @@ import (
 type Options struct {
 	id string // use id to specify service
 
-	projectID string // use projectID and serviceName to specify service
-	name      string
+	name string
 
 	environmentID string // environmentID is required
 }
 
 func NewCmdExpose(f *cmdutil.Factory) *cobra.Command {
-	opts := &Options{
-		projectID: f.Config.GetContext().GetProject().GetID(),
-	}
+	opts := &Options{}
 
 	cmd := &cobra.Command{
 		Use:   "expose",
@@ -31,6 +29,7 @@ example:
 	  zeabur service expose --id xxxxx --environment-id xxxx # use id and environment-id to expose service
       zeabur service expose --name xxxxx --environment-id xxxx # if project context is set, use name, environment-id to expose service
 `,
+		PreRunE: util.NeedProjectContext(f),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runExpose(f, opts)
 		},
@@ -60,8 +59,9 @@ func runExposeNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	ctx := context.Background()
+	projectID := f.Config.GetContext().GetProject().GetID()
 
-	tempTCPPort, err := f.ApiClient.ExposeService(ctx, opts.id, opts.environmentID, opts.projectID, opts.name)
+	tempTCPPort, err := f.ApiClient.ExposeService(ctx, opts.id, opts.environmentID, projectID, opts.name)
 	if err != nil {
 		return fmt.Errorf("failed to expose service: %w", err)
 	}
@@ -74,7 +74,8 @@ func runExposeNonInteractive(f *cmdutil.Factory, opts *Options) error {
 
 func runExposeInteractive(f *cmdutil.Factory, opts *Options) error {
 	if _, err := f.ParamFiller.ServiceByNameWithEnvironment(
-		&opts.projectID, &opts.id, &opts.name, &opts.environmentID); err != nil {
+		f.Config.GetContext(), &opts.id, &opts.name, &opts.environmentID); err != nil {
+		return err
 	}
 
 	return runExposeNonInteractive(f, opts)
