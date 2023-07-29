@@ -148,7 +148,7 @@ func setEnvironment(f *cmdutil.Factory, id, name string, shouldCheck bool) error
 	// we can only check environment by id, name is not supported
 	// so, if shouldCheck is true, id must not be empty
 	if id == "" && shouldCheck {
-		return fmt.Errorf("invalid call to setEnvironment, shouldCheck is true but id is empty")
+		return fmt.Errorf("you have to specify --id when setting environment context")
 	}
 
 	if !shouldCheck && (id == "" || name == "") {
@@ -243,7 +243,7 @@ func selectProject(f *cmdutil.Factory, opts *Options) error {
 		if err != nil {
 			return err
 		}
-		f.Log.Infof("Project %s is set, id: %s", projectInfo.GetName(), projectInfo.GetID())
+		f.Log.Infof("Project <%s> is set, id: <%s>", projectInfo.GetName(), projectInfo.GetID())
 	}
 
 	return nil

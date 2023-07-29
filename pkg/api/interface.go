@@ -14,6 +14,7 @@ type Client interface {
 	ServiceAPI
 	EnvironmentAPI
 	DeploymentAPI
+	LogAPI
 }
 
 type (
@@ -54,5 +55,16 @@ type (
 		ListAllDeployments(ctx context.Context, serviceID string, environmentID string) (model.Deployments, error)
 		GetDeployment(ctx context.Context, id string) (*model.Deployment, error)
 		GetLatestDeployment(ctx context.Context, serviceID string, environmentID string) (*model.Deployment, bool, error)
+	}
+
+	LogAPI interface {
+		// GetRuntimeLogs returns the logs of a service, two cases of parameters:
+		// 1. only deploymentID
+		// 2. deploymentID and serviceID
+		GetRuntimeLogs(ctx context.Context, deploymentID, serviceID, environmentID string) (model.Logs, error)
+		GetBuildLogs(ctx context.Context, deploymentID string) (model.Logs, error)
+
+		WatchRuntimeLogs(ctx context.Context, deploymentID, serviceID, environmentID string) (<-chan model.Log, error)
+		WatchBuildLogs(ctx context.Context, deploymentID string) (<-chan model.Log, error)
 	}
 )

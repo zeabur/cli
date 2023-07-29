@@ -6,25 +6,24 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
+	"github.com/zeabur/cli/internal/util"
 )
 
 type Options struct {
 	//todo: support service name
 	serviceID     string
+	serviceName   string
 	environmentID string
-
-	projectID string
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
-	opts := &Options{
-		projectID: f.Config.GetContext().GetProject().GetID(),
-	}
+	opts := &Options{}
 
 	cmd := &cobra.Command{
 		Use:     "list",
 		Short:   "List deployments",
 		Aliases: []string{"ls"},
+		PreRunE: util.NeedProjectContext(f),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runList(f, opts)
 		},
@@ -33,7 +32,8 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	zctx := f.Config.GetContext()
 
 	cmd.Flags().StringVar(&opts.serviceID, "service-id", zctx.GetService().GetID(), "Service ID")
-	cmd.Flags().StringVar(&opts.environmentID, "environment", zctx.GetEnvironment().GetID(), "Environment ID")
+	cmd.Flags().StringVar(&opts.serviceName, "service-name", zctx.GetService().GetName(), "Service Name")
+	cmd.Flags().StringVar(&opts.environmentID, "environment-id", zctx.GetEnvironment().GetID(), "Environment ID")
 
 	return cmd
 }
@@ -47,7 +47,9 @@ func runList(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runListInteractive(f *cmdutil.Factory, opts *Options) error {
-	if _, err := f.ParamFiller.ServiceWithEnvironment(&opts.projectID, &opts.serviceID, &opts.environmentID); err != nil {
+	zctx := f.Config.GetContext()
+	_, err := f.ParamFiller.ServiceByNameWithEnvironment(zctx, &opts.serviceID, &opts.serviceName, &opts.environmentID)
+	if err != nil {
 		return err
 	}
 
@@ -57,6 +59,15 @@ func runListInteractive(f *cmdutil.Factory, opts *Options) error {
 func runListNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	if err := paramCheck(opts); err != nil {
 		return err
+	}
+
+	// If service id is not provided, get service id by service name
+	if opts.serviceID == "" {
+		if service, err := util.GetServiceByName(f.Config, f.ApiClient, opts.serviceName); err != nil {
+			return fmt.Errorf("failed to get service: %w", err)
+		} else {
+			opts.serviceID = service.ID
+		}
 	}
 
 	deployments, err := f.ApiClient.ListAllDeployments(context.Background(), opts.serviceID, opts.environmentID)
@@ -75,8 +86,8 @@ func runListNonInteractive(f *cmdutil.Factory, opts *Options) error {
 }
 
 func paramCheck(opts *Options) error {
-	if opts.serviceID == "" {
-		return errors.New("service-id is required")
+	if opts.serviceID == "" && opts.serviceName == "" {
+		return errors.New("service-id or service-name is required")
 	}
 
 	if opts.environmentID == "" {
