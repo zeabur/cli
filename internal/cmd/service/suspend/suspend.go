@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/spf13/cobra"
+	"github.com/zeabur/cli/internal/cmd/service/util"
 	"github.com/zeabur/cli/internal/cmdutil"
 )
 
@@ -19,8 +20,9 @@ type Options struct {
 func NewCmdSuspend(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}
 	cmd := &cobra.Command{
-		Use:   "suspend",
-		Short: "Suspend a service",
+		Use:     "suspend",
+		Short:   "suspend a service",
+		PreRunE: util.NeedProjectContext(f),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runSuspend(f, opts)
 		},
@@ -37,14 +39,6 @@ func NewCmdSuspend(f *cmdutil.Factory) *cobra.Command {
 }
 
 func runSuspend(f *cmdutil.Factory, opts *Options) error {
-	// when params are missing, we need to use project id to get service id and environment id
-	if checkParams(opts) != nil {
-		projectCtx := f.Config.GetContext().GetProject()
-		if projectCtx.Empty() {
-			return fmt.Errorf("please set context project first")
-		}
-	}
-
 	if f.Interactive {
 		return runSuspendInteractive(f, opts)
 	} else {
@@ -53,25 +47,10 @@ func runSuspend(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runSuspendInteractive(f *cmdutil.Factory, opts *Options) error {
+	zctx := f.Config.GetContext()
 
-	projectID := f.Config.GetContext().GetProject().GetID()
-
-	// fill in service id
-	if opts.id == "" && opts.name == "" {
-		serviceInfo, _, err := f.Selector.SelectService(projectID)
-		if err != nil {
-			return err
-		}
-		opts.id = serviceInfo.GetID()
-	}
-
-	// fill in environment id
-	if opts.environmentID == "" {
-		environmentInfo, _, err := f.Selector.SelectEnvironment(projectID)
-		if err != nil {
-			return err
-		}
-		opts.environmentID = environmentInfo.GetID()
+	if _, err := f.ParamFiller.ServiceByNameWithEnvironment(zctx, &opts.id, &opts.name, &opts.environmentID); err != nil {
+		return err
 	}
 
 	return runSuspendNonInteractive(f, opts)
@@ -82,28 +61,24 @@ func runSuspendNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
-	// if only name is provided, we need to get service id by project id first
+	// if name is set, get service id by name
 	if opts.id == "" && opts.name != "" {
-		projectCtx := f.Config.GetContext().GetProject()
-		if projectCtx.Empty() {
-			return fmt.Errorf("when using service name, please set context project first")
-		}
-		ownerName := f.Config.GetUsername()
-		projectName := projectCtx.GetName()
-		service, err := f.ApiClient.GetService(context.Background(), "", ownerName, projectName, opts.name)
+		service, err := util.GetServiceByName(f.Config, f.ApiClient, opts.name)
 		if err != nil {
-			return fmt.Errorf("get service by name failed: %w", err)
+			return err
 		}
 		opts.id = service.ID
 	}
 
+	// to show friendly message
+	idOrName := opts.name
+	if idOrName == "" {
+		idOrName = opts.id
+	}
+
 	// double check
 	if f.Interactive && !opts.skipConfirm {
-		idOrName := opts.name
-		if idOrName == "" {
-			idOrName = opts.id
-		}
-		confirm, err := f.Prompter.Confirm(fmt.Sprintf("Are you sure to suspend service <%s>?", idOrName), true)
+		confirm, err := f.Prompter.Confirm(fmt.Sprintf("Are you sure to deploy service <%s>?", idOrName), true)
 		if err != nil {
 			return err
 		}
@@ -116,6 +91,8 @@ func runSuspendNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	if err != nil {
 		return fmt.Errorf("suspend service failed: %w", err)
 	}
+
+	f.Log.Infof("Service <%s> suspended successfully", idOrName)
 
 	return nil
 }

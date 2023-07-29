@@ -112,6 +112,54 @@ func (c *client) getServiceByOwnerAndProjectAndName(ctx context.Context, ownerNa
 	return &query.Service, nil
 }
 
+func (c *client) GetServiceDetailByEnvironment(ctx context.Context, id, ownerName, projectName, name, environmentID string) (*model.ServiceDetail, error) {
+	if id != "" {
+		return c.getServiceDetailByEnvironmentByID(ctx, id, environmentID)
+	}
+
+	if ownerName != "" && projectName != "" && environmentID != "" {
+		return c.getServiceDetailByEnvironmentByOwnerAndProjectAndName(ctx, ownerName, projectName, name, environmentID)
+	}
+
+	return nil, errors.New("either id or ownerName, projectName, and environmentID must be specified")
+}
+
+func (c *client) getServiceDetailByEnvironmentByID(ctx context.Context, id string, environmentID string) (*model.ServiceDetail, error) {
+	var query struct {
+		Service *model.ServiceDetail `graphql:"service(_id: $id)"`
+	}
+
+	err := c.Query(ctx, &query, V{
+		"id":            ObjectID(id),
+		"environmentID": ObjectID(environmentID),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return query.Service, nil
+}
+
+func (c *client) getServiceDetailByEnvironmentByOwnerAndProjectAndName(ctx context.Context, ownerName string, projectName string, name string, environmentID string) (*model.ServiceDetail, error) {
+	var query struct {
+		Service *model.ServiceDetail `graphql:"service(owner: $owner, projectName: $projectName, name: $name)"`
+	}
+
+	err := c.Query(ctx, &query, V{
+		"owner":         ownerName,
+		"projectName":   projectName,
+		"name":          name,
+		"environmentID": ObjectID(environmentID),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return query.Service, nil
+}
+
 func (c *client) ServiceMetric(ctx context.Context, id, environmentID, metricType string, startTime, endTime time.Time) (*model.ServiceMetric, error) {
 	var query struct {
 		ServiceMetric model.ServiceMetric `graphql:"service(_id: $serviceID)"`
