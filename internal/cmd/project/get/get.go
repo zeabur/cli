@@ -81,7 +81,5 @@ func paramCheck(opts *Options) error {
 }
 
 func logProject(f *cmdutil.Factory, p *model.Project) {
-	projects := model.Projects{p}
-
-	f.Printer.Table(projects.Header(), projects.Rows())
+	f.Printer.Table(p.Header(), p.Rows())
 }

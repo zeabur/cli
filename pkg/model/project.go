@@ -74,4 +74,15 @@ func (p Projects) Rows() [][]string {
 	return rows
 }
 
-var _ Tabler = (Projects)(nil)
+func (p *Project) Header() []string {
+	return Projects{p}.Header()
+}
+
+func (p *Project) Rows() [][]string {
+	return Projects{p}.Rows()
+}
+
+var (
+	_ Tabler = (Projects)(nil)
+	_ Tabler = (*Project)(nil)
+)

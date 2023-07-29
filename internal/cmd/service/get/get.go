@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/spf13/cobra"
-	"github.com/zeabur/cli/internal/cmd/service/util"
+	"github.com/zeabur/cli/internal/util"
 	"github.com/zeabur/cli/pkg/api"
 	"github.com/zeabur/cli/pkg/model"
 
@@ -85,7 +85,7 @@ func getServiceBrief(client api.ServiceAPI, id, username, projectName, name stri
 		return nil, fmt.Errorf("get service failed: %w", err)
 	}
 
-	return model.Services{service}, nil
+	return service, nil
 }
 
 func getServiceDetails(client api.ServiceAPI, id, username, projectID, name, environmentID string) (t model.Tabler, err error) {
@@ -95,5 +95,5 @@ func getServiceDetails(client api.ServiceAPI, id, username, projectID, name, env
 		return nil, fmt.Errorf("get service failed: %w", err)
 	}
 
-	return model.ServiceDetails{serviceDetail}, nil
+	return serviceDetail, nil
 }

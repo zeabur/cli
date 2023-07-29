@@ -6,6 +6,7 @@ import (
 
 	deploymentGetCmd "github.com/zeabur/cli/internal/cmd/deployment/get"
 	deploymentListCmd "github.com/zeabur/cli/internal/cmd/deployment/list"
+	deplymentLogCmd "github.com/zeabur/cli/internal/cmd/deployment/log"
 )
 
 func NewCmdDeployment(f *cmdutil.Factory) *cobra.Command {
@@ -18,6 +19,7 @@ func NewCmdDeployment(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.AddCommand(deploymentListCmd.NewCmdList(f))
 	cmd.AddCommand(deploymentGetCmd.NewCmdGet(f))
+	cmd.AddCommand(deplymentLogCmd.NewCmdLog(f))
 
 	return cmd
 }

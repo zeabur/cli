@@ -50,7 +50,18 @@ func (s Services) Rows() [][]string {
 	return rows
 }
 
-var _ Tabler = (Services)(nil)
+func (s *Service) Header() []string {
+	return Services{s}.Header()
+}
+
+func (s *Service) Rows() [][]string {
+	return Services{s}.Rows()
+}
+
+var (
+	_ Tabler = (Services)(nil)
+	_ Tabler = (*Service)(nil)
+)
 
 // ServiceDetail has more information related to specific environment.
 type ServiceDetail struct {
@@ -96,6 +107,19 @@ func (s ServiceDetails) Rows() [][]string {
 
 	return rows
 }
+
+func (s *ServiceDetail) Header() []string {
+	return ServiceDetails{s}.Header()
+}
+
+func (s *ServiceDetail) Rows() [][]string {
+	return ServiceDetails{s}.Rows()
+}
+
+var (
+	_ Tabler = (ServiceDetails)(nil)
+	_ Tabler = (*ServiceDetail)(nil)
+)
 
 // TempTCPPort is a temporary TCP port.
 type TempTCPPort struct {
