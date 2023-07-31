@@ -43,7 +43,7 @@ func NewCmdLog(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVar(&opts.deploymentID, "deployment-id", "", "Deployment ID")
 	cmd.Flags().StringVar(&opts.serviceID, "service-id", zctx.GetService().GetID(), "Service ID")
 	cmd.Flags().StringVar(&opts.serviceName, "service-name", zctx.GetService().GetName(), "Service Name")
-	cmd.Flags().StringVar(&opts.environmentID, "environment-id", zctx.GetEnvironment().GetID(), "Environment ID")
+	cmd.Flags().StringVar(&opts.environmentID, "env-id", zctx.GetEnvironment().GetID(), "Environment ID")
 	cmd.Flags().StringVarP(&opts.logType, "type", "t", logTypeRuntime, "Log type, runtime or build")
 	cmd.Flags().BoolVarP(&opts.watch, "watch", "w", false, "Watch logs")
 
@@ -163,7 +163,7 @@ func paramCheck(opts *Options) error {
 	}
 
 	if opts.environmentID == "" {
-		return errors.New("when deployment-id is not specified, environment-id is required")
+		return errors.New("when deployment-id is not specified, env-id is required")
 	}
 
 	return nil

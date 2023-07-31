@@ -46,7 +46,7 @@ func NewCmdMetric(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&opts.id, "id", zctx.GetService().GetID(), "Service ID")
 	cmd.Flags().StringVar(&opts.name, "name", zctx.GetService().GetName(), "Service name")
-	cmd.Flags().StringVar(&opts.environmentID, "environment-id", zctx.GetEnvironment().GetID(), "Environment ID")
+	cmd.Flags().StringVar(&opts.environmentID, "env-id", zctx.GetEnvironment().GetID(), "Environment ID")
 	cmd.Flags().StringVarP(&opts.metricType, "metric-type", "t", "", "Metric type, one of CPU, MEMORY, NETWORK, DISK")
 	cmd.Flags().UintVarP(&opts.hour, "hour", "H", 2, "Metric history in hour")
 
@@ -137,7 +137,7 @@ func paramCheck(opts *Options) error {
 	}
 
 	if opts.environmentID == "" {
-		return fmt.Errorf("--environment-id is required")
+		return fmt.Errorf("--env-id is required")
 	}
 
 	if opts.metricType == "" {

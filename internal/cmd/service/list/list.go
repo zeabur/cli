@@ -19,7 +19,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
 		Short:   "List environments",
-		Long:    `List environments, if environment-id is provided, list services in the environment in detail`,
+		Long:    `List environments, if env-id is provided, list services in the environment in detail`,
 		Args:    cobra.NoArgs,
 		Aliases: []string{"ls"},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -29,7 +29,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	ctx := f.Config.GetContext()
 
-	cmd.Flags().StringVar(&opts.environmentID, "environment-id", ctx.GetEnvironment().GetID(), "Environment ID")
+	cmd.Flags().StringVar(&opts.environmentID, "env-id", ctx.GetEnvironment().GetID(), "Environment ID")
 
 	return cmd
 }

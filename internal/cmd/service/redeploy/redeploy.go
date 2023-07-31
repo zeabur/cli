@@ -32,7 +32,7 @@ func NewCmdRedeploy(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&opts.id, "id", ctx.GetService().GetID(), "Service ID")
 	cmd.Flags().StringVar(&opts.name, "name", ctx.GetService().GetName(), "Service name")
-	cmd.Flags().StringVar(&opts.environmentID, "environment-id", ctx.GetEnvironment().GetID(), "Environment ID")
+	cmd.Flags().StringVar(&opts.environmentID, "env-id", ctx.GetEnvironment().GetID(), "Environment ID")
 	cmd.Flags().BoolVarP(&opts.skipConfirm, "yes", "y", false, "Skip confirmation")
 
 	return cmd
@@ -103,7 +103,7 @@ func checkParams(opts *Options) error {
 	}
 
 	if opts.environmentID == "" {
-		return fmt.Errorf("--environment-id is required")
+		return fmt.Errorf("--env-id is required")
 	}
 
 	return nil
