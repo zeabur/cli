@@ -8,8 +8,8 @@ const (
 	ZeaburOAuthAuthorizeURL = ZeaburOAuthServerURL + "/authorize"
 	ZeaburOAuthTokenURL     = ZeaburOAuthServerURL + "/token"
 
-	ZeaburOAuthCLIClientID     = "64880903673438f7c30bcc87"
-	ZeaburOAuthCLIClientSecret = "999999"
+	ZeaburOAuthCLIClientID     = "64c7559d0e6da9ed35dee1ff"
+	ZeaburOAuthCLIClientSecret = "630641"
 
 	OAuthLocalServerCallbackURL = "http://localhost/callback"
 )

@@ -1,5 +1,7 @@
 # Zeabur CLI
 
+> Note: Zeabur CLI is currently in beta, and we are still working on it. If you have any questions or suggestions, please feel free to contact us.
+
 ## Overview
 
 Core Features:
