@@ -7,13 +7,13 @@ import (
 	"github.com/zeabur/cli/internal/cmdutil"
 )
 
-func NewCmdVersion(f *cmdutil.Factory, version string) *cobra.Command {
+func NewCmdVersion(f *cmdutil.Factory, version, commit, date string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "version",
 		Short:   "Print the version number of Zeabur CLI",
 		Aliases: []string{"v", "ver"},
 		Run: func(cmd *cobra.Command, args []string) {
-			f.Log.Infof("Version: %s\n", version)
+			f.Printer.Table([]string{"Version", "Commit", "Date"}, [][]string{{version, commit, date}})
 		},
 	}
 

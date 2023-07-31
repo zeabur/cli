@@ -26,7 +26,7 @@ import (
 )
 
 // NewCmdRoot creates the root command
-func NewCmdRoot(f *cmdutil.Factory, version string) (*cobra.Command, error) {
+func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Command, error) {
 	cmd := &cobra.Command{
 		Use:   "zeabur <command> <subcommand> [flags]",
 		Short: "Zeabur CLI",
@@ -36,9 +36,6 @@ func NewCmdRoot(f *cmdutil.Factory, version string) (*cobra.Command, error) {
 			$ zeabur project list
 			$ zeabur service create
 		`),
-		Annotations: map[string]string{
-			"versionInfo": version,
-		},
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// set up logging
 			if f.Debug {
@@ -103,7 +100,7 @@ func NewCmdRoot(f *cmdutil.Factory, version string) (*cobra.Command, error) {
 		"automatically refresh token when it's expired, only works when the token is from browser(OAuth2)")
 
 	// Child commands
-	cmd.AddCommand(versionCmd.NewCmdVersion(f, version))
+	cmd.AddCommand(versionCmd.NewCmdVersion(f, version, commit, date))
 	cmd.AddCommand(authCmd.NewCmdAuth(f))
 	cmd.AddCommand(projectCmd.NewCmdProject(f))
 	cmd.AddCommand(serviceCmd.NewCmdService(f))
