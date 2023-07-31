@@ -6,10 +6,12 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
+	"github.com/zeabur/cli/internal/util"
 )
 
 type Options struct {
-	ProjectID string
+	id   string
+	name string
 }
 
 func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
@@ -24,13 +26,16 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&opts.ProjectID, "id", "", "Project ID")
+	zctx := f.Config.GetContext()
+
+	cmd.Flags().StringVar(&opts.name, "name", zctx.GetProject().GetName(), "Project Name")
+	cmd.Flags().StringVar(&opts.id, "id", zctx.GetProject().GetID(), "Project ID")
 
 	return cmd
 }
 
 func runDelete(f *cmdutil.Factory, opts *Options) error {
-	if err := paramCheck(opts); err == nil {
+	if err := checkParams(opts); err == nil {
 		return runDeleteNonInteractive(f, opts)
 	}
 
@@ -42,7 +47,19 @@ func runDelete(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runDeleteNonInteractive(f *cmdutil.Factory, opts *Options) error {
-	if err := deleteProject(f, opts.ProjectID); err != nil {
+	if err := checkParams(opts); err != nil {
+		return err
+	}
+
+	if opts.id == "" && opts.name != "" {
+		project, err := util.GetProjectByName(f.Config, f.ApiClient, opts.name)
+		if err != nil {
+			return err
+		}
+		opts.id = project.ID
+	}
+
+	if err := deleteProject(f, opts.id); err != nil {
 		return err
 	}
 
@@ -84,9 +101,9 @@ func deleteProject(f *cmdutil.Factory, projectID string) error {
 	return nil
 }
 
-func paramCheck(opts *Options) error {
-	if opts.ProjectID == "" {
-		return fmt.Errorf("please specify project id by --id")
+func checkParams(opts *Options) error {
+	if opts.name == "" && opts.id == "" {
+		return fmt.Errorf("please specify project by --name or --id")
 	}
 
 	return nil
