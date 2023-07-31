@@ -10,13 +10,13 @@ type Log struct {
 type Logs []*Log
 
 func (l Logs) Header() []string {
-	return []string{"Message", "Timestamp"}
+	return []string{"Timestamp", "Message"}
 }
 
 func (l Logs) Rows() [][]string {
 	rows := make([][]string, 0, len(l))
 	for _, log := range l {
-		rows = append(rows, []string{log.Message, log.Timestamp.Format(time.RFC3339)})
+		rows = append(rows, []string{log.Timestamp.Format(time.RFC3339), log.Message})
 	}
 	return rows
 }
