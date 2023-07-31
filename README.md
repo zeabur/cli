@@ -1,14 +1,16 @@
 # Zeabur CLI
 
+[Zeabur](https://zeabur.com/)'s official command line tool
+
 > Note: Zeabur CLI is currently in beta, and we are still working on it. If you have any questions or suggestions, please feel free to contact us.
 
-## Overview
+## How cool it is
 
-Core Features:
-
-1. Login with browser or token
-2. Manage your Zeabur resources with CLI
-3. The design of the context makes it easier for you to manage services.
+1. Manage your Zeabur resources with CLI
+2. Login with browser or token
+3. Intuitive and easy to use
+4. The design of the context makes it easier for you to manage services.
+5. The seamless integration of interactive and non-interactive modes.
 
 ## Quick Start
 
@@ -34,6 +36,8 @@ Or you can use token to login:
 Zeabur CLI will open a browser window and ask you to login with your Zeabur account.
 
 ### 3. Manage your resources(Interactive mode, recommended)
+
+[![asciicast](https://asciinema.org/a/Olf52EUOCrKU6NGJMbYTw24SL.svg)](https://asciinema.org/a/Olf52EUOCrKU6NGJMbYTw24SL)
 
 ```shell
 # list all projects
@@ -112,7 +116,7 @@ Note: you can add `-i=false` to all commands to disable interactive mode.
 5. More commands
 
 ```shell
-./zeabur help 
+./zeabur <command> --help
 ```
 
 ## Development Guide
