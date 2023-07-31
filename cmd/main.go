@@ -9,14 +9,19 @@ import (
 	"github.com/zeabur/cli/pkg/log"
 	"github.com/zeabur/cli/pkg/printer"
 	"github.com/zeabur/cli/pkg/prompt"
+	"time"
+)
+
+var (
+	version = "dev"
+	commit  = "none"
+	date    = time.Now().Format(time.RFC3339)
 )
 
 func main() {
 	factory := initFactory()
 
-	// todo: get version from build
-	version := "0.0.1"
-	rootCmd, err := root.NewCmdRoot(factory, version)
+	rootCmd, err := root.NewCmdRoot(factory, version, commit, date)
 	if err != nil {
 		panic(err)
 	}

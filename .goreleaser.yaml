@@ -22,8 +22,6 @@ archives:
     format: binary # don't use archive format, just binary
 checksum:
   name_template: 'checksums.txt'
-snapshot:
-  name_template: "{{ incpatch .Version }}-next"
 changelog:
   sort: asc
   filters:
