@@ -67,9 +67,12 @@ Zeabur CLI will open a browser window and ask you to login with your Zeabur acco
 
 Non-interactive mode is useful when you want to use Zeabur CLI in a script(such as CI/CD pipeline, etc.)
 
+Note: you can add `-i=false` to all commands to disable interactive mode. 
+**In fact, if the parameters are complete, it's same whether you use interactive mode or not.**
+
 ```shell
 # list all projects
-./zeabur project ls
+./zeabur project ls -i=false
 
 # set project context, the following commands will use this project context
 ./zeabur context set project --name <project-name>
@@ -89,19 +92,19 @@ Non-interactive mode is useful when you want to use Zeabur CLI in a script(such 
 
 # restart the service
 # if service context is set, you can omit the service name; so does environment context
-./zeabur service restart --env-id <env-id> --name <service-name> 
+./zeabur service restart --env-id <env-id> --service-name <service-name>
 # or you can use service id
-# ./zeabur service restart --env-id <env-id> --id <service-id>
+# ./zeabur service restart --env-id <env-id> --service-id <service-id>
 
 # get the latest deployment info(if contexts are set, you can omit the parameters)
-./zeabur deployment get --env-id <env-id> --name <service-name>
+./zeabur deployment get --env-id <env-id> --service-name <service-name>
 # or you can use service id
-# ./zeabur deployment get --env-id <env-id> --id <service-id>
+# ./zeabur deployment get --env-id <env-id> --service-id <service-id>
 
 # get the latest deployment log(runtime)(service id is also supported)
-./zeabur deployment log -t=runtime --env-id <env-id> --name <service-name>
+./zeabur deployment log -t=runtime --env-id <env-id> --service-name <service-name>
 # get the latest deployment log(build)(service id is also supported)
-./zeabur deployment log -t=build --env-id <env-id> --name <service-name>
+./zeabur deployment log -t=build --env-id <env-id> --service-name <service-name>
 ```
 
 5. More commands
