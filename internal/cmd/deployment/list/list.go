@@ -33,7 +33,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&opts.serviceID, "service-id", zctx.GetService().GetID(), "Service ID")
 	cmd.Flags().StringVar(&opts.serviceName, "service-name", zctx.GetService().GetName(), "Service Name")
-	cmd.Flags().StringVar(&opts.environmentID, "environment-id", zctx.GetEnvironment().GetID(), "Environment ID")
+	cmd.Flags().StringVar(&opts.environmentID, "env-id", zctx.GetEnvironment().GetID(), "Environment ID")
 
 	return cmd
 }

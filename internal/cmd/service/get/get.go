@@ -33,7 +33,7 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&opts.id, "id", ctx.GetService().GetID(), "Service ID")
 	cmd.Flags().StringVar(&opts.name, "name", ctx.GetService().GetName(), "Service name")
-	cmd.Flags().StringVar(&opts.environmentID, "environment-id", ctx.GetEnvironment().GetID(), "Environment ID")
+	cmd.Flags().StringVar(&opts.environmentID, "env-id", ctx.GetEnvironment().GetID(), "Environment ID")
 
 	return cmd
 }

@@ -26,8 +26,8 @@ func NewCmdExpose(f *cmdutil.Factory) *cobra.Command {
 		Long: `Expose a service temporarily, default 3600 seconds.
 example:
       zeabur service expose # cli will try to get service from context or prompt to select one
-	  zeabur service expose --id xxxxx --environment-id xxxx # use id and environment-id to expose service
-      zeabur service expose --name xxxxx --environment-id xxxx # if project context is set, use name, environment-id to expose service
+	  zeabur service expose --id xxxxx --env-id xxxx # use id and env-id to expose service
+      zeabur service expose --name xxxxx --env-id xxxx # if project context is set, use name, env-id to expose service
 `,
 		PreRunE: util.NeedProjectContext(f),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -39,7 +39,7 @@ example:
 
 	cmd.Flags().StringVar(&opts.id, "id", ctx.GetService().GetID(), "Service ID")
 	cmd.Flags().StringVar(&opts.name, "name", ctx.GetService().GetName(), "Service name")
-	cmd.Flags().StringVar(&opts.environmentID, "environment-id", ctx.GetEnvironment().GetID(), "Service environment ID")
+	cmd.Flags().StringVar(&opts.environmentID, "env-id", ctx.GetEnvironment().GetID(), "Service environment ID")
 
 	return cmd
 }
@@ -87,7 +87,7 @@ func paramCheck(opts *Options) error {
 	}
 
 	if opts.environmentID == "" {
-		return fmt.Errorf("please specify --environment-id")
+		return fmt.Errorf("please specify --env-id")
 	}
 
 	return nil
