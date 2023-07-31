@@ -18,8 +18,8 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	}
 	cmd := &cobra.Command{
 		Use:     "list",
-		Short:   "List environments",
-		Long:    `List environments, if env-id is provided, list services in the environment in detail`,
+		Short:   "List services",
+		Long:    `List services, if env-id is provided, list services in the environment in detail`,
 		Args:    cobra.NoArgs,
 		Aliases: []string{"ls"},
 		RunE: func(cmd *cobra.Command, args []string) error {
