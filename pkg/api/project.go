@@ -108,3 +108,20 @@ func (c *client) CreateProject(ctx context.Context, name string) (*model.Project
 
 	return &mutation.CreateProject, nil
 }
+
+// Delete a project with the given id
+func (c *client) DeleteProject(ctx context.Context, id string) error {
+	var mutation struct {
+		DeleteProject bool `graphql:"deleteProject(_id: $id)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{
+		"id": ObjectID(id),
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
