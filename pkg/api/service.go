@@ -236,3 +236,35 @@ func (c *client) ExposeService(ctx context.Context, id string, environmentID str
 
 	return &mutation.ExposeService, nil
 }
+
+func (c *client) GetMarketplaceItems(ctx context.Context) ([]model.MarketplaceItem, error) {
+	var query struct {
+		MarketplaceItems []model.MarketplaceItem `graphql:"marketplaceItems"`
+	}
+
+	err := c.Query(ctx, &query, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return query.MarketplaceItems, nil
+}
+
+func (c *client) CreateServiceFromMarketplace(ctx context.Context, projectID string, name string, itemCode string) (*model.Service, error) {
+	var mutation struct {
+		CreateServiceFromMarketplace model.Service `graphql:"createServiceFromMarketplace(projectID: $projectID, name: $name, itemCode: $itemCode)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{
+		"projectID": ObjectID(projectID),
+		"name":      name,
+		"itemCode":  itemCode,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &mutation.CreateServiceFromMarketplace, nil
+}

@@ -4,6 +4,7 @@ package service
 import (
 	"github.com/spf13/cobra"
 
+	serviceDeployCmd "github.com/zeabur/cli/internal/cmd/service/deploy"
 	serviceExposeCmd "github.com/zeabur/cli/internal/cmd/service/expose"
 	serviceGetCmd "github.com/zeabur/cli/internal/cmd/service/get"
 	serviceListCmd "github.com/zeabur/cli/internal/cmd/service/list"
@@ -29,6 +30,7 @@ func NewCmdService(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(serviceRestartCmd.NewCmdRestart(f))
 	cmd.AddCommand(serviceRedeployCmd.NewCmdRedeploy(f))
 	cmd.AddCommand(serviceSuspendCmd.NewCmdSuspend(f))
+	cmd.AddCommand(serviceDeployCmd.NewCmdDeploy(f))
 
 	return cmd
 }
