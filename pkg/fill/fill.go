@@ -9,13 +9,16 @@ import (
 type ParamFiller interface {
 	// Project fills the projectID if it is empty by asking user to select a project
 	Project(projectID *string) (changed bool, err error)
+	// ProjectByName makes sure either projectID or projectName is not empty
+	// if necessary, it will ask user to select a project first
+	ProjectByName(projectID, projectName *string) (changed bool, err error)
 	// Environment fills the environmentID if it is empty by asking user to select an environment,
 	// when the projectID is not empty, it will ask user to select a project first
 	Environment(projectID, environmentID *string) (changed bool, err error)
 	// Service fills the serviceID if it is empty by asking user to select a service,
 	// when the projectID is not empty, it will ask user to select a project first
 	Service(projectID, serviceID *string) (changed bool, err error)
-	// ServiceByName fills the serviceID or serviceName if they are empty by asking user to select a service,
+	// ServiceByName makes sure either serviceID or serviceName is not empty by asking user to select a service,
 	// if necessary, it will ask user to select a project first
 	ServiceByName(projectCtx zcontext.Context, serviceID, serviceName *string) (changed bool, err error)
 	// ServiceWithEnvironment fills the serviceID and environmentID if they are empty by asking user to select a service and an environment,
@@ -48,6 +51,26 @@ func (f *paramFiller) Project(projectID *string) (changed bool, err error) {
 	}
 
 	*projectID = project.ID
+
+	return true, nil
+}
+
+func (f *paramFiller) ProjectByName(projectID, projectName *string) (changed bool, err error) {
+	if err = paramNilCheck(projectID, projectName); err != nil {
+		return false, err
+	}
+
+	if *projectID != "" || *projectName != "" {
+		return false, nil
+	}
+
+	_, project, err := f.selector.SelectProject()
+	if err != nil {
+		return false, err
+	}
+
+	*projectID = project.ID
+	*projectName = project.Name
 
 	return true, nil
 }
