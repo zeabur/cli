@@ -21,15 +21,13 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 		Use:     "delete",
 		Short:   "Delete project",
 		Aliases: []string{"del"},
+		PreRunE: util.DefaultIDNameByContext(f.Config.GetContext().GetProject(), &opts.id, &opts.name),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDelete(f, opts)
 		},
 	}
 
-	zctx := f.Config.GetContext()
-
-	cmd.Flags().StringVar(&opts.name, "name", zctx.GetProject().GetName(), "Project Name")
-	cmd.Flags().StringVar(&opts.id, "id", zctx.GetProject().GetID(), "Project ID")
+	util.AddProjectParam(cmd, &opts.id, &opts.name)
 
 	return cmd
 }

@@ -15,17 +15,16 @@ type Options struct {
 	name          string
 	environmentID string
 	metricType    string
-	projectID     string
 	hour          uint
 }
 
 func NewCmdMetric(f *cmdutil.Factory) *cobra.Command {
-	opts := &Options{
-		projectID: f.Config.GetContext().GetProject().GetID(),
-	}
+	opts := &Options{}
+
+	zctx := f.Config.GetContext()
 
 	cmd := &cobra.Command{
-		Use:   "metric <metric-type>",
+		Use:   "metric [CPU|MEMORY]",
 		Short: "Show metric of a service",
 		Long:  `Show metric of a service`,
 		Args:  cobra.ExactArgs(1),
@@ -35,18 +34,19 @@ func NewCmdMetric(f *cmdutil.Factory) *cobra.Command {
 			//string(model.MetricTypeNetwork), // not supported yet
 			//string(model.MetricTypeDisk),	// not supported yet
 		},
-		PreRunE: util.NeedProjectContext(f),
+		PreRunE: util.RunEChain(
+			util.NeedProjectContext(f),
+			util.DefaultIDNameByContext(zctx.GetService(), &opts.id, &opts.name),
+			util.DefaultIDByContext(zctx.GetEnvironment(), &opts.environmentID),
+		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.metricType = args[0]
 			return runMetric(f, opts)
 		},
 	}
 
-	zctx := f.Config.GetContext()
-
-	cmd.Flags().StringVar(&opts.id, "id", zctx.GetService().GetID(), "Service ID")
-	cmd.Flags().StringVar(&opts.name, "name", zctx.GetService().GetName(), "Service name")
-	cmd.Flags().StringVar(&opts.environmentID, "env-id", zctx.GetEnvironment().GetID(), "Environment ID")
+	util.AddServiceParam(cmd, &opts.id, &opts.name)
+	util.AddEnvOfServiceParam(cmd, &opts.environmentID)
 	cmd.Flags().StringVarP(&opts.metricType, "metric-type", "t", "", "Metric type, one of CPU, MEMORY, NETWORK, DISK")
 	cmd.Flags().UintVarP(&opts.hour, "hour", "H", 2, "Metric history in hour")
 
