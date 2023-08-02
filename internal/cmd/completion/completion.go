@@ -19,7 +19,7 @@ const (
 
 func NewCmdCompletion(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "completion <shell>",
+		Use:                   "completion [bash|zsh|fish|powershell]",
 		Short:                 "Generate completion script",
 		DisableFlagsInUseLine: true,
 		ValidArgs:             []string{ShellBash, ShellZsh, ShellFish, ShellPowerShell},

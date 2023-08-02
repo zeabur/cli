@@ -15,10 +15,8 @@ import (
 // NewCmdProject creates the project command
 func NewCmdProject(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "project <command>",
+		Use:   "project",
 		Short: "Manage projects",
-		//todo: is this alias too short?
-		Aliases: []string{"p"},
 	}
 
 	cmd.AddCommand(projectGetCmd.NewCmdGet(f))

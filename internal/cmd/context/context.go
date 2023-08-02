@@ -14,7 +14,7 @@ import (
 // NewCmdContext creates the context command
 func NewCmdContext(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "context <command>",
+		Use:     "context",
 		Short:   "Manage contexts",
 		Aliases: []string{"ctx"},
 	}

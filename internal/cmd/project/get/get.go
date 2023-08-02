@@ -6,20 +6,15 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zeabur/cli/internal/cmdutil"
-	"github.com/zeabur/cli/pkg/model"
 )
 
 type Options struct {
-	ID string
-
-	OwnerName   string
-	ProjectName string
+	id   string
+	name string
 }
 
 func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
-	opts := &Options{
-		OwnerName: f.Config.GetUsername(),
-	}
+	opts := &Options{}
 
 	cmd := &cobra.Command{
 		Use:   "get",
@@ -32,8 +27,8 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 
 	projectCtx := f.Config.GetContext().GetProject()
 
-	cmd.Flags().StringVar(&opts.ID, "id", projectCtx.GetID(), "Project ID")
-	cmd.Flags().StringVarP(&opts.ProjectName, "name", "n", projectCtx.GetName(), "Project name")
+	cmd.Flags().StringVar(&opts.id, "id", projectCtx.GetID(), "Project id")
+	cmd.Flags().StringVarP(&opts.name, "name", "n", projectCtx.GetName(), "Project name")
 
 	return cmd
 }
@@ -50,7 +45,7 @@ func runGet(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runGetInteractive(f *cmdutil.Factory, opts *Options) error {
-	if _, err := f.ParamFiller.Project(&opts.ID); err != nil {
+	if _, err := f.ParamFiller.ProjectByName(&opts.id, &opts.name); err != nil {
 		return err
 	}
 
@@ -62,24 +57,22 @@ func runGetNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
-	project, err := f.ApiClient.GetProject(context.Background(), opts.ID, opts.OwnerName, opts.ProjectName)
+	ownerName := f.Config.GetUsername()
+
+	project, err := f.ApiClient.GetProject(context.Background(), opts.id, ownerName, opts.name)
 	if err != nil {
 		return fmt.Errorf("failed to get project: %w", err)
 	}
 
-	logProject(f, project)
+	f.Printer.Table(project.Header(), project.Rows())
 
 	return nil
 }
 
 func paramCheck(opts *Options) error {
-	if opts.ID == "" && opts.ProjectName == "" {
+	if opts.id == "" && opts.name == "" {
 		return fmt.Errorf("please specify --id or --name")
 	}
 
 	return nil
-}
-
-func logProject(f *cmdutil.Factory, p *model.Project) {
-	f.Printer.Table(p.Header(), p.Rows())
 }
