@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/spf13/cobra"
+	"github.com/zeabur/cli/internal/util"
 
 	"github.com/zeabur/cli/internal/cmdutil"
 )
@@ -17,18 +18,16 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}
 
 	cmd := &cobra.Command{
-		Use:   "get",
-		Short: "Get project",
-		Long:  "Get project, use --id or --name to specify the project",
+		Use:     "get",
+		Short:   "Get project",
+		Long:    "Get project, use --id or --name to specify the project",
+		PreRunE: util.DefaultIDNameByContext(f.Config.GetContext().GetProject(), &opts.id, &opts.name),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGet(f, opts)
 		},
 	}
 
-	projectCtx := f.Config.GetContext().GetProject()
-
-	cmd.Flags().StringVar(&opts.id, "id", projectCtx.GetID(), "Project id")
-	cmd.Flags().StringVarP(&opts.name, "name", "n", projectCtx.GetName(), "Project name")
+	util.AddProjectParam(cmd, &opts.id, &opts.name)
 
 	return cmd
 }

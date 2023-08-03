@@ -10,8 +10,7 @@ import (
 )
 
 type Options struct {
-	id string // use id to specify service
-
+	id   string // use id or name to specify service
 	name string
 
 	environmentID string // environmentID is required
@@ -19,6 +18,7 @@ type Options struct {
 
 func NewCmdExpose(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}
+	zctx := f.Config.GetContext()
 
 	cmd := &cobra.Command{
 		Use:   "expose",
@@ -29,17 +29,18 @@ example:
 	  zeabur service expose --id xxxxx --env-id xxxx # use id and env-id to expose service
       zeabur service expose --name xxxxx --env-id xxxx # if project context is set, use name, env-id to expose service
 `,
-		PreRunE: util.NeedProjectContext(f),
+		PreRunE: util.RunEChain(
+			util.NeedProjectContext(f),
+			util.DefaultIDNameByContext(zctx.GetService(), &opts.id, &opts.name),
+			util.DefaultIDByContext(zctx.GetEnvironment(), &opts.environmentID),
+		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runExpose(f, opts)
 		},
 	}
 
-	ctx := f.Config.GetContext()
-
-	cmd.Flags().StringVar(&opts.id, "id", ctx.GetService().GetID(), "Service ID")
-	cmd.Flags().StringVar(&opts.name, "name", ctx.GetService().GetName(), "Service name")
-	cmd.Flags().StringVar(&opts.environmentID, "env-id", ctx.GetEnvironment().GetID(), "Service environment ID")
+	util.AddServiceParam(cmd, &opts.id, &opts.name)
+	util.AddEnvOfServiceParam(cmd, &opts.environmentID)
 
 	return cmd
 }

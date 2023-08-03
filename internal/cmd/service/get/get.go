@@ -20,20 +20,23 @@ type Options struct {
 
 func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}
+	zctx := f.Config.GetContext()
+
 	cmd := &cobra.Command{
-		Use:     "get",
-		Short:   "Get a service, if environment is specified, get the service details in the environment",
-		PreRunE: util.NeedProjectContext(f),
+		Use:   "get",
+		Short: "Get a service, if environment is specified, get the service details in the environment",
+		PreRunE: util.RunEChain(
+			util.NeedProjectContext(f),
+			util.DefaultIDNameByContext(zctx.GetService(), &opts.id, &opts.name),
+			util.DefaultIDByContext(zctx.GetEnvironment(), &opts.environmentID),
+		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGet(f, opts)
 		},
 	}
 
-	ctx := f.Config.GetContext()
-
-	cmd.Flags().StringVar(&opts.id, "id", ctx.GetService().GetID(), "Service ID")
-	cmd.Flags().StringVar(&opts.name, "name", ctx.GetService().GetName(), "Service name")
-	cmd.Flags().StringVar(&opts.environmentID, "env-id", ctx.GetEnvironment().GetID(), "Environment ID")
+	util.AddServiceParam(cmd, &opts.id, &opts.name)
+	util.AddEnvOfServiceParam(cmd, &opts.environmentID)
 
 	return cmd
 }

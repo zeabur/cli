@@ -4,8 +4,8 @@ package set
 import (
 	"context"
 	"fmt"
-
 	"github.com/MakeNowJust/heredoc"
+
 	"github.com/spf13/cobra"
 
 	"github.com/zeabur/cli/internal/cmdutil"
@@ -36,13 +36,12 @@ func NewCmdSet(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}
 
 	cmd := &cobra.Command{
-		Use:   "set <context-type>",
+		Use:   "set [project|env|service]",
 		Short: "Set Contexts(project, environment, service), either by ID or by name",
 		Long: heredoc.Doc(`Set Contexts either by ID or by name,
 			For example:
 				zeabur context set project --id=1234567890
 				zeabur context set proj --id=1234567890
-				zeabur context set environment --name=dev
 				zeabur context set env --id=1234567890
 				zeabur context set service --name=svc1
 				zeabur context set svc --name=svc1`,

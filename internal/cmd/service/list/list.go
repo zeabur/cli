@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
+	"github.com/zeabur/cli/internal/util"
 )
 
 type Options struct {
@@ -16,20 +17,24 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{
 		projectID: f.Config.GetContext().GetProject().GetID(),
 	}
+	ctx := f.Config.GetContext()
+
 	cmd := &cobra.Command{
 		Use:     "list",
 		Short:   "List services",
 		Long:    `List services, if env-id is provided, list services in the environment in detail`,
 		Args:    cobra.NoArgs,
 		Aliases: []string{"ls"},
+		PreRunE: util.RunEChain(
+			util.NeedProjectContext(f),
+			util.DefaultIDByContext(ctx.GetEnvironment(), &opts.environmentID),
+		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runList(f, opts)
 		},
 	}
 
-	ctx := f.Config.GetContext()
-
-	cmd.Flags().StringVar(&opts.environmentID, "env-id", ctx.GetEnvironment().GetID(), "Environment ID")
+	util.AddEnvOfServiceParam(cmd, &opts.environmentID)
 
 	return cmd
 }
