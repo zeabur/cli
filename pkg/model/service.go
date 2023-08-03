@@ -178,3 +178,24 @@ func (m MetricType) WithMeasureUnit(v float64) string {
 func formatFloat64(v float64) string {
 	return strconv.FormatFloat(v, 'f', 6, 64)
 }
+
+type ServiceTemplate string
+
+const (
+	ServiceTemplateGit         ServiceTemplate = "GIT"
+	ServiceTemplateMarketplace ServiceTemplate = "MARKETPLACE"
+)
+
+type CreateServiceInput struct {
+	ProjectID string          `json:"projectID" graphql:"projectID"`
+	Name      string          `json:"name" graphql:"name"`
+	Template  ServiceTemplate `graphql:"template"`
+}
+
+type MarketplaceItem struct {
+	Code        string `graphql:"code"`
+	Description string `graphql:"description"`
+	IconURL     string `graphql:"iconURL"`
+	Name        string `graphql:"name"`
+	NetworkType string `graphql:"networkType"`
+}
