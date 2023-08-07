@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+
 	"github.com/hasura/go-graphql-client/pkg/jsonutil"
 	"github.com/zeabur/cli/pkg/model"
 )
@@ -27,6 +28,8 @@ func (c *client) getRuntimeLogsByDeploymentID(ctx context.Context, deploymentID 
 	err := c.Query(ctx, &query, V{
 		"deploymentID": ObjectID(deploymentID),
 	})
+
+	fmt.Println("query", query)
 
 	if err != nil {
 		return nil, err
@@ -78,7 +81,7 @@ func (c *client) WatchRuntimeLogs(ctx context.Context, deploymentID, serviceID, 
 func (c *client) WatchBuildLogs(ctx context.Context, deploymentID string) (<-chan model.Log, error) {
 	logs := make(chan model.Log, 100)
 	type query struct {
-		Log model.Log `graphql:"newBuildLogReceived(deploymentID: $deploymentID)"`
+		Log model.Log `graphql:"buildLogReceived(deploymentID: $deploymentID)"`
 	}
 
 	q := query{}
