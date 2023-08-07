@@ -36,9 +36,16 @@ release:
     - glob: "README.md"
 
 brews:
-  -
-    repository:
+  - repository:
       owner: zeabur
       name: homebrew-tap
     homepage: "https://zeabur.com"
     description: "Zeabur's official command line tool"
+
+scoop:
+  url_template: "https://github.com/zeabur/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+  bucket:
+    owner: zeabur
+    name: cli
+  homepage: "https://zeabur.com"
+  description: "Zeabur's official command line tool"

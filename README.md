@@ -16,26 +16,33 @@
 
 ### 1. Install
 
-> Using script
+### Using Script
 
-* Linux/macOS:
+> Linux/macOS:
 
 ```bash
 curl -sSL https://dub.sh/zeabur | sh
 ```
 
-* Windows
+> Windows
 
 ```powershell
 iwr -useb https://dub.sh/zb-win | iex
 ```
 
-#### **(then restart your powershell)**
+**(then restart your powershell)**
 
-> HomeBrew (Linux/macOS)
+### HomeBrew (Linux/macOS)
 
 ```bash
-homebrew install zeabur/tap/cli
+brew install zeabur/tap/cli
+```
+
+### Scoop (Windows)
+
+```powershell
+scoop bucket add zeabur https://github.com/zeabur/cli
+scoop install zeabur
 ```
 
 ### 2. Login
