@@ -2,40 +2,42 @@ name: goreleaser
 
 on:
   push:
-    # run only against tags
     tags:
-      - 'v*'
+      - "v*"
+
 env:
   TAG: ${{ github.ref_name }}
 
 permissions:
   contents: write
   packages: write
-  # issues: write
 
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
+    permissions: write-all
+
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
       - run: git fetch --force --tags
+
       - uses: actions/setup-go@v4
         with:
-          go-version: '>=1.20'
+          go-version: ">=1.20"
           cache: true
+
       - name: install mockery
         run: go install github.com/vektra/mockery/v2@v2.32.0
+      
       - uses: goreleaser/goreleaser-action@v4
         with:
-          # either 'goreleaser' (default) or 'goreleaser-pro':
           distribution: goreleaser
           version: latest
           args: release --clean
+
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Your GoReleaser Pro key, if you are using the 'goreleaser-pro'
-          # distribution:
-          # GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
+          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
           TAG: ${{ env.TAG }}

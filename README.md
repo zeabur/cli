@@ -16,10 +16,14 @@
 
 ### 1. Install
 
-* Linux/macOS: 
-    ```bash 
-    curl -sSL https://raw.githubusercontent.com/zeabur/cli/main/hack/install.sh | sh
-    ```
+> Using script
+
+* Linux/macOS:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/zeabur/cli/main/hack/install.sh | sh
+```
+
 * Windows: go to [release page](https://github.com/zeabur/cli/releases) to download the latest version.
 
 (TIP: you can put the binary file in the PATH environment variable to use it conveniently.)
