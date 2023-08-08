@@ -5,17 +5,20 @@ set -e
 # Function to detect the operating system
 function get_os() {
     uname_out="$(uname -s)"
+
     case "${uname_out}" in
         Linux*)     os=linux;;
         Darwin*)    os=darwin;;
         *)          os=unknown
     esac
+
     echo "${os}"
 }
 
 # Function to detect the architecture
 function get_arch() {
     arch=$(uname -m)
+
     case "${arch}" in
         x86_64)     arch=amd64;;
         i*86)       arch=386;;
@@ -24,19 +27,22 @@ function get_arch() {
         arm64)      arch=arm64;;
         *)          arch=unknown
     esac
+
     echo "${arch}"
 }
 
 function getLatestReleaseVersion() {
   if [ -n "${GITHUB_TOKEN}" ]; then
-      AUTH_HEADER="Authorization: Bearer ${GITHUB_TOKEN}"
+    AUTH_HEADER="Authorization: Bearer ${GITHUB_TOKEN}"
   fi
 
   # like "v1.2.3"
   latestVersion=$(curl -H "${AUTH_HEADER}" -s https://api.github.com/repos/zeabur/cli/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+
   if [ -z "$latestVersion" ]; then
-      echo "unknown"
+    echo "unknown"
   fi
+
   echo "${latestVersion}"
 }
 
@@ -75,10 +81,13 @@ function downloadZeabur() {
   # 1. download the release and rename it to "zeabur"
   # 2. count the download count of the release
   fullReleaseUrl="https://github.com/zeabur/cli/releases/download/${latestVersion}/${binary}"
+
   echo "Downloading Zeabur CLI from: $fullReleaseUrl"
   # use -L to follow redirects
+
   curl -L -o zeabur $fullReleaseUrl
-  echo "Zeabur CLI downloaded completed\n"
+
+  echo "Zeabur CLI downloaded completed"
 
   # grant execution rights
   chmod +x zeabur
@@ -92,28 +101,35 @@ function showZeaburHelp() {
 
 # Determine the operating system and architecture
 OS=$(get_os)
+
 if [ "${OS}" == "unknown" ]; then
     echo "This operating system is not supported by the install script."
     exit 1
 fi
+
 echo "Operating system: ${OS}"
 
 ARCH=$(get_arch)
+
 if [ "${ARCH}" == "unknown" ]; then
     echo "This architecture is not supported by the install script."
     exit 1
 fi
+
 echo "Architecture: ${ARCH}"
 
 # Latest version of the binary with "v" prefix (change this to the desired version)
 latestVersion=$(getLatestReleaseVersion)
+
 if [ "${latestVersion}" == "unknown" ]; then
     echo "Could not find latest version"
     exit 1
 fi
+
 echo "Latest version: ${latestVersion}"
 
 binary=$(get_binary_name "${OS}" "${ARCH}" "${latestVersion}")
+
 if [ "${binary}" == "unknown" ]; then
     echo "No pre-built binary available for ${OS}_${ARCH}."
     exit 1
@@ -123,3 +139,4 @@ downloadZeabur "${latestVersion}" "${binary}"
 
 showZeaburHelp
 
+sudo mv zeabur /usr/local/bin

@@ -16,24 +16,46 @@
 
 ### 1. Install
 
-* Linux/macOS: 
-    ```bash 
-    curl -sSL https://raw.githubusercontent.com/zeabur/cli/main/hack/install.sh | sh
-    ```
-* Windows: go to [release page](https://github.com/zeabur/cli/releases) to download the latest version.
+### Using Script
 
-(TIP: you can put the binary file in the PATH environment variable to use it conveniently.)
+> Linux/macOS:
+
+```bash
+curl -sSL https://dub.sh/zeabur | sh
+```
+
+> Windows
+
+```powershell
+iwr -useb https://dub.sh/zb-win | iex
+```
+
+**(then restart your powershell)**
+
+### HomeBrew (Linux/macOS)
+
+```bash
+brew install zeabur/tap/cli
+```
+
+### Scoop (Windows)
+
+```powershell
+scoop bucket add zeabur https://github.com/zeabur/cli
+scoop install zeabur
+```
 
 ### 2. Login
 
 If you can open the browser:
+
 ```shell
-./zeabur auth login
+zeabur auth login
 ```
 
 Or you can use token to login:
 ```shell
-./zeabur auth login --token <your-token>
+zeabur auth login --token <your-token>
 ```
 
 Zeabur CLI will open a browser window and ask you to login with your Zeabur account.
@@ -44,32 +66,32 @@ Zeabur CLI will open a browser window and ask you to login with your Zeabur acco
 
 ```shell
 # list all projects
-./zeabur project ls
+zeabur project ls
 
 # set project context, the following commands will use this project context
 # you can use arrow keys to select the project
-./zeabur context set project
+zeabur context set project
 
 # list all services in the project
-./zeabur service ls
+zeabur service ls
 
 # set service context(optional)
-./zeabur context set service
+zeabur context set service
 
 # set environment context(optional)
-./zeabur context set env
+zeabur context set env
 
 # restart the service
-./zeabur service restart
+zeabur service restart
 
 # get the latest deployment info
-./zeabur deployment get
+zeabur deployment get
 
 # get the latest deployment log(runtime)
-./zeabur deployment log -t=runtime
+zeabur deployment log -t=runtime
 
 # get the latest deployment log(build)
-./zeabur deployment log -t=build
+zeabur deployment log -t=build
 ```
 
 ### 4. Manage your resources(Non-interactive mode)
@@ -81,45 +103,45 @@ Note: you can add `-i=false` to all commands to disable interactive mode.
 
 ```shell
 # list all projects
-./zeabur project ls -i=false
+zeabur project ls -i=false
 
 # set project context, the following commands will use this project context
-./zeabur context set project --name <project-name>
+zeabur context set project --name <project-name>
 # or you can use project id
-# ./zeabur context set project --id <project-id>
+# zeabur context set project --id <project-id>
 
 # list all services in the project
-./zeabur service ls
+zeabur service ls
 
 # set service context(optional)
-./zeabur context set service --name <service-name>
+zeabur context set service --name <service-name>
 # or you can use service id
-# ./zeabur context set service --id <service-id>
+# zeabur context set service --id <service-id>
 
 # set environment context(optional)(only --id is supported)
-./zeabur context set env --id <env-id>
+zeabur context set env --id <env-id>
 
 # restart the service
 # if service context is set, you can omit the service name; so does environment context
-./zeabur service restart --env-id <env-id> --service-name <service-name>
+zeabur service restart --env-id <env-id> --service-name <service-name>
 # or you can use service id
-# ./zeabur service restart --env-id <env-id> --service-id <service-id>
+# zeabur service restart --env-id <env-id> --service-id <service-id>
 
 # get the latest deployment info(if contexts are set, you can omit the parameters)
-./zeabur deployment get --env-id <env-id> --service-name <service-name>
+zeabur deployment get --env-id <env-id> --service-name <service-name>
 # or you can use service id
-# ./zeabur deployment get --env-id <env-id> --service-id <service-id>
+# zeabur deployment get --env-id <env-id> --service-id <service-id>
 
 # get the latest deployment log(runtime)(service id is also supported)
-./zeabur deployment log -t=runtime --env-id <env-id> --service-name <service-name>
+zeabur deployment log -t=runtime --env-id <env-id> --service-name <service-name>
 # get the latest deployment log(build)(service id is also supported)
-./zeabur deployment log -t=build --env-id <env-id> --service-name <service-name>
+zeabur deployment log -t=build --env-id <env-id> --service-name <service-name>
 ```
 
 5. More commands
 
 ```shell
-./zeabur <command> --help
+zeabur <command> --help
 ```
 
 ## Development Guide
