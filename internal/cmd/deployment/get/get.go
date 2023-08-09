@@ -24,7 +24,7 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "get",
 		Short:   "Get deployment, if deployment-id is not specified, use serviceID/serviceName and environmentID to get the deployment",
-		PreRunE: util.NeedProjectContext(f),
+		PreRunE: util.NeedProjectContextWhenNonInteractive(f),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGet(f, opts)
 		},

@@ -26,7 +26,7 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 		Use:   "get",
 		Short: "Get a service, if environment is specified, get the service details in the environment",
 		PreRunE: util.RunEChain(
-			util.NeedProjectContext(f),
+			util.NeedProjectContextWhenNonInteractive(f),
 			util.DefaultIDNameByContext(zctx.GetService(), &opts.id, &opts.name),
 			util.DefaultIDByContext(zctx.GetEnvironment(), &opts.environmentID),
 		),

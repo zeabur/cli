@@ -30,7 +30,7 @@ example:
       zeabur service expose --name xxxxx --env-id xxxx # if project context is set, use name, env-id to expose service
 `,
 		PreRunE: util.RunEChain(
-			util.NeedProjectContext(f),
+			util.NeedProjectContextWhenNonInteractive(f),
 			util.DefaultIDNameByContext(zctx.GetService(), &opts.id, &opts.name),
 			util.DefaultIDByContext(zctx.GetEnvironment(), &opts.environmentID),
 		),

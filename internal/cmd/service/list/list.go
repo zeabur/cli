@@ -26,7 +26,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		Args:    cobra.NoArgs,
 		Aliases: []string{"ls"},
 		PreRunE: util.RunEChain(
-			util.NeedProjectContext(f),
+			util.NeedProjectContextWhenNonInteractive(f),
 			util.DefaultIDByContext(ctx.GetEnvironment(), &opts.environmentID),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
