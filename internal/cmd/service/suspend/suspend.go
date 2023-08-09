@@ -25,7 +25,7 @@ func NewCmdSuspend(f *cmdutil.Factory) *cobra.Command {
 		Use:   "suspend",
 		Short: "suspend a service",
 		PreRunE: util.RunEChain(
-			util.NeedProjectContext(f),
+			util.NeedProjectContextWhenNonInteractive(f),
 			util.DefaultIDNameByContext(zctx.GetService(), &opts.id, &opts.name),
 			util.DefaultIDByContext(zctx.GetEnvironment(), &opts.environmentID),
 		),

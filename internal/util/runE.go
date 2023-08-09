@@ -7,8 +7,8 @@ import (
 	"github.com/zeabur/cli/pkg/zcontext"
 )
 
-// NeedProjectContext checks if the project context is set in the non-interactive mode
-func NeedProjectContext(f *cmdutil.Factory) CobraRunE {
+// NeedProjectContextWhenNonInteractive checks if the project context is set in the non-interactive mode
+func NeedProjectContextWhenNonInteractive(f *cmdutil.Factory) CobraRunE {
 	return func(cmd *cobra.Command, args []string) error {
 		if !f.Interactive && f.Config.GetContext().GetProject().Empty() {
 			return errors.New("please run <zeabur context set project> first")
@@ -33,8 +33,11 @@ func DefaultIDByContext(basicInfo zcontext.BasicInfo, id *string) CobraRunE {
 	}
 }
 
-// defaultByContext if id and name both are empty, then use the context to fill them
+// defaultByContext if id and name both are empty, then use the context to fill them, (param should not be nil)
 func defaultByContext(basicInfo zcontext.BasicInfo, id, name *string) {
+	if id == nil || name == nil {
+		return
+	}
 	if *id == "" && *name == "" && !basicInfo.Empty() {
 		*id = basicInfo.GetID()
 		*name = basicInfo.GetName()

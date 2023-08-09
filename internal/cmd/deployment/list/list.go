@@ -23,7 +23,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		Use:     "list",
 		Short:   "List deployments",
 		Aliases: []string{"ls"},
-		PreRunE: util.NeedProjectContext(f),
+		PreRunE: util.NeedProjectContextWhenNonInteractive(f),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runList(f, opts)
 		},

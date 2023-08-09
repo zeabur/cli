@@ -3,8 +3,6 @@ package deploy
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
@@ -21,10 +19,15 @@ type Options struct {
 func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}
 
+	zctx := f.Config.GetContext()
+
 	cmd := &cobra.Command{
-		Use:     "deploy",
-		Short:   "Deploy a service",
-		PreRunE: util.NeedProjectContext(f),
+		Use:   "deploy",
+		Short: "Deploy a service",
+		PreRunE: util.RunEChain(
+			util.NeedProjectContextWhenNonInteractive(f),
+			util.DefaultIDNameByContext(zctx.GetProject(), &opts.projectID, new(string)),
+		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDeploy(f, opts)
 		},
@@ -52,8 +55,6 @@ func runDeployNonInteractive(f *cmdutil.Factory, opts *Options) error {
 
 	ctx := context.Background()
 
-	opts.projectID = f.Config.GetContext().GetProject().GetID()
-
 	if opts.template == "MARKETPLACE" {
 		opts.name = opts.itemCode
 		service, err := f.ApiClient.CreateServiceFromMarketplace(ctx, opts.projectID, opts.name, opts.itemCode)
@@ -68,6 +69,11 @@ func runDeployNonInteractive(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
+	// fill project id if not set by asking user
+	if _, err := f.ParamFiller.Project(&opts.projectID); err != nil {
+		return err
+	}
+
 	serviceTemplate, err := f.Prompter.Select("Select service template", "MARKETPLACE", []string{"MARKETPLACE", "GIT"})
 	if err != nil {
 		return err
@@ -75,10 +81,13 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 
 	ctx := context.Background()
 
-	opts.projectID = f.Config.GetContext().GetProject().GetID()
-
 	if serviceTemplate == 0 {
-		s := spinner.New(spinner.CharSets[1], 100*time.Millisecond)
+		s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+			spinner.WithColor(cmdutil.SpinnerColor),
+			spinner.WithSuffix(" Fetching marketplace items..."),
+			// 🌇 is just a temporary icon, anyone is welcome to contribute a better one
+			spinner.WithFinalMSG(cmdutil.SuccessIcon+" Marketplace fetched 🌇\n"),
+		)
 		s.Start()
 		marketplaceItems, err := f.ApiClient.GetMarketplaceItems(ctx)
 		if err != nil {
@@ -99,14 +108,29 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 		opts.itemCode = marketplaceItems[index].Code
 		opts.name = opts.itemCode
 
+		// use a closure to get the service name after creation
+		serviceName := ""
+		getServiceName := func() string {
+			return serviceName
+		}
+
+		s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+			spinner.WithColor(cmdutil.SpinnerColor),
+			spinner.WithSuffix(" Creating service..."),
+		)
+		// use a closure to update the spinner's final message(especially the service name)
+		s.PreUpdate = func(s *spinner.Spinner) {
+			s.FinalMSG = fmt.Sprintf("%s Service %s created 🚀\n", cmdutil.SuccessIcon, getServiceName())
+		}
 		s.Start()
+
 		service, err := f.ApiClient.CreateServiceFromMarketplace(ctx, opts.projectID, opts.name, opts.itemCode)
 		if err != nil {
 			return fmt.Errorf("create service failed: %w", err)
 		}
-		s.Stop()
+		serviceName = service.Name
 
-		f.Log.Infof("Service %s created", service.Name)
+		s.Stop()
 	}
 
 	return nil
