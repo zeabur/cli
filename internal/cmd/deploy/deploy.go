@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
-	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/google/go-github/github"
@@ -24,7 +23,7 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "deploy",
 		Short:   "Deploy a service",
-		PreRunE: util.NeedProjectContext(f),
+		PreRunE: util.NeedProjectContextWhenNonInteractive(f),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDeploy(f, opts)
 		},
@@ -44,7 +43,12 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runDeployNonInteractive(f *cmdutil.Factory, opts *Options) error {
-	repoID, err := getRepoID()
+	repoOwner, repoName, err := getRepoInfo()
+	if err != nil {
+		return err
+	}
+
+	repoID, err := getRepoID(repoOwner, repoName)
 	if err != nil {
 		return err
 	}
@@ -55,42 +59,79 @@ func runDeployNonInteractive(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
-	s := spinner.New(spinner.CharSets[1], 100*time.Millisecond)
+	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+		spinner.WithColor(cmdutil.SpinnerColor),
+		spinner.WithSuffix(" Fetching repository informations..."),
+	)
 	s.Start()
-	repoID, err := getRepoID()
+	repoOwner, repoName, err := getRepoInfo()
 	if err != nil {
 		return err
 	}
 
-	service, err := f.ApiClient.CreateService(context.Background(), f.Config.GetContext().GetProject().GetID(), opts.name, repoID, "")
+	if opts.name == "" {
+		opts.name = repoName
+	}
+
+	repoID, err := getRepoID(repoOwner, repoName)
 	if err != nil {
 		return err
 	}
 
+	branches, err := getRepoBranches(repoOwner, repoName)
+	if err != nil {
+		return err
+	}
 	s.Stop()
 
-	f.Log.Infof("Service %s created", service.Name)
+	// If repo has only one branch, use it as default branch
+	var branch string
+	if len(branches) == 1 {
+		branch = branches[0]
+	} else {
+		_, err = f.Prompter.Select("Select branch", branch, branches)
+		if err != nil {
+			return err
+		}
+	}
+
+	s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+		spinner.WithColor(cmdutil.SpinnerColor),
+		spinner.WithSuffix(" Creating service..."),
+		spinner.WithFinalMSG(cmdutil.SuccessIcon+" Service created 🥂\n"),
+	)
+	s.Start()
+
+	_, err = f.ApiClient.CreateService(context.Background(), f.Config.GetContext().GetProject().GetID(), opts.name, repoID, branch)
+	if err != nil {
+		return err
+	}
+	s.Stop()
 
 	return nil
 }
 
-func getRepoID() (int, error) {
+func getRepoInfo() (string, string, error) {
 	cmd := exec.Command("git", "remote", "get-url", "origin")
 	cmd.Dir = "."
 	out, err := cmd.Output()
 	if err != nil {
-		return 0, err
+		return "", "", err
 	}
 
 	repoURL := strings.TrimSpace(string(out))
 	parts := strings.Split(repoURL, "/")
 	if len(parts) < 2 {
-		return 0, fmt.Errorf("invalid repository URL")
+		return "", "", fmt.Errorf("invalid repository URL")
 	}
 
 	repoOwner := strings.TrimPrefix(parts[len(parts)-2], "git@github.com:")
 	repoName := strings.TrimSuffix(parts[len(parts)-1], ".git")
 
+	return repoOwner, repoName, nil
+}
+
+func getRepoID(repoOwner string, repoName string) (int, error) {
 	client := github.NewClient(nil)
 
 	repo, _, err := client.Repositories.Get(context.Background(), repoOwner, repoName)
@@ -99,4 +140,21 @@ func getRepoID() (int, error) {
 	}
 
 	return int(*repo.ID), nil
+}
+
+// Get repo branches by repo owner and repo name
+func getRepoBranches(repoOwner string, repoName string) ([]string, error) {
+	client := github.NewClient(nil)
+
+	branches, _, err := client.Repositories.ListBranches(context.Background(), repoOwner, repoName, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var branchNames []string
+	for _, branch := range branches {
+		branchNames = append(branchNames, *branch.Name)
+	}
+
+	return branchNames, nil
 }
