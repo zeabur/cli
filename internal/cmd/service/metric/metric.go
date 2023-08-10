@@ -35,7 +35,7 @@ func NewCmdMetric(f *cmdutil.Factory) *cobra.Command {
 			//string(model.MetricTypeDisk),	// not supported yet
 		},
 		PreRunE: util.RunEChain(
-			util.NeedProjectContext(f),
+			util.NeedProjectContextWhenNonInteractive(f),
 			util.DefaultIDNameByContext(zctx.GetService(), &opts.id, &opts.name),
 			util.DefaultIDByContext(zctx.GetEnvironment(), &opts.environmentID),
 		),
