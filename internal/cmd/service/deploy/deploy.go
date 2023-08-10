@@ -3,6 +3,7 @@ package deploy
 import (
 	"context"
 	"fmt"
+
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
@@ -85,7 +86,6 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 		s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 			spinner.WithColor(cmdutil.SpinnerColor),
 			spinner.WithSuffix(" Fetching marketplace items..."),
-			// 🌇 is just a temporary icon, anyone is welcome to contribute a better one
 			spinner.WithFinalMSG(cmdutil.SuccessIcon+" Marketplace fetched 🌇\n"),
 		)
 		s.Start()
@@ -131,6 +131,8 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 		serviceName = service.Name
 
 		s.Stop()
+	} else if serviceTemplate == 1 {
+		// TODO: implement deploy from git
 	}
 
 	return nil

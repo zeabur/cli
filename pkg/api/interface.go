@@ -44,6 +44,7 @@ type (
 		GetServiceDetailByEnvironment(ctx context.Context, id, ownerName, projectName, name, environmentID string) (*model.ServiceDetail, error)
 		ServiceMetric(ctx context.Context, id, environmentID, metricType string, startTime, endTime time.Time) (*model.ServiceMetric, error)
 		GetMarketplaceItems(ctx context.Context) ([]model.MarketplaceItem, error)
+		SearchGitRepositories(ctx context.Context, keyword *string) ([]model.GitRepo, error)
 
 		RestartService(ctx context.Context, id string, environmentID string) error
 		RedeployService(ctx context.Context, id string, environmentID string) error
