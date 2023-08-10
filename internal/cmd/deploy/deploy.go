@@ -69,23 +69,50 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
+	// Use repo name as default service name
 	if opts.name == "" {
 		opts.name = repoName
 	}
 
-	repoID, err := getRepoID(repoOwner, repoName)
-	if err != nil {
+	// Get repo ID and branches concurrently
+	repoIDChan := make(chan int)
+	branchesChan := make(chan []string)
+	errChan := make(chan error)
+
+	go func() {
+		repoID, err := getRepoID(repoOwner, repoName)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		repoIDChan <- repoID
+	}()
+
+	go func() {
+		branches, err := getRepoBranches(repoOwner, repoName)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		branchesChan <- branches
+	}()
+
+	repoID := <-repoIDChan
+	branches := <-branchesChan
+
+	// Check for errors
+	select {
+	case err := <-errChan:
 		return err
+	default:
 	}
 
-	branches, err := getRepoBranches(repoOwner, repoName)
-	if err != nil {
-		return err
-	}
 	s.Stop()
 
 	// If repo has only one branch, use it as default branch
+	// Otherwise, ask user to select a branch
 	var branch string
+
 	if len(branches) == 1 {
 		branch = branches[0]
 	} else {
