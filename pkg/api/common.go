@@ -15,6 +15,18 @@ func (id ObjectID) GetGraphQLType() string {
 	return `ObjectID`
 }
 
+type ServiceTemplate string
+
+func (t ServiceTemplate) GetGraphQLType() string {
+	return `ServiceTemplate`
+}
+
+type GitProvider string
+
+func (g GitProvider) GitProvider() string {
+	return `GitProvider`
+}
+
 func normalizePagination(skip, limit int) (int, int) {
 	if skip < 0 {
 		skip = 0

@@ -4,9 +4,10 @@ package root
 import (
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/zeabur/cli/pkg/fill"
 	"github.com/zeabur/cli/pkg/selector"
-	"time"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/spf13/cobra"
@@ -15,6 +16,7 @@ import (
 
 	authCmd "github.com/zeabur/cli/internal/cmd/auth"
 	contextCmd "github.com/zeabur/cli/internal/cmd/context"
+	deployCmd "github.com/zeabur/cli/internal/cmd/deploy"
 	deploymentCmd "github.com/zeabur/cli/internal/cmd/deployment"
 	projectCmd "github.com/zeabur/cli/internal/cmd/project"
 	serviceCmd "github.com/zeabur/cli/internal/cmd/service"
@@ -100,6 +102,7 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 		"automatically refresh token when it's expired, only works when the token is from browser(OAuth2)")
 
 	// Child commands
+	cmd.AddCommand(deployCmd.NewCmdDeploy(f))
 	cmd.AddCommand(versionCmd.NewCmdVersion(f, version, commit, date))
 	cmd.AddCommand(authCmd.NewCmdAuth(f))
 	cmd.AddCommand(projectCmd.NewCmdProject(f))
