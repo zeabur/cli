@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
+	"golang.org/x/sync/errgroup"
 )
 
 type Options struct {
@@ -22,7 +23,7 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "deploy",
-		Short:   "Deploy a service",
+		Short:   "Deploy a local Git Service",
 		PreRunE: util.NeedProjectContextWhenNonInteractive(f),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDeploy(f, opts)
@@ -53,7 +54,9 @@ func runDeployNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
-	fmt.Println(repoID)
+	f.Log.Debugf("repoID: %d", repoID)
+
+	//TODO: Deploy Local Git Service NonInteractive
 
 	return nil
 }
@@ -61,7 +64,7 @@ func runDeployNonInteractive(f *cmdutil.Factory, opts *Options) error {
 func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 		spinner.WithColor(cmdutil.SpinnerColor),
-		spinner.WithSuffix(" Fetching repository informations..."),
+		spinner.WithSuffix(" Fetching repository information..."),
 	)
 	s.Start()
 	repoOwner, repoName, err := getRepoInfo()
@@ -74,37 +77,24 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 		opts.name = repoName
 	}
 
-	// Get repo ID and branches concurrently
-	repoIDChan := make(chan int)
-	branchesChan := make(chan []string)
-	errChan := make(chan error)
+	var eg errgroup.Group
+	var repoID int
+	var branches []string
 
-	go func() {
-		repoID, err := getRepoID(repoOwner, repoName)
-		if err != nil {
-			errChan <- err
-			return
-		}
-		repoIDChan <- repoID
-	}()
-
-	go func() {
-		branches, err := getRepoBranches(repoOwner, repoName)
-		if err != nil {
-			errChan <- err
-			return
-		}
-		branchesChan <- branches
-	}()
-
-	repoID := <-repoIDChan
-	branches := <-branchesChan
-
-	// Check for errors
-	select {
-	case err := <-errChan:
+	eg.Go(func() error {
+		var err error
+		repoID, err = getRepoID(repoOwner, repoName)
 		return err
-	default:
+	})
+
+	eg.Go(func() error {
+		var err error
+		branches, err = getRepoBranches(repoOwner, repoName)
+		return err
+	})
+
+	if err := eg.Wait(); err != nil {
+		return err
 	}
 
 	s.Stop()
@@ -159,6 +149,7 @@ func getRepoInfo() (string, string, error) {
 }
 
 func getRepoID(repoOwner string, repoName string) (int, error) {
+	//TODO: Deal with GitHub Auth, reading token env and set HTTP client header
 	client := github.NewClient(nil)
 
 	repo, _, err := client.Repositories.Get(context.Background(), repoOwner, repoName)
