@@ -21,7 +21,7 @@
 > Linux/macOS:
 
 ```bash
-curl -sSL https://dub.sh/zeabur | sh
+curl -sSL https://dub.sh/zeabur | bash
 ```
 
 > Windows
