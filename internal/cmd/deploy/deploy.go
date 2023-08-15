@@ -169,7 +169,7 @@ func getRepoBranches(repoOwner string, repoName string) ([]string, error) {
 		return nil, err
 	}
 
-	var branchNames []string
+	branchNames := make([]string, 0, len(branches))
 	for _, branch := range branches {
 		branchNames = append(branchNames, *branch.Name)
 	}
