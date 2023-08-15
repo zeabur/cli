@@ -297,7 +297,7 @@ func (c *client) CreateService(ctx context.Context, projectID string, name strin
 		"gitProvider": GitProvider("GITHUB"),
 		"name":        name,
 		"repoID":      repoID,
-		"branchName":  "main",
+		"branchName":  branchName,
 	})
 
 	if err != nil {
