@@ -21,9 +21,10 @@ archives:
   - name_template: "zeabur_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     format: binary
     id: "binary"
-  - name_template: "zeabur_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    format: zip
-    id: "zip"
+    # to archive as zip on Windows.
+    format_overrides:
+      - goos: windows
+        format: zip
 
 checksum:
   name_template: "checksums.txt"
@@ -40,18 +41,21 @@ release:
     - glob: "README.md"
 
 brews:
-  - ids: ["zip"]
-    repository:
+  - repository:
       owner: zeabur
       name: homebrew-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
     homepage: "https://zeabur.com"
     description: "Zeabur's official command line tool"
 
-scoops:
-- ids: ["zip"]
+scoop:
   url_template: "https://github.com/zeabur/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
   bucket:
     owner: zeabur
     name: cli
   homepage: "https://zeabur.com"
   description: "Zeabur's official command line tool"
+  repository:
+    pull_request:
+      enabled: true
+      draft: false
