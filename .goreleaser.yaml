@@ -20,6 +20,10 @@ builds:
 archives:
   - name_template: "zeabur_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     format: binary
+    id: "binary"
+  - name_template: "zeabur_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format: zip
+    id: "archive"
 
 checksum:
   name_template: "checksums.txt"
@@ -42,7 +46,8 @@ brews:
     homepage: "https://zeabur.com"
     description: "Zeabur's official command line tool"
 
-scoop:
+scoops:
+- ids: ["zip"]
   url_template: "https://github.com/zeabur/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
   bucket:
     owner: zeabur
