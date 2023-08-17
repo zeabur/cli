@@ -3,6 +3,7 @@ package deploy
 import (
 	"context"
 	"fmt"
+
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
@@ -10,10 +11,13 @@ import (
 )
 
 type Options struct {
-	projectID string
-	template  string
-	itemCode  string
-	name      string
+	projectID  string
+	template   string
+	itemCode   string
+	branchName string
+	name       string
+	keyword    string
+	repoID     int
 }
 
 func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
@@ -33,8 +37,12 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
+	cmd.Flags().StringVar(&opts.name, "name", "", "Service Name")
 	cmd.Flags().StringVar(&opts.template, "template", "", "Service template")
 	cmd.Flags().StringVar(&opts.itemCode, "item-code", "", "Marketplace item code")
+	cmd.Flags().IntVar(&opts.repoID, "repo-id", 0, "Git repository ID")
+	cmd.Flags().StringVar(&opts.branchName, "branch-name", "", "Git branch name")
+	cmd.Flags().StringVar(&opts.keyword, "keyword", "", "Git repository keyword")
 
 	return cmd
 }
@@ -85,7 +93,6 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 		s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 			spinner.WithColor(cmdutil.SpinnerColor),
 			spinner.WithSuffix(" Fetching marketplace items..."),
-			// 🌇 is just a temporary icon, anyone is welcome to contribute a better one
 			spinner.WithFinalMSG(cmdutil.SuccessIcon+" Marketplace fetched 🌇\n"),
 		)
 		s.Start()
@@ -130,6 +137,66 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 		}
 		serviceName = service.Name
 
+		s.Stop()
+	} else if serviceTemplate == 1 {
+		var s *spinner.Spinner
+
+		s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+			spinner.WithColor(cmdutil.SpinnerColor),
+			spinner.WithSuffix(" Fetching Git Repositories..."),
+			spinner.WithFinalMSG(cmdutil.SuccessIcon+" Repositories fetched 🌇\n"),
+		)
+		s.Start()
+		gitRepositories, err := f.ApiClient.SearchGitRepositories(ctx, &opts.keyword)
+		if err != nil {
+			return fmt.Errorf("search git repositories failed: %w", err)
+		}
+		s.Stop()
+
+		gitRepositoriesList := make([]string, len(gitRepositories))
+		for i, repo := range gitRepositories {
+			gitRepositoriesList[i] = repo.Owner + "/" + repo.Name
+		}
+
+		index, err := f.Prompter.Select("Select git repository", "", gitRepositoriesList)
+		if err != nil {
+			return fmt.Errorf("select git repository failed: %w", err)
+		}
+
+		opts.repoID = gitRepositories[index].ID
+		opts.name = gitRepositories[index].Name
+
+		s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+			spinner.WithColor(cmdutil.SpinnerColor),
+			spinner.WithSuffix(" Fetching Git Repository Branches..."),
+		)
+		s.Start()
+		branches, err := f.ApiClient.GetRepoBranchesByRepoID(opts.repoID)
+		if err != nil {
+			return fmt.Errorf("get git repository branches failed: %w", err)
+		}
+		s.Stop()
+
+		if len(branches) == 1 {
+			opts.branchName = branches[0]
+		} else {
+			_, err = f.Prompter.Select("Select branch", opts.branchName, branches)
+			if err != nil {
+				return err
+			}
+		}
+
+		s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+			spinner.WithColor(cmdutil.SpinnerColor),
+			spinner.WithSuffix(" Creating service..."),
+			spinner.WithFinalMSG(cmdutil.SuccessIcon+" Service created 🥂\n"),
+		)
+		s.Start()
+
+		_, err = f.ApiClient.CreateService(context.Background(), f.Config.GetContext().GetProject().GetID(), opts.name, opts.repoID, opts.branchName)
+		if err != nil {
+			return err
+		}
 		s.Stop()
 	}
 

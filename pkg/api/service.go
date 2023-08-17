@@ -268,3 +268,41 @@ func (c *client) CreateServiceFromMarketplace(ctx context.Context, projectID str
 
 	return &mutation.CreateServiceFromMarketplace, nil
 }
+
+func (c *client) SearchGitRepositories(ctx context.Context, keyword *string) ([]model.GitRepo, error) {
+	var query struct {
+		SearchGitRepositories []model.GitRepo `graphql:"searchGitRepositories(Limit: 5, provider: GITHUB, keyword: $keyword)"`
+	}
+
+	err := c.Query(ctx, &query, V{
+		"keyword": keyword,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return query.SearchGitRepositories, nil
+}
+
+func (c *client) CreateService(ctx context.Context, projectID string, name string, repoID int, branchName string) (*model.Service, error) {
+	var mutation struct {
+		CreateService model.Service `graphql:"createService(projectID: $projectID, template: $template, name: $name, gitProvider: $gitProvider repoID: $repoID, branchName: $branchName)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{
+		"projectID": ObjectID(projectID),
+		// specify template as "ServiceTemplate" type
+		"template":    ServiceTemplate("GIT"),
+		"gitProvider": GitProvider("GITHUB"),
+		"name":        name,
+		"repoID":      repoID,
+		"branchName":  branchName,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &mutation.CreateService, nil
+}

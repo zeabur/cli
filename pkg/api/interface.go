@@ -15,6 +15,7 @@ type Client interface {
 	EnvironmentAPI
 	DeploymentAPI
 	LogAPI
+	GitAPI
 }
 
 type (
@@ -44,12 +45,14 @@ type (
 		GetServiceDetailByEnvironment(ctx context.Context, id, ownerName, projectName, name, environmentID string) (*model.ServiceDetail, error)
 		ServiceMetric(ctx context.Context, id, environmentID, metricType string, startTime, endTime time.Time) (*model.ServiceMetric, error)
 		GetMarketplaceItems(ctx context.Context) ([]model.MarketplaceItem, error)
+		SearchGitRepositories(ctx context.Context, keyword *string) ([]model.GitRepo, error)
 
 		RestartService(ctx context.Context, id string, environmentID string) error
 		RedeployService(ctx context.Context, id string, environmentID string) error
 		SuspendService(ctx context.Context, id string, environmentID string) error
 		ExposeService(ctx context.Context, id string, environmentID string, projectID string, name string) (*model.TempTCPPort, error)
 		CreateServiceFromMarketplace(ctx context.Context, projectID string, name string, itemCode string) (*model.Service, error)
+		CreateService(ctx context.Context, projectID string, name string, repoID int, branchName string) (*model.Service, error)
 	}
 
 	DeploymentAPI interface {
@@ -68,5 +71,12 @@ type (
 
 		WatchRuntimeLogs(ctx context.Context, deploymentID, serviceID, environmentID string) (<-chan model.Log, error)
 		WatchBuildLogs(ctx context.Context, deploymentID string) (<-chan model.Log, error)
+	}
+
+	GitAPI interface {
+		GetRepoBranches(ctx context.Context, repoOwner string, repoName string) ([]string, error)
+		GetRepoID(repoOwner string, repoName string) (int, error)
+		GetRepoInfo() (string, string, error)
+		GetRepoBranchesByRepoID(repoID int) ([]string, error)
 	}
 )
