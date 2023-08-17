@@ -11,10 +11,12 @@ import (
 )
 
 type Options struct {
-	projectID string
-	template  string
-	itemCode  string
-	name      string
+	projectID  string
+	template   string
+	itemCode   string
+	branchName string
+	name       string
+	repoID     int
 }
 
 func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
@@ -132,7 +134,30 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 
 		s.Stop()
 	} else if serviceTemplate == 1 {
-		// TODO: implement deploy from git
+		s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+			spinner.WithColor(cmdutil.SpinnerColor),
+			spinner.WithSuffix(" Fetching Git Repositories..."),
+			spinner.WithFinalMSG(cmdutil.SuccessIcon+" Repositories fetched 🌇\n"),
+		)
+		s.Start()
+		gitRepositories, err := f.ApiClient.SearchGitRepositories(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("search git repositories failed: %w", err)
+		}
+		s.Stop()
+
+		gitRepositoriesList := make([]string, len(gitRepositories))
+		for i, repo := range gitRepositories {
+			gitRepositoriesList[i] = repo.Owner + "/" + repo.Name
+		}
+
+		index, err := f.Prompter.Select("Select git repository", "", gitRepositoriesList)
+		if err != nil {
+			return fmt.Errorf("select git repository failed: %w", err)
+		}
+
+		opts.repoID = gitRepositories[index].ID
+
 	}
 
 	return nil

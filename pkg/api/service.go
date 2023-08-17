@@ -271,7 +271,7 @@ func (c *client) CreateServiceFromMarketplace(ctx context.Context, projectID str
 
 func (c *client) SearchGitRepositories(ctx context.Context, keyword *string) ([]model.GitRepo, error) {
 	var query struct {
-		SearchGitRepositories []model.GitRepo `graphql:"searchGitRepositories(limit: 5, provider: GITHUB, keyword: $keyword)"`
+		SearchGitRepositories []model.GitRepo `graphql:"searchGitRepositories(Limit: 5, provider: GITHUB, keyword: $keyword)"`
 	}
 
 	err := c.Query(ctx, &query, V{

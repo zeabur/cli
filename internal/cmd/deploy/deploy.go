@@ -2,12 +2,8 @@ package deploy
 
 import (
 	"context"
-	"fmt"
-	"os/exec"
-	"strings"
 
 	"github.com/briandowns/spinner"
-	"github.com/google/go-github/github"
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
@@ -44,12 +40,12 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runDeployNonInteractive(f *cmdutil.Factory, opts *Options) error {
-	repoOwner, repoName, err := getRepoInfo()
+	repoOwner, repoName, err := f.ApiClient.GetRepoInfo()
 	if err != nil {
 		return err
 	}
 
-	repoID, err := getRepoID(repoOwner, repoName)
+	repoID, err := f.ApiClient.GetRepoID(repoOwner, repoName)
 	if err != nil {
 		return err
 	}
@@ -67,7 +63,12 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 		spinner.WithSuffix(" Fetching repository information..."),
 	)
 	s.Start()
-	repoOwner, repoName, err := getRepoInfo()
+
+	var repoOwner string
+	var repoName string
+	var err error
+
+	repoOwner, repoName, err = f.ApiClient.GetRepoInfo()
 	if err != nil {
 		return err
 	}
@@ -82,18 +83,16 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 	var branches []string
 
 	eg.Go(func() error {
-		var err error
-		repoID, err = getRepoID(repoOwner, repoName)
+		repoID, err = f.ApiClient.GetRepoID(repoOwner, repoName)
 		return err
 	})
 
 	eg.Go(func() error {
-		var err error
-		branches, err = getRepoBranches(repoOwner, repoName)
+		branches, err = f.ApiClient.GetRepoBranches(context.Background(), repoOwner, repoName)
 		return err
 	})
 
-	if err := eg.Wait(); err != nil {
+	if err = eg.Wait(); err != nil {
 		return err
 	}
 
@@ -126,53 +125,4 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 	s.Stop()
 
 	return nil
-}
-
-func getRepoInfo() (string, string, error) {
-	cmd := exec.Command("git", "remote", "get-url", "origin")
-	cmd.Dir = "."
-	out, err := cmd.Output()
-	if err != nil {
-		return "", "", err
-	}
-
-	repoURL := strings.TrimSpace(string(out))
-	parts := strings.Split(repoURL, "/")
-	if len(parts) < 2 {
-		return "", "", fmt.Errorf("invalid repository URL")
-	}
-
-	repoOwner := strings.TrimPrefix(parts[len(parts)-2], "git@github.com:")
-	repoName := strings.TrimSuffix(parts[len(parts)-1], ".git")
-
-	return repoOwner, repoName, nil
-}
-
-func getRepoID(repoOwner string, repoName string) (int, error) {
-	//TODO: Deal with GitHub Auth, reading token env and set HTTP client header
-	client := github.NewClient(nil)
-
-	repo, _, err := client.Repositories.Get(context.Background(), repoOwner, repoName)
-	if err != nil {
-		return 0, err
-	}
-
-	return int(*repo.ID), nil
-}
-
-// Get repo branches by repo owner and repo name
-func getRepoBranches(repoOwner string, repoName string) ([]string, error) {
-	client := github.NewClient(nil)
-
-	branches, _, err := client.Repositories.ListBranches(context.Background(), repoOwner, repoName, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	branchNames := make([]string, 0, len(branches))
-	for _, branch := range branches {
-		branchNames = append(branchNames, *branch.Name)
-	}
-
-	return branchNames, nil
 }

@@ -201,8 +201,8 @@ type MarketplaceItem struct {
 }
 
 type GitRepo struct {
-	ID    int    `graphql:"id"`
 	Name  string `graphql:"name"`
 	Owner string `graphql:"owner"`
 	URL   string `graphql:"url"`
+	ID    int    `graphql:"id"`
 }

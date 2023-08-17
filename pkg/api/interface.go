@@ -15,6 +15,7 @@ type Client interface {
 	EnvironmentAPI
 	DeploymentAPI
 	LogAPI
+	GitAPI
 }
 
 type (
@@ -70,5 +71,11 @@ type (
 
 		WatchRuntimeLogs(ctx context.Context, deploymentID, serviceID, environmentID string) (<-chan model.Log, error)
 		WatchBuildLogs(ctx context.Context, deploymentID string) (<-chan model.Log, error)
+	}
+
+	GitAPI interface {
+		GetRepoBranches(ctx context.Context, repoOwner string, repoName string) ([]string, error)
+		GetRepoID(repoOwner string, repoName string) (int, error)
+		GetRepoInfo() (string, string, error)
 	}
 )
