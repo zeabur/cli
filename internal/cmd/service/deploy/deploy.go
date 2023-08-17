@@ -16,6 +16,7 @@ type Options struct {
 	itemCode   string
 	branchName string
 	name       string
+	keyword    string
 	repoID     int
 }
 
@@ -36,8 +37,12 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
+	cmd.Flags().StringVar(&opts.name, "name", "", "Service Name")
 	cmd.Flags().StringVar(&opts.template, "template", "", "Service template")
 	cmd.Flags().StringVar(&opts.itemCode, "item-code", "", "Marketplace item code")
+	cmd.Flags().IntVar(&opts.repoID, "repo-id", 0, "Git repository ID")
+	cmd.Flags().StringVar(&opts.branchName, "branch-name", "", "Git branch name")
+	cmd.Flags().StringVar(&opts.keyword, "keyword", "", "Git repository keyword")
 
 	return cmd
 }
@@ -142,7 +147,7 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 			spinner.WithFinalMSG(cmdutil.SuccessIcon+" Repositories fetched 🌇\n"),
 		)
 		s.Start()
-		gitRepositories, err := f.ApiClient.SearchGitRepositories(ctx, nil)
+		gitRepositories, err := f.ApiClient.SearchGitRepositories(ctx, &opts.keyword)
 		if err != nil {
 			return fmt.Errorf("search git repositories failed: %w", err)
 		}
