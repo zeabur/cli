@@ -56,3 +56,18 @@ func (c *client) GetRepoInfo() (string, string, error) {
 
 	return repoOwner, repoName, nil
 }
+
+func (c *client) GetRepoBranchesByRepoID(repoID int) ([]string, error) {
+	var query struct {
+		GitRepoBranches []string `graphql:"gitRepoBranches(repoID: $repoID)"`
+	}
+
+	err := c.Query(context.Background(), &query, V{
+		"repoID": repoID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return query.GitRepoBranches, nil
+}

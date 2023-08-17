@@ -134,7 +134,9 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 
 		s.Stop()
 	} else if serviceTemplate == 1 {
-		s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+		var s *spinner.Spinner
+
+		s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 			spinner.WithColor(cmdutil.SpinnerColor),
 			spinner.WithSuffix(" Fetching Git Repositories..."),
 			spinner.WithFinalMSG(cmdutil.SuccessIcon+" Repositories fetched 🌇\n"),
@@ -157,7 +159,40 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 		}
 
 		opts.repoID = gitRepositories[index].ID
+		opts.name = gitRepositories[index].Name
 
+		s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+			spinner.WithColor(cmdutil.SpinnerColor),
+			spinner.WithSuffix(" Fetching Git Repository Branches..."),
+		)
+		s.Start()
+		branches, err := f.ApiClient.GetRepoBranchesByRepoID(opts.repoID)
+		if err != nil {
+			return fmt.Errorf("get git repository branches failed: %w", err)
+		}
+		s.Stop()
+
+		if len(branches) == 1 {
+			opts.branchName = branches[0]
+		} else {
+			_, err = f.Prompter.Select("Select branch", opts.branchName, branches)
+			if err != nil {
+				return err
+			}
+		}
+
+		s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+			spinner.WithColor(cmdutil.SpinnerColor),
+			spinner.WithSuffix(" Creating service..."),
+			spinner.WithFinalMSG(cmdutil.SuccessIcon+" Service created 🥂\n"),
+		)
+		s.Start()
+
+		_, err = f.ApiClient.CreateService(context.Background(), f.Config.GetContext().GetProject().GetID(), opts.name, opts.repoID, opts.branchName)
+		if err != nil {
+			return err
+		}
+		s.Stop()
 	}
 
 	return nil

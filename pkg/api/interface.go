@@ -77,5 +77,6 @@ type (
 		GetRepoBranches(ctx context.Context, repoOwner string, repoName string) ([]string, error)
 		GetRepoID(repoOwner string, repoName string) (int, error)
 		GetRepoInfo() (string, string, error)
+		GetRepoBranchesByRepoID(repoID int) ([]string, error)
 	}
 )
