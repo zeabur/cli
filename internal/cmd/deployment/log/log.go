@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
@@ -18,7 +19,7 @@ type Options struct {
 	deploymentID string
 
 	logType string
-	watch   bool //todo: implement watch
+	watch   bool
 }
 
 const (
@@ -75,33 +76,48 @@ func runLogNonInteractive(f *cmdutil.Factory, opts *Options) (err error) {
 		return err
 	}
 
-	var logs model.Logs
+	if opts.watch {
+		if opts.deploymentID != "" {
+			logChan, err := f.ApiClient.WatchRuntimeLogs(context.Background(), opts.deploymentID)
+			if err != nil {
+				return fmt.Errorf("failed to watch logs: %w", err)
+			}
 
-	// If deployment id is provided, get deployment by deployment id
-	if opts.deploymentID != "" {
-		logs, err = logDeploymentByID(f, opts.deploymentID, opts.logType)
-	} else {
-		// or, get deployment by service id and environment id
-
-		// If service id is not provided, get service id by service name
-		if opts.serviceID == "" {
-			var service *model.Service
-			if service, err = util.GetServiceByName(f.Config, f.ApiClient, opts.serviceName); err != nil {
-				return fmt.Errorf("failed to get service: %w", err)
-			} else {
-				opts.serviceID = service.ID
+			for log := range logChan {
+				f.Printer.Table(log.Header(), log.Rows())
 			}
 		}
-		logs, err = logDeploymentByServiceAndEnvironment(f, opts.serviceID, opts.environmentID, opts.logType)
+
+		return nil
+	} else {
+		var logs model.Logs
+
+		// If deployment id is provided, get deployment by deployment id
+		if opts.deploymentID != "" {
+			logs, err = logDeploymentByID(f, opts.deploymentID, opts.logType)
+		} else {
+			// or, get deployment by service id and environment id
+
+			// If service id is not provided, get service id by service name
+			if opts.serviceID == "" {
+				var service *model.Service
+				if service, err = util.GetServiceByName(f.Config, f.ApiClient, opts.serviceName); err != nil {
+					return fmt.Errorf("failed to get service: %w", err)
+				} else {
+					opts.serviceID = service.ID
+				}
+			}
+			logs, err = logDeploymentByServiceAndEnvironment(f, opts.serviceID, opts.environmentID, opts.logType)
+		}
+
+		if err != nil {
+			return err
+		}
+
+		f.Printer.Table(logs.Header(), logs.Rows())
+
+		return nil
 	}
-
-	if err != nil {
-		return err
-	}
-
-	f.Printer.Table(logs.Header(), logs.Rows())
-
-	return nil
 }
 
 func logDeploymentByID(f *cmdutil.Factory, deploymentID, logType string) (model.Logs, error) {

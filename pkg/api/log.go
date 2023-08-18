@@ -71,13 +71,55 @@ func (c *client) GetBuildLogs(ctx context.Context, deploymentID string) (model.L
 	return query.Logs, nil
 }
 
-func (c *client) WatchRuntimeLogs(ctx context.Context, deploymentID, serviceID, environmentID string) (<-chan model.Log, error) {
-	logs := make(chan model.Log)
-	//todo: implement
+func (c *client) WatchRuntimeLogs(ctx context.Context, deploymentID string) (<-chan model.Log, error) {
+	logs := make(chan model.Log, 100)
+
+	subClient := c.sub
+
+	type subscription struct {
+		Log model.Log `graphql:"runtimeLogReceived(deploymentID: $deploymentID)"`
+	}
+
+	sub := subscription{}
+
+	_, err := subClient.Subscribe(&sub, V{
+		"deploymentID": ObjectID(deploymentID),
+	}, func(dataValue []byte, errValue error) error {
+		if errValue != nil {
+			fmt.Println(errValue)
+			return nil
+		}
+
+		if dataValue == nil {
+			return nil
+		}
+
+		data := subscription{}
+
+		err := jsonutil.UnmarshalGraphQL(dataValue, &data)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+
+		logs <- data.Log
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("Start running")
+
+	go func() {
+		subClient.Run()
+	}()
+
 	return logs, nil
 }
 
-// todo: to be tested and implemented
+// TODO: to be tested and implemented
 func (c *client) WatchBuildLogs(ctx context.Context, deploymentID string) (<-chan model.Log, error) {
 	logs := make(chan model.Log, 100)
 	type query struct {

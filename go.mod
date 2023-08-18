@@ -5,7 +5,10 @@ go 1.20
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/MakeNowJust/heredoc v1.0.0
+	github.com/briandowns/spinner v1.23.0
 	github.com/cli/browser v1.2.0
+	github.com/fatih/color v1.13.0
+	github.com/google/go-github v17.0.0+incompatible
 	github.com/hasura/go-graphql-client v0.9.3
 	github.com/onsi/ginkgo/v2 v2.11.0
 	github.com/onsi/gomega v1.27.8
@@ -14,15 +17,12 @@ require (
 	github.com/stretchr/testify v1.8.3
 	go.uber.org/zap v1.21.0
 	golang.org/x/oauth2 v0.7.0
+	golang.org/x/sync v0.3.0
 )
 
 require (
-	github.com/briandowns/spinner v1.23.0 // indirect
-	github.com/fatih/color v1.13.0 // indirect
-	github.com/google/go-github v17.0.0+incompatible // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
-	golang.org/x/sync v0.3.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 )
 
