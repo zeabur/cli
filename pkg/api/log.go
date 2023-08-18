@@ -111,7 +111,10 @@ func (c *client) WatchRuntimeLogs(ctx context.Context, deploymentID string) (<-c
 	}
 
 	go func() {
-		subClient.Run()
+		err := subClient.Run()
+		if err != nil {
+			return
+		}
 	}()
 
 	return logs, nil
@@ -157,7 +160,10 @@ func (c *client) WatchBuildLogs(ctx context.Context, deploymentID string) (<-cha
 	}
 
 	go func() {
-		subClient.Run()
+		err := subClient.Run()
+		if err != nil {
+			return
+		}
 	}()
 
 	return logs, nil

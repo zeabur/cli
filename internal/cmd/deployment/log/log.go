@@ -79,18 +79,17 @@ func runLogNonInteractive(f *cmdutil.Factory, opts *Options) (err error) {
 	if opts.watch {
 		if opts.deploymentID != "" {
 			var logChan <-chan model.Log
-			var err error
+			var subscriptionErr error
 
 			switch opts.logType {
 			case logTypeRuntime:
-				logChan, err = f.ApiClient.WatchRuntimeLogs(context.Background(), opts.deploymentID)
+				logChan, subscriptionErr = f.ApiClient.WatchRuntimeLogs(context.Background(), opts.deploymentID)
 			case logTypeBuild:
-				logChan, err = f.ApiClient.WatchBuildLogs(context.Background(), opts.deploymentID)
+				logChan, subscriptionErr = f.ApiClient.WatchBuildLogs(context.Background(), opts.deploymentID)
 			default:
-				logChan, err = f.ApiClient.WatchRuntimeLogs(context.Background(), opts.deploymentID)
+				logChan, subscriptionErr = f.ApiClient.WatchRuntimeLogs(context.Background(), opts.deploymentID)
 			}
-
-			if err != nil {
+			if subscriptionErr != nil {
 				return fmt.Errorf("failed to watch logs: %w", err)
 			}
 
