@@ -1,0 +1,28 @@
+{
+    "version": "0.0.3",
+    "architecture": {
+        "32bit": {
+            "url": "https://github.com/zeabur/cli/releases/download/v0.0.3/zeabur_0.0.3_windows_386.zip",
+            "bin": [
+                "zeabur.exe"
+            ],
+            "hash": "2b57b226799b8f3a01541cdb77503962702518b7655f028b97eea8c45e7f6b7d"
+        },
+        "64bit": {
+            "url": "https://github.com/zeabur/cli/releases/download/v0.0.3/zeabur_0.0.3_windows_amd64.zip",
+            "bin": [
+                "zeabur.exe"
+            ],
+            "hash": "9db84a420823f249e709c735347378bb8b579286717a71c989ab418e17081758"
+        },
+        "arm64": {
+            "url": "https://github.com/zeabur/cli/releases/download/v0.0.3/zeabur_0.0.3_windows_arm64.zip",
+            "bin": [
+                "zeabur.exe"
+            ],
+            "hash": "f2acd59635d40ef3713fc709187dec2a37007a7a6f2bbbd136dd0a7d5b12aec3"
+        }
+    },
+    "homepage": "https://zeabur.com",
+    "description": "Zeabur's official command line tool"
+}
