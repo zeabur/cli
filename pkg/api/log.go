@@ -110,8 +110,6 @@ func (c *client) WatchRuntimeLogs(ctx context.Context, deploymentID string) (<-c
 		return nil, err
 	}
 
-	fmt.Println("Start running")
-
 	go func() {
 		subClient.Run()
 	}()
@@ -119,28 +117,33 @@ func (c *client) WatchRuntimeLogs(ctx context.Context, deploymentID string) (<-c
 	return logs, nil
 }
 
-// TODO: to be tested and implemented
 func (c *client) WatchBuildLogs(ctx context.Context, deploymentID string) (<-chan model.Log, error) {
 	logs := make(chan model.Log, 100)
-	type query struct {
+
+	subClient := c.sub
+
+	type subscription struct {
 		Log model.Log `graphql:"buildLogReceived(deploymentID: $deploymentID)"`
 	}
 
-	q := query{}
+	sub := subscription{}
 
-	handler := func(dataValue []byte, errValue error) error {
+	_, err := subClient.Subscribe(&sub, V{
+		"deploymentID": ObjectID(deploymentID),
+	}, func(dataValue []byte, errValue error) error {
 		if errValue != nil {
-			// handle error
-			// if returns error, it will failback to `onError` event
 			fmt.Println(errValue)
 			return nil
 		}
-		data := query{}
-		// use the github.com/hasura/go-graphql-client/pkg/jsonutil package
+
+		if dataValue == nil {
+			return nil
+		}
+
+		data := subscription{}
+
 		err := jsonutil.UnmarshalGraphQL(dataValue, &data)
 		if err != nil {
-			// handle error
-			// if returns error, it will failback to `onError` event
 			fmt.Println(err)
 			return nil
 		}
@@ -148,18 +151,14 @@ func (c *client) WatchBuildLogs(ctx context.Context, deploymentID string) (<-cha
 		logs <- data.Log
 
 		return nil
-	}
-
-	subID, err := c.sub.Subscribe(&q, V{
-		"deploymentID": ObjectID(deploymentID),
-	}, handler)
-
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	// todo: handle unsubscribe
-	fmt.Println(subID)
+	go func() {
+		subClient.Run()
+	}()
 
 	return logs, nil
 }
