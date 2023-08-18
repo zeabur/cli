@@ -21,7 +21,6 @@ archives:
   - name_template: "zeabur_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     format: binary
     id: "binary"
-    # to archive as zip on Windows.
     format_overrides:
       - goos: windows
         format: zip
@@ -48,14 +47,12 @@ brews:
     homepage: "https://zeabur.com"
     description: "Zeabur's official command line tool"
 
-scoop:
-  url_template: "https://github.com/zeabur/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
-  bucket:
-    owner: zeabur
-    name: cli
-  homepage: "https://zeabur.com"
-  description: "Zeabur's official command line tool"
-  repository:
-    pull_request:
-      enabled: true
-      draft: false
+scoops:
+  - url_template: "https://github.com/zeabur/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    bucket:
+      owner: zeabur
+      name: cli
+    homepage: "https://zeabur.com"
+    description: "Zeabur's official command line tool"
+    repository:
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
