@@ -1,4 +1,4 @@
-project_name: cli
+project_name: zeabur
 
 before:
   hooks:
@@ -40,7 +40,8 @@ release:
     - glob: "README.md"
 
 brews:
-  - repository:
+  - name: cli
+    repository:
       owner: zeabur
       name: homebrew-tap
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
