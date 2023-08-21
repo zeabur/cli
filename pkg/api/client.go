@@ -40,9 +40,9 @@ func NewGraphQLClientWithToken(token string) *graphql.Client {
 }
 
 func NewSubscriptionClient(token string) *graphql.SubscriptionClient {
-	return graphql.NewSubscriptionClient(ZeaburGraphQLAPIEndpoint).
+	return graphql.NewSubscriptionClient(WSSZeaburGraphQLAPIEndpoint).
 		WithConnectionParams(map[string]any{
-			"Authorization": "Bearer " + token,
+			"authToken": token,
 		})
 }
 

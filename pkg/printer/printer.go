@@ -1,8 +1,9 @@
 package printer
 
 import (
-	"github.com/olekukonko/tablewriter"
 	"os"
+
+	"github.com/olekukonko/tablewriter"
 )
 
 type defaultPrinter struct {
