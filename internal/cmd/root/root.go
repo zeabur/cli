@@ -20,6 +20,7 @@ import (
 	deploymentCmd "github.com/zeabur/cli/internal/cmd/deployment"
 	projectCmd "github.com/zeabur/cli/internal/cmd/project"
 	serviceCmd "github.com/zeabur/cli/internal/cmd/service"
+	templateCmd "github.com/zeabur/cli/internal/cmd/template"
 	versionCmd "github.com/zeabur/cli/internal/cmd/version"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/pkg/api"
@@ -108,6 +109,7 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 	cmd.AddCommand(projectCmd.NewCmdProject(f))
 	cmd.AddCommand(serviceCmd.NewCmdService(f))
 	cmd.AddCommand(deploymentCmd.NewCmdDeployment(f))
+	cmd.AddCommand(templateCmd.NewCmdTemplate(f))
 
 	cmd.AddCommand(contextCmd.NewCmdContext(f))
 
