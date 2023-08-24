@@ -92,16 +92,16 @@ func (c *client) getProjectByOwnerUsernameAndProject(ctx context.Context,
 	return &query.Project, nil
 }
 
-// Create a project with the given name.
-func (c *client) CreateProject(ctx context.Context, name string) (*model.Project, error) {
+// Create a project with the region and optional name.
+func (c *client) CreateProject(ctx context.Context, region string, name *string) (*model.Project, error) {
 	var mutation struct {
-		CreateProject model.Project `graphql:"createProject(name: $name)"`
+		CreateProject model.Project `graphql:"createProject(region: $region, name: $name)"`
 	}
 
 	err := c.Mutate(ctx, &mutation, V{
-		"name": name,
+		"region": region,
+		"name":   name,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -124,4 +124,17 @@ func (c *client) DeleteProject(ctx context.Context, id string) error {
 	}
 
 	return nil
+}
+
+func (c *client) GetRegions(ctx context.Context) ([]model.Region, error) {
+	var query struct {
+		Regions []model.Region `graphql:"regions"`
+	}
+
+	err := c.Query(ctx, &query, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return query.Regions, nil
 }

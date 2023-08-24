@@ -86,3 +86,19 @@ var (
 	_ Tabler = (Projects)(nil)
 	_ Tabler = (*Project)(nil)
 )
+
+type RegionProvider string
+
+const (
+	RegionProviderAWS ServiceTemplate = "AWS"
+	RegionProviderGCP ServiceTemplate = "GCP"
+)
+
+type Region struct {
+	Available   bool           `graphql:"available"`
+	Description string         `graphql:"description"`
+	ID          string         `graphql:"id"`
+	Name        string         `graphql:"name"`
+	Coordinates []float64      `graphql:"coordinates"`
+	Provider    RegionProvider `graphql:"provider"`
+}
