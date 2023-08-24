@@ -86,5 +86,8 @@ type (
 	TemplateAPI interface {
 		ListTemplates(ctx context.Context, skip, limit int) (*model.TemplateConnection, error)
 		ListAllTemplates(ctx context.Context) (model.Templates, error)
+		GetTemplate(ctx context.Context, code string) (*model.Template, error)
+
+		DeployTemplate(ctx context.Context, code string, variables map[string]interface{}, repoConfigs model.RepoConfigs) (*model.Project, error)
 	}
 )

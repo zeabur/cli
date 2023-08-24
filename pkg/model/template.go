@@ -1,16 +1,19 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 type Template struct {
-	Code          string    `graphql:"code"`
-	CreatedAt     time.Time `graphql:"createdAt"`
-	DeploymentCnt int       `graphql:"deploymentCnt"`
-	Description   string    `graphql:"description"`
-	Name          string    `graphql:"name"`
-	PreviewURL    string    `graphql:"previewURL"`
-	Readme        string    `graphql:"readme"`
-	Tags          []string  `graphql:"tags"`
+	Code          string               `graphql:"code"`
+	CreatedAt     time.Time            `graphql:"createdAt"`
+	DeploymentCnt int                  `graphql:"deploymentCnt"`
+	Description   string               `graphql:"description"`
+	Name          string               `graphql:"name"`
+	PreviewURL    string               `graphql:"previewURL"`
+	Readme        string               `graphql:"readme"`
+	Tags          []string             `graphql:"tags"`
+	Services      []*ServiceInTemplate `graphql:"services"`
 }
 
 type TemplateConnection struct {
@@ -56,3 +59,27 @@ var (
 	_ Tabler = (Templates)(nil)
 	_ Tabler = (*Template)(nil)
 )
+
+type RepoConfig struct {
+	IsPublicRepo bool   `json:"isPublicRepo"`
+	RepoName     string `json:"repoName"`
+	ServiceName  string `json:"serviceName"`
+}
+
+type RepoConfigs []*RepoConfig
+
+type ServiceInTemplate struct {
+	BranchName         string                 `json:"branchName"`
+	CustomBuildCommand string                 `json:"customBuildCommand"`
+	CustomStartCommand string                 `json:"customStartCommand"`
+	DomainKey          string                 `json:"domainKey"`
+	GitNamespaceID     int                    `json:"gitNamespaceID"`
+	GitRepoID          int                    `json:"gitRepoID"`
+	MarketplaceItem    MarketplaceItem        `json:"marketplaceItem"`
+	Name               string                 `json:"name"`
+	OutputDir          string                 `json:"outputDir"`
+	RootDirectory      string                 `json:"rootDirectory"`
+	Template           ServiceTemplate        `json:"template"`
+	Variables          map[string]interface{} `json:"variables"`
+	WatchPaths         []string               `json:"watchPaths"`
+}
