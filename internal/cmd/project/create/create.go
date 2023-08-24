@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
 )
 
 type Options struct {
-	ProjectName string
+	ProjectRegion string
+	ProjectName   string
 }
 
 func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
@@ -24,6 +26,7 @@ func NewCmdCreate(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&opts.ProjectName, "name", "n", "", "Project name")
+	cmd.Flags().StringVarP(&opts.ProjectRegion, "region", "r", "", "Project region")
 
 	return cmd
 }
@@ -42,15 +45,38 @@ func runCreate(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runCreateInteractive(f *cmdutil.Factory, opts *Options) error {
-	projectName, err := f.Prompter.Input("Please input project name:", "")
+	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+		spinner.WithColor(cmdutil.SpinnerColor),
+		spinner.WithSuffix(" Fetching available project regions..."),
+	)
+	s.Start()
+	regions, err := f.ApiClient.GetRegions(context.Background())
+	if err != nil {
+		return err
+	}
+	s.Stop()
+
+	regionIDs := make([]string, 0, len(regions))
+	for _, region := range regions {
+		regionIDs = append(regionIDs, region.ID)
+	}
+
+	projectRegionIndex, err := f.Prompter.Select("Select project region", "", regionIDs)
 	if err != nil {
 		return err
 	}
 
-	if err := createProject(f, projectName); err != nil {
-		f.Log.Error(err)
+	projectRegion := regions[projectRegionIndex].ID
+
+	s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+		spinner.WithColor(cmdutil.SpinnerColor),
+		spinner.WithSuffix(" Creating project..."),
+	)
+	s.Start()
+	if err := createProject(f, projectRegion, &opts.ProjectName); err != nil {
 		return err
 	}
+	s.Stop()
 
 	return nil
 }
@@ -60,7 +86,7 @@ func runCreateNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
-	err := createProject(f, opts.ProjectName)
+	err := createProject(f, opts.ProjectRegion, &opts.ProjectName)
 	if err != nil {
 		f.Log.Error(err)
 		return err
@@ -69,8 +95,8 @@ func runCreateNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	return nil
 }
 
-func createProject(f *cmdutil.Factory, projectName string) error {
-	project, err := f.ApiClient.CreateProject(context.Background(), projectName)
+func createProject(f *cmdutil.Factory, projectRegion string, projectName *string) error {
+	project, err := f.ApiClient.CreateProject(context.Background(), projectRegion, projectName)
 	if err != nil {
 		f.Log.Error(err)
 		return err
@@ -82,8 +108,8 @@ func createProject(f *cmdutil.Factory, projectName string) error {
 }
 
 func paramCheck(opts *Options) error {
-	if opts.ProjectName == "" {
-		return fmt.Errorf("please specify project name with --name")
+	if opts.ProjectRegion == "" {
+		return fmt.Errorf("please specify project region with --region")
 	}
 
 	return nil

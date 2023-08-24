@@ -291,8 +291,7 @@ func (c *client) CreateService(ctx context.Context, projectID string, name strin
 	}
 
 	err := c.Mutate(ctx, &mutation, V{
-		"projectID": ObjectID(projectID),
-		// specify template as "ServiceTemplate" type
+		"projectID":   ObjectID(projectID),
 		"template":    ServiceTemplate("GIT"),
 		"gitProvider": GitProvider("GITHUB"),
 		"name":        name,
