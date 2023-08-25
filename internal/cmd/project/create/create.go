@@ -6,6 +6,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
+
 	"github.com/zeabur/cli/internal/cmdutil"
 )
 
@@ -41,7 +42,6 @@ func runCreate(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	return runCreateNonInteractive(f, opts)
-
 }
 
 func runCreateInteractive(f *cmdutil.Factory, opts *Options) error {

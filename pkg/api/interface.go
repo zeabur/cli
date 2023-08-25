@@ -16,6 +16,7 @@ type Client interface {
 	DeploymentAPI
 	LogAPI
 	GitAPI
+	TemplateAPI
 }
 
 type (
@@ -80,5 +81,14 @@ type (
 		GetRepoID(repoOwner string, repoName string) (int, error)
 		GetRepoInfo() (string, string, error)
 		GetRepoBranchesByRepoID(repoID int) ([]string, error)
+	}
+
+	TemplateAPI interface {
+		ListTemplates(ctx context.Context, skip, limit int) (*model.TemplateConnection, error)
+		ListAllTemplates(ctx context.Context) (model.Templates, error)
+		GetTemplate(ctx context.Context, code string) (*model.Template, error)
+
+		DeployTemplate(ctx context.Context, code string, variables map[string]interface{}, repoConfigs model.RepoConfigs) (*model.Project, error)
+		DeleteTemplate(ctx context.Context, code string) error
 	}
 )
