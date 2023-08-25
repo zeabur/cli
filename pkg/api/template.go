@@ -75,3 +75,16 @@ func (c *client) GetTemplate(ctx context.Context, code string) (*model.Template,
 
 	return &query.Template, nil
 }
+
+func (c *client) DeleteTemplate(ctx context.Context, code string) error {
+	var mutation struct {
+		DeleteTemplate bool `graphql:"deleteTemplate(code: $code)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{"code": code})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

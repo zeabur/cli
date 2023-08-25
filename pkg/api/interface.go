@@ -89,5 +89,6 @@ type (
 		GetTemplate(ctx context.Context, code string) (*model.Template, error)
 
 		DeployTemplate(ctx context.Context, code string, variables map[string]interface{}, repoConfigs model.RepoConfigs) (*model.Project, error)
+		DeleteTemplate(ctx context.Context, code string) error
 	}
 )
