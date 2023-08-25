@@ -5,15 +5,14 @@ import (
 )
 
 type Template struct {
-	Code          string               `graphql:"code"`
-	CreatedAt     time.Time            `graphql:"createdAt"`
-	DeploymentCnt int                  `graphql:"deploymentCnt"`
-	Description   string               `graphql:"description"`
-	Name          string               `graphql:"name"`
-	PreviewURL    string               `graphql:"previewURL"`
-	Readme        string               `graphql:"readme"`
-	Tags          []string             `graphql:"tags"`
-	Services      []*ServiceInTemplate `graphql:"services"`
+	Code          string    `graphql:"code"`
+	CreatedAt     time.Time `graphql:"createdAt"`
+	DeploymentCnt int       `graphql:"deploymentCnt"`
+	Description   string    `graphql:"description"`
+	Name          string    `graphql:"name"`
+	PreviewURL    string    `graphql:"previewURL"`
+	Readme        string    `graphql:"readme"`
+	Tags          []string  `graphql:"tags"`
 }
 
 type TemplateConnection struct {

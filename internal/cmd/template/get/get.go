@@ -1,6 +1,7 @@
 package get
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/briandowns/spinner"
@@ -30,17 +31,60 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 }
 
 func runGet(f *cmdutil.Factory, opts Options) error {
+	if f.Interactive {
+		return runGetInteractive(f, opts)
+	}
+	return runGetNonInteractive(f, opts)
+
+}
+
+func runGetInteractive(f *cmdutil.Factory, opts Options) error {
+	code, err := f.Prompter.Input("Template Code: ", "")
+	if err != nil {
+		return err
+	}
+
+	opts.code = code
+
+	err = getTemplate(f, opts)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func runGetNonInteractive(f *cmdutil.Factory, opts Options) error {
 	err := paramCheck(opts)
 	if err != nil {
 		return err
 	}
 
+	err = getTemplate(f, opts)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getTemplate(f *cmdutil.Factory, opts Options) error {
 	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 		spinner.WithColor(cmdutil.SpinnerColor),
 		spinner.WithSuffix(" Fetching template..."),
 	)
 	s.Start()
-  template, err := f.ApiClient.GetTemplate(ctx context.Context, code string)
+	template, err := f.ApiClient.GetTemplate(context.Background(), opts.code)
+	if err != nil {
+		return err
+	}
+	s.Stop()
+
+	if template == nil || template.Code == "" {
+		fmt.Println("Template not found")
+	} else {
+		f.Printer.Table([]string{"Code", "Name", "Description"}, [][]string{{template.Code, template.Name, template.Description}})
+	}
 
 	return nil
 }
