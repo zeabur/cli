@@ -5,9 +5,9 @@ import (
 )
 
 type Template struct {
-	Code          string    `graphql:"code"`
 	CreatedAt     time.Time `graphql:"createdAt"`
 	DeploymentCnt int       `graphql:"deploymentCnt"`
+	Code          string    `graphql:"code"`
 	Description   string    `graphql:"description"`
 	Name          string    `graphql:"name"`
 	PreviewURL    string    `graphql:"previewURL"`
