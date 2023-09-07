@@ -1,26 +1,26 @@
 {
-    "version": "0.0.5",
+    "version": "0.0.6",
     "architecture": {
         "32bit": {
-            "url": "https://github.com/zeabur/cli/releases/download/v0.0.5/zeabur_0.0.5_windows_386.zip",
+            "url": "https://github.com/zeabur/cli/releases/download/v0.0.6/zeabur_0.0.6_windows_386.zip",
             "bin": [
                 "zeabur.exe"
             ],
-            "hash": "3c451c7051fa3e29a35b2a320eeccaa0175d99aa393c0045dd40ff47bd7642c9"
+            "hash": "b163c4517d5d99f18b7778b6c82a9610bfc904e0aa512fd58ee6cf88de79ad36"
         },
         "64bit": {
-            "url": "https://github.com/zeabur/cli/releases/download/v0.0.5/zeabur_0.0.5_windows_amd64.zip",
+            "url": "https://github.com/zeabur/cli/releases/download/v0.0.6/zeabur_0.0.6_windows_amd64.zip",
             "bin": [
                 "zeabur.exe"
             ],
-            "hash": "39379111de2d72c287778deb5bd1e94b182f7a5db6cea98120901b9afcc90718"
+            "hash": "af00616cc04774728437c32c5a5f08a9cf7e764ed0353511d557b8a9df79ecc6"
         },
         "arm64": {
-            "url": "https://github.com/zeabur/cli/releases/download/v0.0.5/zeabur_0.0.5_windows_arm64.zip",
+            "url": "https://github.com/zeabur/cli/releases/download/v0.0.6/zeabur_0.0.6_windows_arm64.zip",
             "bin": [
                 "zeabur.exe"
             ],
-            "hash": "43a161f9031fe6dba4a95ecf8ebd7c4fb6070d45f9eae14000e98b8f028e54e9"
+            "hash": "30ea27aa156586c33cc79f2be7b0ed8c538f8ad9d4ac769ea91d2b7fc3321af7"
         }
     },
     "homepage": "https://zeabur.com",
