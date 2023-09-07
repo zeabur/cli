@@ -30,7 +30,5 @@ func IsAuthCheckEnabled(cmd *cobra.Command) bool {
 
 func (f *Factory) LoggedIn() bool {
 	token := f.Config.GetTokenString()
-	user := f.Config.GetUser()
-	username := f.Config.GetUsername()
-	return token != "" && user != "" && username != ""
+	return token != ""
 }
