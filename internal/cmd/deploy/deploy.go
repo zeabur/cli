@@ -2,12 +2,14 @@ package deploy
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
-	"golang.org/x/sync/errgroup"
 )
 
 type Options struct {
@@ -52,25 +54,71 @@ func runDeployNonInteractive(f *cmdutil.Factory, opts *Options) error {
 
 	f.Log.Debugf("repoID: %d", repoID)
 
-	//TODO: Deploy Local Git Service NonInteractive
+	// TODO: Deploy Local Git Service NonInteractive
 
 	return nil
 }
 
 func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
-	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
-		spinner.WithColor(cmdutil.SpinnerColor),
-		spinner.WithSuffix(" Fetching repository information..."),
-	)
-	s.Start()
-
 	var repoOwner string
 	var repoName string
 	var err error
 
 	repoOwner, repoName, err = f.ApiClient.GetRepoInfo()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get repository info: %w", err)
+	}
+
+	user, err := f.ApiClient.GetUserInfo(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to get user info: %w", err)
+	}
+
+	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+		spinner.WithColor(cmdutil.SpinnerColor),
+		spinner.WithSuffix(" Fetching repository information..."),
+	)
+	s.Start()
+
+	if repoOwner != user.Username {
+		s.Stop()
+		confirm, err := f.Prompter.Confirm("You are not the owner of this repository, would you like to wipe the repository information and continue? (y/n)", true)
+		if err != nil {
+			return err
+		}
+
+		if confirm {
+			f.ApiClient.WipeRepo()
+			f.Log.Info("Repository information wiped")
+
+			s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+				spinner.WithColor(cmdutil.SpinnerColor),
+				spinner.WithSuffix(" Fetching organizations..."),
+			)
+			s.Start()
+			orgs, err := f.ApiClient.GetOrganizationList(user.Username)
+			if err != nil {
+				return err
+			}
+			s.Stop()
+
+			index, err := f.Prompter.Select("Select organization", repoOwner, orgs)
+			if err != nil {
+				return err
+			}
+			repoOwner = orgs[index]
+
+			repo, err := f.ApiClient.InitRepo(repoName, repoOwner)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(repo)
+
+			s.Stop()
+		} else {
+			return nil
+		}
 	}
 
 	// Use repo name as default service name

@@ -91,9 +91,7 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 		},
 	}
 
-	// don't print usage when error happens
 	cmd.SilenceUsage = true
-	// don't print error when error happens(we will print it ourselves)
 	cmd.SilenceErrors = true
 
 	// Persistent flags

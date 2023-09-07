@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/go-github/github"
 	"github.com/zeabur/cli/pkg/model"
 )
 
@@ -81,6 +82,10 @@ type (
 		GetRepoID(repoOwner string, repoName string) (int, error)
 		GetRepoInfo() (string, string, error)
 		GetRepoBranchesByRepoID(repoID int) ([]string, error)
+		GetOrganizationList(username string) ([]string, error)
+
+		WipeRepo() error
+		InitRepo(repoName string, repoOwner string) (*github.Repository, error)
 	}
 
 	TemplateAPI interface {
