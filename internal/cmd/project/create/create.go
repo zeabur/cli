@@ -3,6 +3,7 @@ package create
 import (
 	"context"
 	"fmt"
+	"github.com/zeabur/cli/pkg/zcontext"
 
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
@@ -103,7 +104,11 @@ func createProject(f *cmdutil.Factory, projectRegion string, projectName *string
 	}
 
 	f.Log.Infof("Project %s created", project.Name)
-
+	err = setProject(f, project.ID, project.Name)
+	if err != nil {
+		f.Log.Error(err)
+		return err
+	}
 	return nil
 }
 
@@ -111,6 +116,21 @@ func paramCheck(opts *Options) error {
 	if opts.ProjectRegion == "" {
 		return fmt.Errorf("please specify project region with --region")
 	}
+
+	return nil
+}
+
+func setProject(f *cmdutil.Factory, id, name string) error {
+	if id == "" && name == "" {
+		return fmt.Errorf("context auto-switching failed, check if the project was created successfully")
+	}
+	f.Config.GetContext().SetProject(zcontext.NewBasicInfo(id, name))
+
+	// clear environment and service context when project context is set
+	f.Config.GetContext().ClearService()
+	f.Config.GetContext().ClearEnvironment()
+
+	f.Log.Infof("Project context is set to <%s>", name)
 
 	return nil
 }
