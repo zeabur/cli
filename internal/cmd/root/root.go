@@ -49,7 +49,6 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 
 			// require that the user is authenticated before running most commands
 			if cmdutil.IsAuthCheckEnabled(cmd) {
-				f.Log.Debug("Checking authentication")
 				// do not return error, guide user to login instead
 				if !f.LoggedIn() {
 					f.Log.Info("A browser window will be opened for you to login, please confirm")

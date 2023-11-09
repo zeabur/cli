@@ -1,6 +1,8 @@
 package deploy
 
 import (
+	"context"
+
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
@@ -29,27 +31,42 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 }
 
 func runDeploy(f *cmdutil.Factory, opts *Options) error {
-	if f.Interactive {
-		return runDeployInteractive(f, opts)
-	} else {
-		return runDeployNonInteractive(f, opts)
-	}
-}
-
-func runDeployNonInteractive(f *cmdutil.Factory, opts *Options) error {
-	f.Log.Info("Deploying...")
-	return nil
-}
-
-func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 		spinner.WithColor(cmdutil.SpinnerColor),
-		spinner.WithSuffix(" Fetching repository information..."),
+		spinner.WithSuffix(" Fetching projects ..."),
 	)
 	s.Start()
-
-	f.Log.Info("Deploying interactive...")
-
+	projects, err := f.ApiClient.ListAllProjects(context.Background())
+	if err != nil {
+		return err
+	}
 	s.Stop()
+
+	if len(projects) == 0 {
+		confirm, err := f.Prompter.Confirm("No projects found, would you like to create one now?", true)
+		if err != nil {
+			return err
+		}
+		if confirm {
+			project, err := f.ApiClient.CreateProject(context.Background(), "default", nil)
+			if err != nil {
+				f.Log.Error("Failed to create project: ", err)
+				return err
+			}
+			f.Log.Infof("Project %s created", project.Name)
+			//TODO: Deploy codes as a service in the project
+			return nil
+		}
+	}
+
+	f.Log.Info("Select one project to deploy your service.")
+
+	_, project, err := f.Selector.SelectProject()
+	if err != nil {
+		return err
+	}
+
+	f.Log.Info("You have selected project %s", project.Name)
+
 	return nil
 }
