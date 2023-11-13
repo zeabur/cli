@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
+	"github.com/zeabur/cli/pkg/zcontext"
 )
 
 type Options struct {
@@ -18,7 +19,7 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "deploy",
-		Short:   "Deploy local codes to Zeabur with one command",
+		Short:   "Deploy local project to Zeabur with one command",
 		PreRunE: util.NeedProjectContextWhenNonInteractive(f),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDeploy(f, opts)
@@ -54,7 +55,8 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 				return err
 			}
 			f.Log.Infof("Project %s created", project.Name)
-			//TODO: Deploy codes as a service in the project
+			f.Config.GetContext().SetProject(zcontext.NewBasicInfo(project.ID, project.Name))
+
 			return nil
 		}
 	}
@@ -67,6 +69,8 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	f.Log.Info("You have selected project %s", project.Name)
+
+	f.Config.GetContext().SetProject(zcontext.NewBasicInfo(project.ID, project.Name))
 
 	return nil
 }
