@@ -47,13 +47,3 @@ brews:
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
     homepage: "https://zeabur.com"
     description: "Zeabur's official command line tool"
-
-scoops:
-  - url_template: "https://github.com/zeabur/cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
-    bucket:
-      owner: zeabur
-      name: cli
-    homepage: "https://zeabur.com"
-    description: "Zeabur's official command line tool"
-    repository:
-      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
