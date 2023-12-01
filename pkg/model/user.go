@@ -23,8 +23,7 @@ type User struct {
 	BannedAt  *time.Time `json:"bannedAt" graphql:"bannedAt"`
 	//BannedReason    *BannedReasonType  `json:"bannedReason" graphql:"bannedReason"`
 	//EmailPreference map[string]bool    `json:"emailPreference" graphql:"emailPreference"`
-	AgreedAt        *time.Time `json:"agreedAt" graphql:"agreedAt"`
-	LastCheckedInAt *time.Time `json:"lastCheckedInAt" graphql:"lastCheckedInAt"`
+	AgreedAt *time.Time `json:"agreedAt" graphql:"agreedAt"`
 	// DiscordID is the user's Discord ID.
 	DiscordID *string `json:"discordID" graphql:"discordID"`
 	ID        string  `json:"_id" graphql:"_id"`
@@ -37,7 +36,7 @@ type User struct {
 }
 
 func (u *User) Header() []string {
-	return []string{"ID", "Name", "Username", "Email", "Language", "LastCheckInAt", "RegisteredAt"}
+	return []string{"ID", "Name", "Username", "Email", "Language", "RegisteredAt"}
 }
 
 func (u *User) Rows() [][]string {
@@ -47,7 +46,6 @@ func (u *User) Rows() [][]string {
 	row = append(row, u.Username)
 	row = append(row, u.Email)
 	row = append(row, u.Language)
-	row = append(row, u.LastCheckedInAt.Format(time.RFC3339))
 	row = append(row, u.CreatedAt.Format(time.RFC3339))
 
 	return [][]string{row}
