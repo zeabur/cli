@@ -38,13 +38,6 @@ iwr -useb https://dub.sh/zb-win | iex
 brew install zeabur/tap/cli
 ```
 
-### Scoop (Windows)
-
-```powershell
-scoop bucket add zeabur https://github.com/zeabur/cli
-scoop install zeabur
-```
-
 ### 2. Login
 
 If you can open the browser:
