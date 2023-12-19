@@ -47,7 +47,7 @@ func NewZeaburWebAppOAuthClient() *WebAppClient {
 		ClientID:               ZeaburOAuthCLIClientID,
 		ClientSecret:           ZeaburOAuthCLIClientSecret,
 		RedirectURIWithoutPort: OAuthLocalServerCallbackURL,
-		Scopes:                 []string{"all"},
+		Scopes:                 []string{"project:write", "user:write", "service:write", "environment:write"},
 
 		AuthorizeURL: ZeaburOAuthAuthorizeURL,
 		TokenURL:     ZeaburOAuthTokenURL,
