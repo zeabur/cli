@@ -1,6 +1,7 @@
 .DS_Store
 .idea/
 .vscode/
+.env
 
 # test && mocks
 mocks/
