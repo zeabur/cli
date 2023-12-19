@@ -3,6 +3,7 @@ package create
 import (
 	"context"
 	"fmt"
+
 	"github.com/zeabur/cli/pkg/zcontext"
 
 	"github.com/briandowns/spinner"
@@ -55,6 +56,8 @@ func runCreateInteractive(f *cmdutil.Factory, opts *Options) error {
 	if err != nil {
 		return err
 	}
+
+	regions = regions[1:]
 	s.Stop()
 
 	regionIDs := make([]string, 0, len(regions))
