@@ -1,10 +1,16 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"fmt"
+	"io"
+	"mime/multipart"
+	"net/http"
 	"time"
 
+	"github.com/spf13/viper"
 	"github.com/zeabur/cli/pkg/model"
 )
 
@@ -304,4 +310,76 @@ func (c *client) CreateService(ctx context.Context, projectID string, name strin
 	}
 
 	return &mutation.CreateService, nil
+}
+
+func (c *client) CreateEmptyService(ctx context.Context, projectID string, name string) (*model.Service, error) {
+	var mutation struct {
+		CreateService model.Service `graphql:"createService(projectID: $projectID, template: $template, name: $name)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{
+		"projectID": ObjectID(projectID),
+		"template":  ServiceTemplate("GIT"),
+		"name":      name,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &mutation.CreateService, nil
+}
+
+func (c *client) UploadZipToService(ctx context.Context, projectID string, serviceID string, environmentID string, zipBytes []byte) (*model.Service, error) {
+	url := "https://gateway.zeabur.com/projects/" + projectID + "/services/" + serviceID + "/deploy"
+
+	method := "POST"
+
+	var requestBody bytes.Buffer
+	multipartWriter := multipart.NewWriter(&requestBody)
+
+	err := multipartWriter.WriteField("environment", environmentID)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	fileWriter, err := multipartWriter.CreateFormFile("code", "zeabur.zip")
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	_, err = io.Copy(fileWriter, bytes.NewReader(zipBytes))
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	err = multipartWriter.Close()
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	client := &http.Client{}
+
+	req, err := http.NewRequest(method, url, &requestBody)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	token := viper.GetString("token")
+
+	req.Header.Set("Content-Type", multipartWriter.FormDataContentType())
+	req.Header.Set("Cookie", "token="+token)
+
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	return nil, nil
 }

@@ -2,6 +2,9 @@
 package main
 
 import (
+	"os"
+	"time"
+
 	"github.com/zeabur/cli/internal/cmd/root"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/pkg/auth"
@@ -9,7 +12,6 @@ import (
 	"github.com/zeabur/cli/pkg/log"
 	"github.com/zeabur/cli/pkg/printer"
 	"github.com/zeabur/cli/pkg/prompt"
-	"time"
 )
 
 var (
@@ -24,6 +26,10 @@ func main() {
 	rootCmd, err := root.NewCmdRoot(factory, version, commit, date)
 	if err != nil {
 		panic(err)
+	}
+
+	if len(os.Args) <= 1 {
+		os.Args = append([]string{os.Args[0], "deploy"}, os.Args[1:]...)
 	}
 
 	// log errors

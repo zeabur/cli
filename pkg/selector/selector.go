@@ -64,10 +64,40 @@ func (s *selector) SelectProject() (zcontext.BasicInfo, *model.Project, error) {
 	for i, project := range projects {
 		projectsName[i] = project.Name
 	}
+	projectsName = append(projectsName, "Create a new project")
 	index, err := s.prompter.Select("Select project", projectsName[0], projectsName)
 	if err != nil {
 		return nil, nil, fmt.Errorf("select project failed: %w", err)
 	}
+
+	if index == len(projects) {
+
+		regions, err := s.client.GetRegions(context.Background())
+		if err != nil {
+			return nil, nil, fmt.Errorf("get regions failed: %w", err)
+		}
+		regions = regions[1:]
+
+		regionIDs := make([]string, 0, len(regions))
+		for _, region := range regions {
+			regionIDs = append(regionIDs, region.ID)
+		}
+
+		projectRegionIndex, err := s.prompter.Select("Select project region", "", regionIDs)
+		if err != nil {
+			return nil, nil, fmt.Errorf("select project region failed: %w", err)
+		}
+
+		projectRegion := regions[projectRegionIndex].ID
+
+		project, err := s.client.CreateProject(context.Background(), projectRegion, nil)
+		if err != nil {
+			return nil, nil, fmt.Errorf("create project failed: %w", err)
+		}
+
+		return zcontext.NewBasicInfo(project.ID, project.Name), project, nil
+	}
+
 	project := projects[index]
 
 	return zcontext.NewBasicInfo(project.ID, project.Name), project, nil

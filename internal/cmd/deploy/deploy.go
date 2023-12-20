@@ -2,12 +2,13 @@ package deploy
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
-	"golang.org/x/sync/errgroup"
+	"github.com/zeabur/cli/pkg/zcontext"
 )
 
 type Options struct {
@@ -19,7 +20,7 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "deploy",
-		Short:   "Deploy a local Git Service",
+		Short:   "Deploy local project to Zeabur with one command",
 		PreRunE: util.NeedProjectContextWhenNonInteractive(f),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDeploy(f, opts)
@@ -32,97 +33,80 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 }
 
 func runDeploy(f *cmdutil.Factory, opts *Options) error {
-	if f.Interactive {
-		return runDeployInteractive(f, opts)
-	} else {
-		return runDeployNonInteractive(f, opts)
-	}
-}
-
-func runDeployNonInteractive(f *cmdutil.Factory, opts *Options) error {
-	repoOwner, repoName, err := f.ApiClient.GetRepoInfo()
-	if err != nil {
-		return err
-	}
-
-	repoID, err := f.ApiClient.GetRepoID(repoOwner, repoName)
-	if err != nil {
-		return err
-	}
-
-	f.Log.Debugf("repoID: %d", repoID)
-
-	//TODO: Deploy Local Git Service NonInteractive
-
-	return nil
-}
-
-func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 		spinner.WithColor(cmdutil.SpinnerColor),
-		spinner.WithSuffix(" Fetching repository information..."),
+		spinner.WithSuffix(" Fetching projects ..."),
 	)
 	s.Start()
-
-	var repoOwner string
-	var repoName string
-	var err error
-
-	repoOwner, repoName, err = f.ApiClient.GetRepoInfo()
+	projects, err := f.ApiClient.ListAllProjects(context.Background())
 	if err != nil {
 		return err
 	}
-
-	// Use repo name as default service name
-	if opts.name == "" {
-		opts.name = repoName
-	}
-
-	var eg errgroup.Group
-	var repoID int
-	var branches []string
-
-	eg.Go(func() error {
-		repoID, err = f.ApiClient.GetRepoID(repoOwner, repoName)
-		return err
-	})
-
-	eg.Go(func() error {
-		branches, err = f.ApiClient.GetRepoBranches(context.Background(), repoOwner, repoName)
-		return err
-	})
-
-	if err = eg.Wait(); err != nil {
-		return err
-	}
-
 	s.Stop()
 
-	// If repo has only one branch, use it as default branch
-	// Otherwise, ask user to select a branch
-	var branch string
-
-	if len(branches) == 1 {
-		branch = branches[0]
-	} else {
-		_, err = f.Prompter.Select("Select branch", branch, branches)
+	if len(projects) == 0 {
+		confirm, err := f.Prompter.Confirm("No projects found, would you like to create one now?", true)
 		if err != nil {
 			return err
 		}
+		if confirm {
+			project, err := f.ApiClient.CreateProject(context.Background(), "default", nil)
+			if err != nil {
+				f.Log.Error("Failed to create project: ", err)
+				return err
+			}
+			f.Log.Infof("Project %s created", project.Name)
+			f.Config.GetContext().SetProject(zcontext.NewBasicInfo(project.ID, project.Name))
+
+			return nil
+		}
+	}
+
+	f.Log.Info("Select one project to deploy your service.")
+
+	_, project, err := f.Selector.SelectProject()
+	if err != nil {
+		return err
+	}
+
+	f.Config.GetContext().SetProject(zcontext.NewBasicInfo(project.ID, project.Name))
+
+	_, environment, err := f.Selector.SelectEnvironment(project.ID)
+	if err != nil {
+		return err
 	}
 
 	s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 		spinner.WithColor(cmdutil.SpinnerColor),
-		spinner.WithSuffix(" Creating service..."),
-		spinner.WithFinalMSG(cmdutil.SuccessIcon+" Service created 🥂\n"),
+		spinner.WithSuffix(" Creating new service ..."),
 	)
 	s.Start()
 
-	_, err = f.ApiClient.CreateService(context.Background(), f.Config.GetContext().GetProject().GetID(), opts.name, repoID, branch)
+	bytes, fileName, err := util.PackZip()
+	if err != nil {
+		return err
+	}
+
+	service, err := f.ApiClient.CreateEmptyService(context.Background(), project.ID, fileName)
+	if err != nil {
+		return err
+	}
+
+	s.Stop()
+
+	s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+		spinner.WithColor(cmdutil.SpinnerColor),
+		spinner.WithSuffix(" Uploading codes to Zeabur ..."),
+	)
+	s.Start()
+
+	_, err = f.ApiClient.UploadZipToService(context.Background(), project.ID, service.ID, environment.ID, bytes)
 	if err != nil {
 		return err
 	}
 	s.Stop()
+
+	fmt.Println("Service created successfully, you can access it at: ", "https://dash.zeabur.com/projects/"+project.ID+"/services/"+service.ID+"?environmentID="+environment.ID)
 
 	return nil
 }

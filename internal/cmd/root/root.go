@@ -2,12 +2,12 @@
 package root
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/zeabur/cli/pkg/fill"
 	"github.com/zeabur/cli/pkg/selector"
+	"golang.org/x/oauth2"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/spf13/cobra"
@@ -31,7 +31,7 @@ import (
 // NewCmdRoot creates the root command
 func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Command, error) {
 	cmd := &cobra.Command{
-		Use:   "zeabur <command> <subcommand> [flags]",
+		Use:   "zeabur",
 		Short: "Zeabur CLI",
 		Long:  `Zeabur CLI is the official command line tool for Zeabur.`,
 		Example: heredoc.Doc(`
@@ -49,9 +49,23 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 
 			// require that the user is authenticated before running most commands
 			if cmdutil.IsAuthCheckEnabled(cmd) {
-				f.Log.Debug("Checking authentication")
+				// do not return error, guide user to login instead
 				if !f.LoggedIn() {
-					return errors.New("not authenticated")
+					f.Log.Info("A browser window will be opened for you to login, please confirm")
+
+					var (
+						tokenString string
+						token       *oauth2.Token
+						err         error
+					)
+
+					token, err = f.AuthClient.Login()
+					if err != nil {
+						return fmt.Errorf("failed to login: %w", err)
+					}
+					tokenString = token.AccessToken
+					f.Config.SetToken(token)
+					f.Config.SetTokenString(tokenString)
 				}
 				// set up the client
 				f.ApiClient = api.New(f.Config.GetTokenString())
