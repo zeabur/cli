@@ -5,6 +5,8 @@ package webapp
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -17,8 +19,9 @@ import (
 
 // Flow holds the state for the steps of OAuth Web Application flow.
 type Flow struct {
-	server *localServer
-	state  string
+	server        *localServer
+	state         string
+	codeChallenge string
 }
 
 // InitFlow creates a new Flow instance by detecting a locally available port number.
@@ -29,10 +32,12 @@ func InitFlow() (*Flow, error) {
 	}
 
 	state, _ := randomString(20)
+	codeChallenge, _ := randomString(43)
 
 	return &Flow{
-		server: server,
-		state:  state,
+		server:        server,
+		state:         state,
+		codeChallenge: codeChallenge,
 	}, nil
 }
 
@@ -55,7 +60,9 @@ func (flow *Flow) BrowserURL(baseURL string, config oauth2.Config) (string, erro
 	q := url.Values{}
 	q.Set("client_id", config.ClientID)
 	q.Set("redirect_uri", config.RedirectURL)
-	q.Set("scope", strings.Join(config.Scopes, " "))
+	q.Set("code_challenge", genCodeChallengeS256(flow.codeChallenge))
+	q.Set("code_challenge_method", "S256")
+	q.Set("scope", strings.Join(config.Scopes, ","))
 	q.Set("state", flow.state)
 	q.Set("response_type", "code")
 
@@ -79,7 +86,7 @@ func (flow *Flow) Wait(ctx context.Context, config oauth2.Config) (*oauth2.Token
 		return nil, errors.New("state mismatch")
 	}
 
-	token, err := config.Exchange(context.Background(), code.Code)
+	token, err := config.Exchange(context.Background(), code.Code, oauth2.SetAuthURLParam("code_verifier", flow.codeChallenge))
 	if err != nil {
 		return nil, err
 	}
@@ -94,4 +101,9 @@ func randomString(length int) (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(b), nil
+}
+
+func genCodeChallengeS256(s string) string {
+	s256 := sha256.Sum256([]byte(s))
+	return base64.URLEncoding.EncodeToString(s256[:])
 }
