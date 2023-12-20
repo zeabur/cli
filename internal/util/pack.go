@@ -9,13 +9,19 @@ import (
 	"path/filepath"
 )
 
-func PackZip() ([]byte, error) {
+func PackZip() ([]byte, string, error) {
 	zipBytes, err := wrapNodeFunction(os.Getenv("PWD"), map[string]string{})
+
+	// turn pwd to a valid file name
+	fileName := filepath.Base(os.Getenv("PWD"))
+
 	if err != nil {
-		return nil, fmt.Errorf("wrap node function: %w", err)
+		return nil, "", fmt.Errorf("wrap node function: %w", err)
 	}
 
-	return zipBytes, nil
+	os.WriteFile("zeabur.zip", zipBytes, 0644)
+
+	return zipBytes, fileName, nil
 }
 
 func wrapNodeFunction(baseFolder string, envVars map[string]string) ([]byte, error) {

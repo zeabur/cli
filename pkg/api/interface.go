@@ -56,6 +56,8 @@ type (
 		ExposeService(ctx context.Context, id string, environmentID string, projectID string, name string) (*model.TempTCPPort, error)
 		CreateServiceFromMarketplace(ctx context.Context, projectID string, name string, itemCode string) (*model.Service, error)
 		CreateService(ctx context.Context, projectID string, name string, repoID int, branchName string) (*model.Service, error)
+		CreateEmptyService(ctx context.Context, projectID string, name string) (*model.Service, error)
+		UploadZipToService(ctx context.Context, projectID string, serviceID string, environmentID string, zipBytes []byte) (*model.Service, error)
 	}
 
 	DeploymentAPI interface {
