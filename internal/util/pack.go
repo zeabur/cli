@@ -19,8 +19,6 @@ func PackZip() ([]byte, string, error) {
 		return nil, "", fmt.Errorf("wrap node function: %w", err)
 	}
 
-	os.WriteFile("zeabur.zip", zipBytes, 0644)
-
 	return zipBytes, fileName, nil
 }
 
