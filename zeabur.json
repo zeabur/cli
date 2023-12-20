@@ -6,21 +6,21 @@
             "bin": [
                 "zeabur.exe"
             ],
-            "hash": "5cae2460a239e20fc5bfd24632bc09895053ff35b9a669f5bb35579acd160a31"
+            "hash": "f5d755406af5ccad0b981f4142ded15c97e47930fc52dee6c53b3a2baeb6337c"
         },
         "64bit": {
             "url": "https://github.com/zeabur/cli/releases/download/v0.0.7/zeabur_0.0.7_windows_amd64.zip",
             "bin": [
                 "zeabur.exe"
             ],
-            "hash": "88264c612f0644186c87ef47828463323630091365090d4abcb2e7114614e0b7"
+            "hash": "670e3b54934df6c3637c313c957870d8a81af9724bb80f10c0f73fb91a89d4c6"
         },
         "arm64": {
             "url": "https://github.com/zeabur/cli/releases/download/v0.0.7/zeabur_0.0.7_windows_arm64.zip",
             "bin": [
                 "zeabur.exe"
             ],
-            "hash": "ba7a294c6ed76fc1f6ad7ca55be60a1471e61c1177c60a3ef5132a02a3b77b6c"
+            "hash": "569a2e6aa9ac2a77f0524c70471434d986c30043b3fc0003b5012b342ff98f8a"
         }
     },
     "homepage": "https://zeabur.com",
