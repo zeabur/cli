@@ -200,6 +200,12 @@ type MarketplaceItem struct {
 	NetworkType string `graphql:"networkType"`
 }
 
+type PrebuiltItem struct {
+	ID          string `graphql:"id"`
+	Name        string `graphql:"name"`
+	Description string `graphql:"description"`
+}
+
 type GitRepo struct {
 	Name  string `graphql:"name"`
 	Owner string `graphql:"owner"`

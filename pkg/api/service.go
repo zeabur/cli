@@ -243,9 +243,9 @@ func (c *client) ExposeService(ctx context.Context, id string, environmentID str
 	return &mutation.ExposeService, nil
 }
 
-func (c *client) GetMarketplaceItems(ctx context.Context) ([]model.MarketplaceItem, error) {
+func (c *client) GetPrebuiltItems(ctx context.Context) ([]model.PrebuiltItem, error) {
 	var query struct {
-		MarketplaceItems []model.MarketplaceItem `graphql:"marketplaceItems"`
+		PrebuiltItems []model.PrebuiltItem `graphql:"prebuiltMarketplaceItems"`
 	}
 
 	err := c.Query(ctx, &query, nil)
@@ -254,25 +254,24 @@ func (c *client) GetMarketplaceItems(ctx context.Context) ([]model.MarketplaceIt
 		return nil, err
 	}
 
-	return query.MarketplaceItems, nil
+	return query.PrebuiltItems, nil
 }
 
-func (c *client) CreateServiceFromMarketplace(ctx context.Context, projectID string, name string, itemCode string) (*model.Service, error) {
+func (c *client) CreatePrebuiltService(ctx context.Context, projectID string, marketplaceCode string) (*model.Service, error) {
 	var mutation struct {
-		CreateServiceFromMarketplace model.Service `graphql:"createServiceFromMarketplace(projectID: $projectID, name: $name, itemCode: $itemCode)"`
+		CreatePrebuiltService model.Service `graphql:"createGenericService(projectID: $projectID, marketplaceCode: $marketplaceCode)"`
 	}
 
 	err := c.Mutate(ctx, &mutation, V{
-		"projectID": ObjectID(projectID),
-		"name":      name,
-		"itemCode":  itemCode,
+		"projectID":       ObjectID(projectID),
+		"marketplaceCode": marketplaceCode,
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &mutation.CreateServiceFromMarketplace, nil
+	return &mutation.CreatePrebuiltService, nil
 }
 
 func (c *client) SearchGitRepositories(ctx context.Context, keyword *string) ([]model.GitRepo, error) {

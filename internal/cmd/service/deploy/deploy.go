@@ -11,13 +11,13 @@ import (
 )
 
 type Options struct {
-	projectID  string
-	template   string
-	itemCode   string
-	branchName string
-	name       string
-	keyword    string
-	repoID     int
+	projectID       string
+	template        string
+	marketplaceCode string
+	branchName      string
+	name            string
+	keyword         string
+	repoID          int
 }
 
 func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
@@ -39,7 +39,7 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&opts.name, "name", "", "Service Name")
 	cmd.Flags().StringVar(&opts.template, "template", "", "Service template")
-	cmd.Flags().StringVar(&opts.itemCode, "item-code", "", "Marketplace item code")
+	cmd.Flags().StringVar(&opts.marketplaceCode, "marketplace-code", "", "Marketplace item code")
 	cmd.Flags().IntVar(&opts.repoID, "repo-id", 0, "Git repository ID")
 	cmd.Flags().StringVar(&opts.branchName, "branch-name", "", "Git branch name")
 	cmd.Flags().StringVar(&opts.keyword, "keyword", "", "Git repository keyword")
@@ -63,11 +63,11 @@ func runDeployNonInteractive(f *cmdutil.Factory, opts *Options) error {
 
 	ctx := context.Background()
 
-	if opts.template == "MARKETPLACE" {
-		opts.name = opts.itemCode
-		service, err := f.ApiClient.CreateServiceFromMarketplace(ctx, opts.projectID, opts.name, opts.itemCode)
+	if opts.template == "PREBUILT" {
+		opts.name = opts.marketplaceCode
+		service, err := f.ApiClient.CreatePrebuiltService(ctx, opts.projectID, opts.marketplaceCode)
 		if err != nil {
-			return fmt.Errorf("create service failed: %w", err)
+			return fmt.Errorf("create prebuilt service failed: %w", err)
 		}
 
 		f.Log.Infof("Service %s created", service.Name)
@@ -82,7 +82,7 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
-	serviceTemplate, err := f.Prompter.Select("Select service template", "MARKETPLACE", []string{"MARKETPLACE", "GIT"})
+	serviceTemplate, err := f.Prompter.Select("Select service template", "PREBUILT", []string{"PREBUILT", "GIT"})
 	if err != nil {
 		return err
 	}
@@ -92,28 +92,27 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 	if serviceTemplate == 0 {
 		s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 			spinner.WithColor(cmdutil.SpinnerColor),
-			spinner.WithSuffix(" Fetching marketplace items..."),
-			spinner.WithFinalMSG(cmdutil.SuccessIcon+" Marketplace fetched 🌇\n"),
+			spinner.WithSuffix(" Fetching prebuilt marketplae..."),
+			spinner.WithFinalMSG(cmdutil.SuccessIcon+" Prebuilt marketplace fetched 🌇\n"),
 		)
 		s.Start()
-		marketplaceItems, err := f.ApiClient.GetMarketplaceItems(ctx)
+		prebuiltItems, err := f.ApiClient.GetPrebuiltItems(ctx)
 		if err != nil {
-			return fmt.Errorf("get marketplace items failed: %w", err)
+			return fmt.Errorf("get prebuilt marketplace failed: %w", err)
 		}
 		s.Stop()
 
-		marketplaceItemsList := make([]string, len(marketplaceItems))
-		for i, item := range marketplaceItems {
-			marketplaceItemsList[i] = item.Name + " (" + item.Description + ")"
+		prebuiltItemsList := make([]string, len(prebuiltItems))
+		for i, item := range prebuiltItems {
+			prebuiltItemsList[i] = item.Name + " (" + item.Description + ")"
 		}
 
-		index, err := f.Prompter.Select("Select marketplace item", "", marketplaceItemsList)
+		index, err := f.Prompter.Select("Select prebuilt item", "", prebuiltItemsList)
 		if err != nil {
-			return fmt.Errorf("select marketplace item failed: %w", err)
+			return fmt.Errorf("select prebuilt item failed: %w", err)
 		}
 
-		opts.itemCode = marketplaceItems[index].Code
-		opts.name = opts.itemCode
+		opts.marketplaceCode = prebuiltItems[index].ID
 
 		// use a closure to get the service name after creation
 		serviceName := ""
@@ -131,9 +130,9 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 		}
 		s.Start()
 
-		service, err := f.ApiClient.CreateServiceFromMarketplace(ctx, opts.projectID, opts.name, opts.itemCode)
+		service, err := f.ApiClient.CreatePrebuiltService(ctx, opts.projectID, opts.marketplaceCode)
 		if err != nil {
-			return fmt.Errorf("create service failed: %w", err)
+			return fmt.Errorf("create prebuilt service failed: %w", err)
 		}
 		serviceName = service.Name
 
@@ -208,7 +207,7 @@ func paramCheck(opts *Options) error {
 		return fmt.Errorf("please specify service template with --template")
 	}
 
-	if opts.template == "MARKETPLACE" && opts.itemCode == "" {
+	if opts.template == "PREBUILT" && opts.marketplaceCode == "" {
 		return fmt.Errorf("please specify marketplace item code with --item-code")
 	}
 
