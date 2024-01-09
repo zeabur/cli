@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"math/rand"
+
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
@@ -12,7 +14,8 @@ import (
 )
 
 type Options struct {
-	name string
+	name       string
+	domainName string
 }
 
 func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
@@ -28,6 +31,7 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&opts.name, "name", "", "Service name")
+	cmd.Flags().StringVar(&opts.domainName, "domain", "", "Domain name")
 
 	return cmd
 }
@@ -106,7 +110,31 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 	}
 	s.Stop()
 
-	fmt.Println("Service created successfully, you can access it at: ", "https://dash.zeabur.com/projects/"+project.ID+"/services/"+service.ID+"?environmentID="+environment.ID)
+	s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+		spinner.WithColor(cmdutil.SpinnerColor),
+		spinner.WithSuffix(" Creating domain ..."),
+	)
+	s.Start()
+
+	// if opts.domain is empty, create a random domain
+	domainName := opts.domainName
+	if domainName == "" {
+		var from = []rune("abcdefghijklmnopqrstuvwxyz")
+		b := make([]rune, 8)
+		for i := range b {
+			b[i] = from[rand.Intn(len(from))]
+		}
+		domainName = string(b)
+	}
+
+	domain, err := f.ApiClient.AddDomain(context.Background(), service.ID, environment.ID, opts.domainName == "", domainName)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Domain created: ", "https://"+*domain)
+
+	s.Stop()
 
 	return nil
 }

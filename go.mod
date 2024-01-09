@@ -8,6 +8,7 @@ require (
 	github.com/briandowns/spinner v1.23.0
 	github.com/cli/browser v1.2.0
 	github.com/fatih/color v1.13.0
+	github.com/google/go-containerregistry v0.17.0
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/hasura/go-graphql-client v0.9.3
 	github.com/onsi/ginkgo/v2 v2.11.0
@@ -16,17 +17,19 @@ require (
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.3
 	go.uber.org/zap v1.21.0
-	golang.org/x/oauth2 v0.7.0
-	golang.org/x/sync v0.3.0
+	golang.org/x/oauth2 v0.8.0
 )
 
 require (
+	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
-	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
+	github.com/opencontainers/go-digest v1.0.0 // indirect
+	github.com/opencontainers/image-spec v1.1.0-rc3 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
-	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
+	github.com/vbatts/tar-split v0.11.3 // indirect
+	golang.org/x/sync v0.3.0 // indirect
 )
 
 require (
@@ -41,7 +44,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/klauspost/compress v1.13.6 // indirect
+	github.com/klauspost/compress v1.16.5 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
