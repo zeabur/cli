@@ -34,6 +34,7 @@ func NewCmdCreateDomain(f *cmdutil.Factory) *cobra.Command {
 	util.AddServiceParam(cmd, &opts.id, &opts.name)
 	util.AddEnvOfServiceParam(cmd, &opts.environmentID)
 	cmd.Flags().BoolVarP(&opts.skipConfirm, "yes", "y", false, "Skip confirmation")
+	cmd.Flags().StringVar(&opts.domainName, "domain", "", "Domain name")
 
 	return cmd
 }
@@ -46,6 +47,7 @@ func runCreateDomain(f *cmdutil.Factory, opts *Options) error {
 	}
 }
 
+// TODO: Implement this function
 func runCreateDomainInteractive(f *cmdutil.Factory, opts *Options) error {
 	zctx := f.Config.GetContext()
 
@@ -56,6 +58,7 @@ func runCreateDomainInteractive(f *cmdutil.Factory, opts *Options) error {
 	return runCreateDomainNonInteractive(f, opts)
 }
 
+// TODO: Implement this function
 func runCreateDomainNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	zctx := f.Config.GetContext()
 

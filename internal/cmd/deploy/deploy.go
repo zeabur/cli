@@ -132,7 +132,7 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
-	fmt.Println("Domain created: ", *domain)
+	fmt.Println("Domain created: ", "https://"+*domain)
 
 	s.Stop()
 
