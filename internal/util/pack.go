@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
+	"strings"
 )
 
 func PackZip() ([]byte, string, error) {
@@ -26,12 +28,21 @@ func wrapNodeFunction(baseFolder string, envVars map[string]string) ([]byte, err
 	buf := new(bytes.Buffer)
 	w := zip.NewWriter(buf)
 
-	err := filepath.Walk(baseFolder, func(path string, info os.FileInfo, err error) error {
+	patterns, err := getGitignorePatterns(baseFolder)
+	if err != nil {
+		return nil, fmt.Errorf("getting gitignore patterns: %w", err)
+	}
+
+	err = filepath.Walk(baseFolder, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return fmt.Errorf("walking to %s: %w", path, err)
 		}
 
 		if info.IsDir() {
+			return nil
+		}
+
+		if matchesGitignorePattern(path, patterns) {
 			return nil
 		}
 
@@ -110,4 +121,33 @@ func wrapNodeFunction(baseFolder string, envVars map[string]string) ([]byte, err
 	}
 
 	return buf.Bytes(), nil
+}
+
+func getGitignorePatterns(baseFolder string) ([]string, error) {
+	gitignorePath := path.Join(baseFolder, ".gitignore")
+	gitignoreContent, err := os.ReadFile(gitignorePath)
+	if err != nil {
+		// If .gitignore file doesn't exist, return an empty list
+		if os.IsNotExist(err) {
+			return []string{}, nil
+		}
+		return nil, fmt.Errorf("reading .gitignore file: %w", err)
+	}
+
+	patterns := strings.Split(string(gitignoreContent), "\n")
+	return patterns, nil
+}
+
+func matchesGitignorePattern(filePath string, patterns []string) bool {
+	for _, pattern := range patterns {
+		matched, err := path.Match(pattern, filePath)
+		if err != nil {
+			// Handle error if path matching fails
+			continue
+		}
+		if matched {
+			return true
+		}
+	}
+	return false
 }
