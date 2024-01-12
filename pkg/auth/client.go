@@ -38,6 +38,7 @@ type (
 		TokenURL     string
 		HTTPClient   *http.Client
 		Scopes       []string
+		AuthStyle    oauth2.AuthStyle
 	}
 )
 
@@ -51,6 +52,7 @@ func NewZeaburWebAppOAuthClient() *WebAppClient {
 
 		AuthorizeURL: ZeaburOAuthAuthorizeURL,
 		TokenURL:     ZeaburOAuthTokenURL,
+		AuthStyle:    oauth2.AuthStyleInParams,
 	}
 
 	return NewWebAppClient(opts)
@@ -80,8 +82,9 @@ func NewWebAppClient(opts Options) *WebAppClient {
 		Scopes:       c.Scopes,
 		RedirectURL:  "", // we will fill port after local server is started
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  c.AuthorizeURL,
-			TokenURL: c.TokenURL,
+			AuthURL:   c.AuthorizeURL,
+			TokenURL:  c.TokenURL,
+			AuthStyle: opts.AuthStyle,
 		},
 	}
 
