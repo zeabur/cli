@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"math/rand"
-
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
@@ -80,23 +78,34 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
-	s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
-		spinner.WithColor(cmdutil.SpinnerColor),
-		spinner.WithSuffix(" Creating new service ..."),
-	)
-	s.Start()
+	f.Log.Info("Select one service to deploy or create a new one.")
+
+	_, service, err := f.Selector.SelectService(project.ID)
+	if err != nil {
+		return err
+	}
 
 	bytes, fileName, err := util.PackZip()
 	if err != nil {
 		return err
 	}
 
-	service, err := f.ApiClient.CreateEmptyService(context.Background(), project.ID, fileName)
-	if err != nil {
-		return err
-	}
+	if service == nil {
+		f.Log.Info("No service found, create a new one.")
 
-	s.Stop()
+		s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+			spinner.WithColor(cmdutil.SpinnerColor),
+			spinner.WithSuffix(" Creating new service ..."),
+		)
+		s.Start()
+
+		service, err = f.ApiClient.CreateEmptyService(context.Background(), project.ID, fileName)
+		if err != nil {
+			return err
+		}
+
+		s.Stop()
+	}
 
 	s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 		spinner.WithColor(cmdutil.SpinnerColor),
@@ -110,24 +119,21 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 	}
 	s.Stop()
 
+	domainName := opts.domainName
+
+	if domainName == "" {
+		fmt.Println("Service deployed successfully, you can access it via:")
+		fmt.Println("https://dash.zeabur.com/projects/" + project.ID + "/services/" + service.ID + "?envID=" + environment.ID)
+		return nil
+	}
+
 	s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 		spinner.WithColor(cmdutil.SpinnerColor),
 		spinner.WithSuffix(" Creating domain ..."),
 	)
 	s.Start()
 
-	// if opts.domain is empty, create a random domain
-	domainName := opts.domainName
-	if domainName == "" {
-		var from = []rune("abcdefghijklmnopqrstuvwxyz")
-		b := make([]rune, 8)
-		for i := range b {
-			b[i] = from[rand.Intn(len(from))]
-		}
-		domainName = string(b)
-	}
-
-	domain, err := f.ApiClient.AddDomain(context.Background(), service.ID, environment.ID, opts.domainName == "", domainName)
+	domain, err := f.ApiClient.AddDomain(context.Background(), service.ID, environment.ID, false, domainName)
 	if err != nil {
 		return err
 	}

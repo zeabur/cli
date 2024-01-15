@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 
 	"github.com/zeabur/cli/pkg/api"
 	"github.com/zeabur/cli/pkg/model"
@@ -111,7 +112,7 @@ func (s *selector) SelectService(projectID string) (zcontext.BasicInfo, *model.S
 	}
 
 	if len(services) == 0 {
-		return nil, nil, errors.New("there are no services in current project")
+		return nil, nil, nil
 	}
 
 	if len(services) == 1 {
@@ -121,15 +122,30 @@ func (s *selector) SelectService(projectID string) (zcontext.BasicInfo, *model.S
 	}
 
 	serviceNames := make([]string, len(services))
-
 	for i, service := range services {
 		serviceNames[i] = service.Name
 	}
+	serviceNames = append(serviceNames, "Create a new service")
 
 	index, err := s.prompter.Select("Select a service", serviceNames[0], serviceNames)
 	if err != nil {
 		return nil, nil, fmt.Errorf("select service failed: %w", err)
 	}
+
+	if index == len(services) {
+		var from = []rune("abcdefghijklmnopqrstuvwxyz")
+		b := make([]rune, 8)
+		for i := range b {
+			b[i] = from[rand.Intn(len(from))]
+		}
+		serviceName := string(b)
+		service, err := s.client.CreateEmptyService(context.Background(), projectID, serviceName)
+		if err != nil {
+			return nil, nil, fmt.Errorf("create service failed: %w", err)
+		}
+		return zcontext.NewBasicInfo(service.ID, service.Name), service, nil
+	}
+
 	service := services[index]
 
 	return zcontext.NewBasicInfo(service.ID, service.Name), service, nil
