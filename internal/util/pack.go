@@ -9,6 +9,8 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/denormal/go-gitignore"
 )
 
 func PackZip() ([]byte, string, error) {
@@ -28,7 +30,7 @@ func wrapNodeFunction(baseFolder string, envVars map[string]string) ([]byte, err
 	buf := new(bytes.Buffer)
 	w := zip.NewWriter(buf)
 
-	patterns, err := getGitignorePatterns(baseFolder)
+	ignore, err := gitignore.NewFromFile(baseFolder + "/.gitignore")
 	if err != nil {
 		return nil, fmt.Errorf("getting gitignore patterns: %w", err)
 	}
@@ -42,14 +44,15 @@ func wrapNodeFunction(baseFolder string, envVars map[string]string) ([]byte, err
 			return nil
 		}
 
-		if matchesGitignorePattern(path, patterns) {
-			return nil
-		}
-
 		// This will ensure only the content inside baseFolder is included at the root of the ZIP.
 		relativePath, err := filepath.Rel(baseFolder, path)
 		if err != nil {
 			return fmt.Errorf("getting relative path: %w", err)
+		}
+
+		match := ignore.Match(relativePath)
+		if match != nil {
+			return nil
 		}
 
 		lstat, err := os.Lstat(path)
@@ -135,10 +138,13 @@ func getGitignorePatterns(baseFolder string) ([]string, error) {
 	}
 
 	patterns := strings.Split(string(gitignoreContent), "\n")
+	fmt.Println("patterns: " + strings.Join(patterns, ","))
 	return patterns, nil
 }
 
 func matchesGitignorePattern(filePath string, patterns []string) bool {
+	fmt.Print("filePath: " + filePath)
+
 	for _, pattern := range patterns {
 		matched, err := path.Match(pattern, filePath)
 		if err != nil {
@@ -146,6 +152,7 @@ func matchesGitignorePattern(filePath string, patterns []string) bool {
 			continue
 		}
 		if matched {
+			fmt.Println(" matched")
 			return true
 		}
 	}
