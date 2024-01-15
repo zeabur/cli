@@ -6,9 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/denormal/go-gitignore"
 )
@@ -124,37 +122,4 @@ func wrapNodeFunction(baseFolder string, envVars map[string]string) ([]byte, err
 	}
 
 	return buf.Bytes(), nil
-}
-
-func getGitignorePatterns(baseFolder string) ([]string, error) {
-	gitignorePath := path.Join(baseFolder, ".gitignore")
-	gitignoreContent, err := os.ReadFile(gitignorePath)
-	if err != nil {
-		// If .gitignore file doesn't exist, return an empty list
-		if os.IsNotExist(err) {
-			return []string{}, nil
-		}
-		return nil, fmt.Errorf("reading .gitignore file: %w", err)
-	}
-
-	patterns := strings.Split(string(gitignoreContent), "\n")
-	fmt.Println("patterns: " + strings.Join(patterns, ","))
-	return patterns, nil
-}
-
-func matchesGitignorePattern(filePath string, patterns []string) bool {
-	fmt.Print("filePath: " + filePath)
-
-	for _, pattern := range patterns {
-		matched, err := path.Match(pattern, filePath)
-		if err != nil {
-			// Handle error if path matching fails
-			continue
-		}
-		if matched {
-			fmt.Println(" matched")
-			return true
-		}
-	}
-	return false
 }
