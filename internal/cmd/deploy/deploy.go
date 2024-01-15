@@ -80,23 +80,34 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
-	s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
-		spinner.WithColor(cmdutil.SpinnerColor),
-		spinner.WithSuffix(" Creating new service ..."),
-	)
-	s.Start()
+	f.Log.Info("Select one service to deploy or create a new one.")
+
+	_, service, err := f.Selector.SelectService(project.ID)
+	if err != nil {
+		return err
+	}
 
 	bytes, fileName, err := util.PackZip()
 	if err != nil {
 		return err
 	}
 
-	service, err := f.ApiClient.CreateEmptyService(context.Background(), project.ID, fileName)
-	if err != nil {
-		return err
-	}
+	if service == nil {
+		f.Log.Info("No service found, create a new one.")
 
-	s.Stop()
+		s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+			spinner.WithColor(cmdutil.SpinnerColor),
+			spinner.WithSuffix(" Creating new service ..."),
+		)
+		s.Start()
+
+		service, err = f.ApiClient.CreateEmptyService(context.Background(), project.ID, fileName)
+		if err != nil {
+			return err
+		}
+
+		s.Stop()
+	}
 
 	s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 		spinner.WithColor(cmdutil.SpinnerColor),
