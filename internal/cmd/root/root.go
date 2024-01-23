@@ -73,9 +73,6 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 
 			// refresh the token if the token is from OAuth2 and it's expired
 			if f.AutoRefreshToken && f.LoggedIn() && f.Config.GetToken() != nil {
-				f.Log.Debug("Token Expiry: ", f.Config.GetToken().Expiry)
-				f.Log.Debug("Now: ", time.Now())
-
 				if f.Config.GetToken().Expiry.Before(time.Now()) {
 					f.Log.Info("Token is from OAuth2 and it's expired, refreshing it")
 
