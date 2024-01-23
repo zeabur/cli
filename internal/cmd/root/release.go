@@ -3,7 +3,7 @@ package root
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -49,7 +49,7 @@ func GetLatestRelease(repo string) (*ReleaseInfo, error) {
 		return nil, fmt.Errorf("get release info failed: %d", resp.StatusCode)
 	}
 
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
