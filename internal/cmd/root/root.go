@@ -3,14 +3,12 @@ package root
 
 import (
 	"fmt"
-	"time"
-
+	"github.com/MakeNowJust/heredoc"
+	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/pkg/fill"
 	"github.com/zeabur/cli/pkg/selector"
 	"golang.org/x/oauth2"
-
-	"github.com/MakeNowJust/heredoc"
-	"github.com/spf13/cobra"
+	"time"
 
 	completionCmd "github.com/zeabur/cli/internal/cmd/completion"
 
@@ -73,32 +71,37 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 				f.ParamFiller = fill.NewParamFiller(f.Selector)
 			}
 
-			return nil
-		},
-		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
-			err := f.Config.Write()
-			if err != nil {
-				return fmt.Errorf("failed to save config: %w", err)
-			}
-
 			// refresh the token if the token is from OAuth2 and it's expired
 			if f.AutoRefreshToken && f.LoggedIn() && f.Config.GetToken() != nil {
+				f.Log.Debug("Token Expiry: ", f.Config.GetToken().Expiry)
+				f.Log.Debug("Now: ", time.Now())
+
 				if f.Config.GetToken().Expiry.Before(time.Now()) {
 					f.Log.Info("Token is from OAuth2 and it's expired, refreshing it")
 
 					token := f.Config.GetToken()
+					token.Expiry = time.Now()
 					newToken, err := f.AuthClient.RefreshToken(token)
 					if err != nil {
 						return fmt.Errorf("failed to refresh token, it is recommended to logout and login again: %w", err)
 					}
 					f.Config.SetToken(newToken)
 					f.Config.SetTokenString(newToken.AccessToken)
+					f.Log.Debug("New token: ", newToken)
 					if err := f.Config.Write(); err != nil {
 						return fmt.Errorf("failed to save config: %w", err)
 					}
 
 					f.Log.Info("Token refreshed successfully")
 				}
+			}
+
+			return nil
+		},
+		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
+			err := f.Config.Write()
+			if err != nil {
+				return fmt.Errorf("failed to save config: %w", err)
 			}
 
 			return nil
