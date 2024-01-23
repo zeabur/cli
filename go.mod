@@ -7,8 +7,8 @@ require (
 	github.com/MakeNowJust/heredoc v1.0.0
 	github.com/briandowns/spinner v1.23.0
 	github.com/cli/browser v1.2.0
+	github.com/coreos/go-semver v0.3.0
 	github.com/fatih/color v1.13.0
-	github.com/google/go-containerregistry v0.17.0
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/hasura/go-graphql-client v0.9.3
 	github.com/onsi/ginkgo/v2 v2.11.0
@@ -21,17 +21,12 @@ require (
 )
 
 require (
-	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
-	github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/denormal/go-gitignore v0.0.0-20180930084346-ae8ad1d07817 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
-	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.1.0-rc3 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
-	github.com/vbatts/tar-split v0.11.3 // indirect
-	golang.org/x/sync v0.3.0 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
 require (

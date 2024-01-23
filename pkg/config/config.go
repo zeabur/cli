@@ -29,6 +29,7 @@ const (
 const (
 	KeyInteractive      = "interactive"
 	KeyAutoRefreshToken = "auto_refresh_token"
+	KeyAutoCheckUpdate  = "auto_check_update"
 )
 
 type Config interface {
