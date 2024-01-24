@@ -166,13 +166,14 @@ func (c *client) getServiceDetailByEnvironmentByOwnerAndProjectAndName(ctx conte
 	return query.Service, nil
 }
 
-func (c *client) ServiceMetric(ctx context.Context, id, environmentID, metricType string, startTime, endTime time.Time) (*model.ServiceMetric, error) {
+func (c *client) ServiceMetric(ctx context.Context, id, projectID, environmentID, metricType string, startTime, endTime time.Time) (*model.ServiceMetric, error) {
 	var query struct {
 		ServiceMetric model.ServiceMetric `graphql:"service(_id: $serviceID)"`
 	}
 
 	err := c.Query(ctx, &query, V{
 		"serviceID":     ObjectID(id),
+		"projectID":     ObjectID(projectID),
 		"environmentID": ObjectID(environmentID),
 		"metricType":    model.MetricType(metricType),
 		"startTime":     startTime,

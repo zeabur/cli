@@ -46,7 +46,7 @@ type (
 		ListAllServicesDetailByEnvironment(ctx context.Context, projectID, environmentID string) (model.ServiceDetails, error)
 		GetService(ctx context.Context, id, ownerName, projectName, name string) (*model.Service, error)
 		GetServiceDetailByEnvironment(ctx context.Context, id, ownerName, projectName, name, environmentID string) (*model.ServiceDetail, error)
-		ServiceMetric(ctx context.Context, id, environmentID, metricType string, startTime, endTime time.Time) (*model.ServiceMetric, error)
+		ServiceMetric(ctx context.Context, id, projectID, environmentID, metricType string, startTime, endTime time.Time) (*model.ServiceMetric, error)
 		GetPrebuiltItems(ctx context.Context) ([]model.PrebuiltItem, error)
 		SearchGitRepositories(ctx context.Context, keyword *string) ([]model.GitRepo, error)
 
