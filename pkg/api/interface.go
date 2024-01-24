@@ -17,6 +17,7 @@ type Client interface {
 	LogAPI
 	GitAPI
 	TemplateAPI
+	DomainAPI
 }
 
 type (
@@ -58,7 +59,13 @@ type (
 		CreateService(ctx context.Context, projectID string, name string, repoID int, branchName string) (*model.Service, error)
 		CreateEmptyService(ctx context.Context, projectID string, name string) (*model.Service, error)
 		UploadZipToService(ctx context.Context, projectID string, serviceID string, environmentID string, zipBytes []byte) (*model.Service, error)
-		AddDomain(ctx context.Context, serviceID string, environmentID string, isGenerated bool, domain string) (*string, error)
+	}
+
+	DomainAPI interface {
+		AddDomain(ctx context.Context, serviceID string, environmentID string, isGenerated bool, domain string, options ...string) (*string, error)
+		ListDomains(ctx context.Context, serviceID string, environmentID string) ([]*model.Domain, error)
+		RemoveDomain(ctx context.Context, domain string) (bool, error)
+		CheckDomainAvailable(ctx context.Context, domain string, isGenerated bool) (bool, string, error)
 	}
 
 	DeploymentAPI interface {

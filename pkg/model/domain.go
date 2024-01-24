@@ -14,3 +14,5 @@ type Domain struct {
 	IsGenerated   bool      `json:"isGenerated" graphql:"isGenerated"`
 	CreatedAt     time.Time `json:"createdAt" graphql:"createdAt"`
 }
+
+type Domains []*Domain

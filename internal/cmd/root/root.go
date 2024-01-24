@@ -10,14 +10,15 @@ import (
 	"github.com/zeabur/cli/pkg/fill"
 	"github.com/zeabur/cli/pkg/selector"
 	"golang.org/x/oauth2"
-
 	completionCmd "github.com/zeabur/cli/internal/cmd/completion"
 
+
 	authCmd "github.com/zeabur/cli/internal/cmd/auth"
+	completionCmd "github.com/zeabur/cli/internal/cmd/completion"
 	contextCmd "github.com/zeabur/cli/internal/cmd/context"
 	deployCmd "github.com/zeabur/cli/internal/cmd/deploy"
 	deploymentCmd "github.com/zeabur/cli/internal/cmd/deployment"
-	profileCmd "github.com/zeabur/cli/internal/cmd/profile"
+	domainCmd "github.com/zeabur/cli/internal/cmd/domain"
 	projectCmd "github.com/zeabur/cli/internal/cmd/project"
 	serviceCmd "github.com/zeabur/cli/internal/cmd/service"
 	templateCmd "github.com/zeabur/cli/internal/cmd/template"
@@ -144,10 +145,9 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 	cmd.AddCommand(serviceCmd.NewCmdService(f))
 	cmd.AddCommand(deploymentCmd.NewCmdDeployment(f))
 	cmd.AddCommand(templateCmd.NewCmdTemplate(f))
+	cmd.AddCommand(domainCmd.NewCmdDomain(f))
 	cmd.AddCommand(profileCmd.NewCmdProfile(f))
-
 	cmd.AddCommand(contextCmd.NewCmdContext(f))
-
 	cmd.AddCommand(completionCmd.NewCmdCompletion(f))
 
 	return cmd, nil

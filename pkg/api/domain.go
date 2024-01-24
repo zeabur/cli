@@ -6,15 +6,57 @@ import (
 	"github.com/zeabur/cli/pkg/model"
 )
 
-func (c *client) ListDomains(ctx context.Context, environmentID string) ([]*model.Domain, error) {
+func (c *client) AddDomain(ctx context.Context, serviceID string, environmentID string, isGenerated bool, domain string, options ...string) (*string, error) {
+	var err error
+
+	if len(options) > 0 {
+		var mutationOptional struct {
+			AddDomain struct {
+				Domain string `json:"domain" graphql:"domain"`
+			} `graphql:"addDomain(serviceID: $serviceID, environmentID: $environmentID, isGenerated: $isGenerated, domain: $domain, redirectTo: $redirectTo)"`
+		}
+
+		err = c.Mutate(ctx, &mutationOptional, V{
+			"serviceID":     ObjectID(serviceID),
+			"environmentID": ObjectID(environmentID),
+			"isGenerated":   isGenerated,
+			"domain":        domain,
+			"redirectTo":    options[0],
+		})
+
+		return &mutationOptional.AddDomain.Domain, nil
+	}
+
+	var mutation struct {
+		AddDomain struct {
+			Domain string `json:"domain" graphql:"domain"`
+		} `graphql:"addDomain(serviceID: $serviceID, environmentID: $environmentID, isGenerated: $isGenerated, domain: $domain)"`
+	}
+
+	err = c.Mutate(ctx, &mutation, V{
+		"serviceID":     ObjectID(serviceID),
+		"environmentID": ObjectID(environmentID),
+		"isGenerated":   isGenerated,
+		"domain":        domain,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &mutation.AddDomain.Domain, nil
+}
+
+func (c *client) ListDomains(ctx context.Context, serviceID string, environmentID string) ([]*model.Domain, error) {
 	var query struct {
 		Service struct {
-			Domains []*model.Domain `graphql:"domains(environmentID: $environmentID))"`
-		}
+			Domains model.Domains `graphql:"domains(environmentID: $environmentID)"`
+		} `graphql:"service(_id: $id)"`
 	}
 
 	err := c.Query(ctx, &query, V{
 		"environmentID": ObjectID(environmentID),
+		"id":            ObjectID(serviceID),
 	})
 
 	if err != nil {
