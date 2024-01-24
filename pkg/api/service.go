@@ -384,14 +384,34 @@ func (c *client) UploadZipToService(ctx context.Context, projectID string, servi
 	return nil, nil
 }
 
-func (c *client) AddDomain(ctx context.Context, serviceID string, environmentID string, isGenerated bool, domain string) (*string, error) {
+func (c *client) AddDomain(ctx context.Context, serviceID string, environmentID string, isGenerated bool, domain string, options ...string) (*string, error) {
+	var err error
+
+	if len(options) > 0 {
+		var mutationOptional struct {
+			AddDomain struct {
+				Domain string `json:"domain" graphql:"domain"`
+			} `graphql:"addDomain(serviceID: $serviceID, environmentID: $environmentID, isGenerated: $isGenerated, domain: $domain, redirectTo: $redirectTo)"`
+		}
+
+		err = c.Mutate(ctx, &mutationOptional, V{
+			"serviceID":     ObjectID(serviceID),
+			"environmentID": ObjectID(environmentID),
+			"isGenerated":   isGenerated,
+			"domain":        domain,
+			"redirectTo":    options[0],
+		})
+
+		return &mutationOptional.AddDomain.Domain, nil
+	}
+
 	var mutation struct {
 		AddDomain struct {
 			Domain string `json:"domain" graphql:"domain"`
 		} `graphql:"addDomain(serviceID: $serviceID, environmentID: $environmentID, isGenerated: $isGenerated, domain: $domain)"`
 	}
 
-	err := c.Mutate(ctx, &mutation, V{
+	err = c.Mutate(ctx, &mutation, V{
 		"serviceID":     ObjectID(serviceID),
 		"environmentID": ObjectID(environmentID),
 		"isGenerated":   isGenerated,
