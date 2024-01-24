@@ -3,12 +3,13 @@ package root
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/pkg/fill"
 	"github.com/zeabur/cli/pkg/selector"
 	"golang.org/x/oauth2"
-	"time"
 
 	completionCmd "github.com/zeabur/cli/internal/cmd/completion"
 
@@ -16,6 +17,7 @@ import (
 	contextCmd "github.com/zeabur/cli/internal/cmd/context"
 	deployCmd "github.com/zeabur/cli/internal/cmd/deploy"
 	deploymentCmd "github.com/zeabur/cli/internal/cmd/deployment"
+	profileCmd "github.com/zeabur/cli/internal/cmd/profile"
 	projectCmd "github.com/zeabur/cli/internal/cmd/project"
 	serviceCmd "github.com/zeabur/cli/internal/cmd/service"
 	templateCmd "github.com/zeabur/cli/internal/cmd/template"
@@ -44,7 +46,7 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 			} else {
 				f.Log = log.NewInfoLevel()
 			}
-			
+
 			if f.AutoCheckUpdate && !f.Debug && version != "dev" {
 				currentVersion := TrimPrefixV(version)
 				upstreamVersionInfo, err := GetLatestRelease("zeabur/cli")
@@ -142,6 +144,7 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 	cmd.AddCommand(serviceCmd.NewCmdService(f))
 	cmd.AddCommand(deploymentCmd.NewCmdDeployment(f))
 	cmd.AddCommand(templateCmd.NewCmdTemplate(f))
+	cmd.AddCommand(profileCmd.NewCmdProfile(f))
 
 	cmd.AddCommand(contextCmd.NewCmdContext(f))
 
