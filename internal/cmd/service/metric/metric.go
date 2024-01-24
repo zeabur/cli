@@ -3,11 +3,13 @@ package metric
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
 	"github.com/zeabur/cli/pkg/model"
-	"time"
 )
 
 type Options struct {
@@ -24,15 +26,14 @@ func NewCmdMetric(f *cmdutil.Factory) *cobra.Command {
 	zctx := f.Config.GetContext()
 
 	cmd := &cobra.Command{
-		Use:   "metric [CPU|MEMORY]",
+		Use:   "metric [CPU|MEMORY|NETWORK]",
 		Short: "Show metric of a service",
 		Long:  `Show metric of a service`,
 		Args:  cobra.ExactArgs(1),
 		ValidArgs: []string{
 			string(model.MetricTypeCPU),
 			string(model.MetricTypeMemory),
-			//string(model.MetricTypeNetwork), // not supported yet
-			//string(model.MetricTypeDisk),	// not supported yet
+			string(model.MetricTypeNetwork),
 		},
 		PreRunE: util.RunEChain(
 			util.NeedProjectContextWhenNonInteractive(f),
@@ -47,7 +48,7 @@ func NewCmdMetric(f *cmdutil.Factory) *cobra.Command {
 
 	util.AddServiceParam(cmd, &opts.id, &opts.name)
 	util.AddEnvOfServiceParam(cmd, &opts.environmentID)
-	cmd.Flags().StringVarP(&opts.metricType, "metric-type", "t", "", "Metric type, one of CPU, MEMORY, NETWORK, DISK")
+	cmd.Flags().StringVarP(&opts.metricType, "metric-type", "t", "", "Metric type, one of CPU, MEMORY, NETWORK")
 	cmd.Flags().UintVarP(&opts.hour, "hour", "H", 2, "Metric history in hour")
 
 	return cmd
@@ -84,12 +85,14 @@ func runMetricNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		opts.id = service.ID
 	}
 
+	upperCaseMetricType := strings.ToUpper(opts.metricType)
+
 	mt := model.MetricType(opts.metricType)
 
 	startTime := time.Now().Add(-time.Duration(opts.hour) * time.Hour)
 	endTime := time.Now()
 
-	metrics, err := f.ApiClient.ServiceMetric(context.Background(), opts.id, opts.environmentID, opts.metricType, startTime, endTime)
+	metrics, err := f.ApiClient.ServiceMetric(context.Background(), opts.id, f.Config.GetContext().GetProject().GetID(), opts.environmentID, upperCaseMetricType, startTime, endTime)
 	if err != nil {
 		return fmt.Errorf("get service metric failed: %w", err)
 	}
@@ -125,8 +128,6 @@ func runMetricNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	data := [][]string{{mt.WithMeasureUnit(sum), mt.WithMeasureUnit(avg), mt.WithMeasureUnit(max), mt.WithMeasureUnit(min)}}
 
 	f.Printer.Table(header, data)
-
-	// todo: support chart? (add a new method in printer.Printer)
 
 	return nil
 }

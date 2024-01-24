@@ -142,7 +142,7 @@ type ServiceMetric struct {
 	Metrics []struct {
 		Timestamp time.Time `json:"timestamp" graphql:"timestamp"`
 		Value     float64   `json:"value" graphql:"value"`
-	} `json:"metrics" graphql:"metrics(environmentID: $environmentID, metricType: $metricType, startTime: $startTime, endTime: $endTime)"`
+	} `json:"metrics" graphql:"metrics(environmentID: $environmentID, metricType: $metricType, startTime: $startTime, endTime: $endTime, projectID: $projectID)"`
 }
 
 // MetricType is the type of metric.
@@ -153,7 +153,6 @@ const (
 	MetricTypeCPU     MetricType = "CPU"
 	MetricTypeMemory  MetricType = "MEMORY"
 	MetricTypeNetwork MetricType = "NETWORK"
-	MetricTypeDisk    MetricType = "DISK"
 )
 
 func (m MetricType) GetGraphQLType() string {
@@ -166,10 +165,8 @@ func (m MetricType) WithMeasureUnit(v float64) string {
 		return formatFloat64(v*100) + "%"
 	case MetricTypeMemory:
 		return formatFloat64(v) + "MB"
-		//case MetricTypeNetwork:
-		//	return formatFloat64(v) + "MB"
-		//case MetricTypeDisk:
-		//	return formatFloat64(v) + "MB"
+	case MetricTypeNetwork:
+		return formatFloat64(v) + "MB"
 	default:
 		return formatFloat64(v)
 	}
