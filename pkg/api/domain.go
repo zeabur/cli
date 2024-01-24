@@ -24,6 +24,10 @@ func (c *client) AddDomain(ctx context.Context, serviceID string, environmentID 
 			"redirectTo":    options[0],
 		})
 
+		if err != nil {
+			return nil, err
+		}
+
 		return &mutationOptional.AddDomain.Domain, nil
 	}
 
