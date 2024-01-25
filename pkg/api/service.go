@@ -383,24 +383,3 @@ func (c *client) UploadZipToService(ctx context.Context, projectID string, servi
 
 	return nil, nil
 }
-
-func (c *client) AddDomain(ctx context.Context, serviceID string, environmentID string, isGenerated bool, domain string) (*string, error) {
-	var mutation struct {
-		AddDomain struct {
-			Domain string `json:"domain" graphql:"domain"`
-		} `graphql:"addDomain(serviceID: $serviceID, environmentID: $environmentID, isGenerated: $isGenerated, domain: $domain)"`
-	}
-
-	err := c.Mutate(ctx, &mutation, V{
-		"serviceID":     ObjectID(serviceID),
-		"environmentID": ObjectID(environmentID),
-		"isGenerated":   isGenerated,
-		"domain":        domain,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &mutation.AddDomain.Domain, nil
-}
