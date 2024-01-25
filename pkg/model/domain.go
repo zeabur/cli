@@ -1,7 +1,7 @@
 package model
 
 import (
-	"strconv"
+	"github.com/zeabur/cli/pkg/util"
 	"time"
 )
 
@@ -21,7 +21,7 @@ type Domain struct {
 type Domains []*Domain
 
 func (d Domains) Header() []string {
-	return []string{"ID", "Domain", "RedirectTo", "Status", "IsGenerated", "CreatedAt"}
+	return []string{"Domain", "Status", "CreatedAt"}
 }
 
 func (d Domains) Rows() [][]string {
@@ -29,12 +29,13 @@ func (d Domains) Rows() [][]string {
 	headerLen := len(d.Header())
 	for _, domain := range d {
 		row := make([]string, 0, headerLen)
-		row = append(row, domain.ID)
-		row = append(row, domain.Domain)
-		row = append(row, domain.RedirectTo)
+		if domain.RedirectTo != "" {
+			row = append(row, domain.Domain+" (→"+" "+domain.RedirectTo+")")
+		} else {
+			row = append(row, domain.Domain)
+		}
 		row = append(row, domain.Status)
-		row = append(row, strconv.FormatBool(domain.IsGenerated))
-		row = append(row, domain.CreatedAt.Format(time.RFC3339))
+		row = append(row, util.ConvertTimeAgoString(domain.CreatedAt))
 
 		rows = append(rows, row)
 	}

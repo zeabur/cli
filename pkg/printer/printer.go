@@ -43,6 +43,9 @@ func (p *defaultPrinter) Table(header []string, rows [][]string) {
 
 	table.SetColumnColor(columnColors...)
 
+	// fix take space as newline bug
+	table.SetAutoWrapText(false)
+
 	table.AppendBulk(rows)
 
 	table.Render()
