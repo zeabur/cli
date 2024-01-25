@@ -30,7 +30,7 @@ func (d Domains) Rows() [][]string {
 	for _, domain := range d {
 		row := make([]string, 0, headerLen)
 		if domain.RedirectTo != "" {
-			row = append(row, domain.Domain+"(->"+domain.RedirectTo+")")
+			row = append(row, domain.Domain+" (→"+" "+domain.RedirectTo+")")
 		} else {
 			row = append(row, domain.Domain)
 		}
