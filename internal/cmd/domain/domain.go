@@ -2,8 +2,9 @@ package domain
 
 import (
 	"github.com/spf13/cobra"
-	
+
 	domainCreateCmd "github.com/zeabur/cli/internal/cmd/domain/create"
+	domainListCmd "github.com/zeabur/cli/internal/cmd/domain/list"
 	"github.com/zeabur/cli/internal/cmdutil"
 )
 
@@ -16,6 +17,7 @@ func NewCmdDomain(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.AddCommand(domainCreateCmd.NewCmdCreateDomain(f))
+	cmd.AddCommand(domainListCmd.NewCmdListDomains(f))
 
 	return cmd
 }
