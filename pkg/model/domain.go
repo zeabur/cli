@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"strconv"
+	"time"
+)
 
 type Domain struct {
 	ID            string    `json:"id" graphql:"_id"`
@@ -16,3 +19,24 @@ type Domain struct {
 }
 
 type Domains []*Domain
+
+func (d Domains) Header() []string {
+	return []string{"ID", "Domain", "RedirectTo", "Status", "IsGenerated", "CreatedAt"}
+}
+
+func (d Domains) Rows() [][]string {
+	rows := make([][]string, 0, len(d))
+	headerLen := len(d.Header())
+	for _, domain := range d {
+		row := make([]string, 0, headerLen)
+		row = append(row, domain.ID)
+		row = append(row, domain.Domain)
+		row = append(row, domain.RedirectTo)
+		row = append(row, domain.Status)
+		row = append(row, strconv.FormatBool(domain.IsGenerated))
+		row = append(row, domain.CreatedAt.Format(time.RFC3339))
+
+		rows = append(rows, row)
+	}
+	return rows
+}
