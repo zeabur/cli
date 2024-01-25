@@ -7,11 +7,7 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/spf13/cobra"
-	"github.com/zeabur/cli/pkg/fill"
-	"github.com/zeabur/cli/pkg/selector"
 	"golang.org/x/oauth2"
-	completionCmd "github.com/zeabur/cli/internal/cmd/completion"
-
 
 	authCmd "github.com/zeabur/cli/internal/cmd/auth"
 	completionCmd "github.com/zeabur/cli/internal/cmd/completion"
@@ -19,6 +15,7 @@ import (
 	deployCmd "github.com/zeabur/cli/internal/cmd/deploy"
 	deploymentCmd "github.com/zeabur/cli/internal/cmd/deployment"
 	domainCmd "github.com/zeabur/cli/internal/cmd/domain"
+	profileCmd "github.com/zeabur/cli/internal/cmd/profile"
 	projectCmd "github.com/zeabur/cli/internal/cmd/project"
 	serviceCmd "github.com/zeabur/cli/internal/cmd/service"
 	templateCmd "github.com/zeabur/cli/internal/cmd/template"
@@ -26,7 +23,9 @@ import (
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/pkg/api"
 	"github.com/zeabur/cli/pkg/config"
+	"github.com/zeabur/cli/pkg/fill"
 	"github.com/zeabur/cli/pkg/log"
+	"github.com/zeabur/cli/pkg/selector"
 )
 
 // NewCmdRoot creates the root command
