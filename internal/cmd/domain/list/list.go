@@ -3,8 +3,10 @@ package list
 import (
 	"context"
 	"fmt"
+
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
+
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
 )
