@@ -26,6 +26,7 @@ func NewCmdCreateDomain(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "create a domain",
+		Long:  `Create a domain for a service`,
 		PreRunE: util.RunEChain(
 			util.NeedProjectContextWhenNonInteractive(f),
 			util.DefaultIDNameByContext(zctx.GetService(), &opts.id, &opts.name),
