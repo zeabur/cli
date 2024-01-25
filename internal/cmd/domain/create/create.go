@@ -40,8 +40,8 @@ func NewCmdCreateDomain(f *cmdutil.Factory) *cobra.Command {
 	util.AddEnvOfServiceParam(cmd, &opts.environmentID)
 	cmd.Flags().BoolVarP(&opts.skipConfirm, "yes", "y", false, "Skip confirmation")
 	cmd.Flags().StringVar(&opts.domainName, "domain", "", "Domain name")
-	cmd.Flags().BoolVarP(&opts.IsGenerated, "generated", "g", false, "Is generated domain")
-	cmd.Flags().StringVar(&opts.RedirectTo, "redirect", "", "Redirect to existed domain")
+	cmd.Flags().BoolVarP(&opts.IsGenerated, "generated", "g", false, "Is this a generated domain")
+	cmd.Flags().StringVar(&opts.RedirectTo, "redirect", "", "Redirect to an existing domain")
 
 	return cmd
 }
@@ -61,7 +61,7 @@ func runCreateDomainInteractive(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
-	isGeneratedSelect, err := f.Prompter.Select("Is generated domain", "Yes", []string{"Yes", "No"})
+	isGeneratedSelect, err := f.Prompter.Select("Is this a generated domain?", "Yes", []string{"Yes", "No"})
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func runCreateDomainInteractive(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	if opts.IsGenerated {
-		subDomainInput, err := f.Prompter.Input("Generate Domain: ", "")
+		subDomainInput, err := f.Prompter.Input("The subdomain part of zeabur.app: ", "")
 		if err != nil {
 			return err
 		}
@@ -102,7 +102,7 @@ func runCreateDomainInteractive(f *cmdutil.Factory, opts *Options) error {
 
 	s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 		spinner.WithColor(cmdutil.SpinnerColor),
-		spinner.WithSuffix(" Fetching existed domains ..."),
+		spinner.WithSuffix(" Fetching existing domains ..."),
 	)
 	s.Start()
 	existedDomains, err := f.ApiClient.ListDomains(context.Background(), opts.id, opts.environmentID)
