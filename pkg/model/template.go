@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/zeabur/cli/pkg/util"
 	"time"
 )
 
@@ -39,7 +40,7 @@ func (t Templates) Rows() [][]string {
 		row = append(row, template.Code)
 		row = append(row, template.Name)
 		row = append(row, template.Description)
-		row = append(row, template.CreatedAt.Format(time.RFC3339))
+		row = append(row, util.ConvertTimeAgoString(template.CreatedAt))
 
 		rows = append(rows, row)
 	}
