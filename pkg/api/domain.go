@@ -51,7 +51,7 @@ func (c *client) AddDomain(ctx context.Context, serviceID string, environmentID 
 	return &mutation.AddDomain.Domain, nil
 }
 
-func (c *client) ListDomains(ctx context.Context, serviceID string, environmentID string) ([]*model.Domain, error) {
+func (c *client) ListDomains(ctx context.Context, serviceID string, environmentID string) (model.Domains, error) {
 	var query struct {
 		Service struct {
 			Domains model.Domains `graphql:"domains(environmentID: $environmentID)"`
