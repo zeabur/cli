@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/zeabur/cli/pkg/util"
 	"time"
 )
 
@@ -45,7 +46,7 @@ func (d Deployments) Rows() [][]string {
 		row = append(row, deployment.Ref)
 		row = append(row, truncateString(deployment.CommitMessage, 20))
 		row = append(row, deployment.PlanType)
-		row = append(row, deployment.CreatedAt.Format(time.RFC3339))
+		row = append(row, util.ConvertTimeAgoString(deployment.CreatedAt))
 		row = append(row, truncateString(deployment.CommitSHA, 8))
 
 		rows = append(rows, row)

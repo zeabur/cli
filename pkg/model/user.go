@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/zeabur/cli/pkg/util"
 	"time"
 )
 
@@ -46,7 +47,7 @@ func (u *User) Rows() [][]string {
 	row = append(row, u.Username)
 	row = append(row, u.Email)
 	row = append(row, u.Language)
-	row = append(row, u.CreatedAt.Format(time.RFC3339))
+	row = append(row, util.ConvertTimeAgoString(*u.CreatedAt))
 
 	return [][]string{row}
 }

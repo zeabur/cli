@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/zeabur/cli/pkg/util"
 	"strconv"
 	"strings"
 	"time"
@@ -42,7 +43,7 @@ func (s Services) Rows() [][]string {
 		row = append(row, service.ID)
 		row = append(row, service.Name)
 		row = append(row, service.Template)
-		row = append(row, service.CreatedAt.Format(time.RFC3339))
+		row = append(row, util.ConvertTimeAgoString(service.CreatedAt))
 
 		rows = append(rows, row)
 	}
