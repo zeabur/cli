@@ -3,11 +3,13 @@ package create
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
+
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
-	"strings"
 )
 
 type Options struct {
