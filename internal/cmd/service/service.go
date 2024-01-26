@@ -10,6 +10,7 @@ import (
 	serviceInstructionCmd "github.com/zeabur/cli/internal/cmd/service/instruction"
 	serviceListCmd "github.com/zeabur/cli/internal/cmd/service/list"
 	serviceMetricCmd "github.com/zeabur/cli/internal/cmd/service/metric"
+	serviceNetworkCmd "github.com/zeabur/cli/internal/cmd/service/network"
 	serviceRedeployCmd "github.com/zeabur/cli/internal/cmd/service/redeploy"
 	serviceRestartCmd "github.com/zeabur/cli/internal/cmd/service/restart"
 	serviceSuspendCmd "github.com/zeabur/cli/internal/cmd/service/suspend"
@@ -33,6 +34,7 @@ func NewCmdService(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(serviceSuspendCmd.NewCmdSuspend(f))
 	cmd.AddCommand(serviceDeployCmd.NewCmdDeploy(f))
 	cmd.AddCommand(serviceInstructionCmd.NewCmdInstruction(f))
+	cmd.AddCommand(serviceNetworkCmd.NewCmdPrivateNetwork(f))
 
 	return cmd
 }
