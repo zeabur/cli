@@ -1,4 +1,4 @@
-package create
+package update
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
-	"strings"
 )
 
 type Options struct {
@@ -19,14 +18,14 @@ type Options struct {
 	inputDone     bool
 }
 
-func NewCmdCreateVariable(f *cmdutil.Factory) *cobra.Command {
+func NewCmdUpdateVariable(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}
 	zctx := f.Config.GetContext()
 
 	cmd := &cobra.Command{
-		Use:   "create",
-		Short: "create variable(s)",
-		Long:  `Create variable(s) for a service`,
+		Use:   "update",
+		Short: "update variable(s)",
+		Long:  `update variable(s) for a service`,
 		PreRunE: util.RunEChain(
 			util.NeedProjectContextWhenNonInteractive(f),
 			util.DefaultIDNameByContext(zctx.GetService(), &opts.id, &opts.name),
@@ -62,18 +61,39 @@ func runCreateVariableInteractive(f *cmdutil.Factory, opts *Options) error {
 
 	opts.keys = make(map[string]string)
 
+	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+		spinner.WithColor(cmdutil.SpinnerColor),
+		spinner.WithSuffix(fmt.Sprintf(" Querying variables of service: %s...", opts.name)),
+	)
+	s.Start()
+
+	varList, err := f.ApiClient.ListVariables(context.Background(), opts.id, opts.environmentID)
+	if err != nil {
+		return err
+	}
+	varMap := varList.ToMap()
+	var keyTable, selectTable []string
+	for k, v := range varMap {
+		keyTable = append(keyTable, k)
+		selectTable = append(selectTable, fmt.Sprintf("%s = %s", k, v))
+		opts.keys[k] = v
+	}
+
+	s.Stop()
+
 	for !opts.inputDone {
-		varInput, err := f.Prompter.Input("Enter variable key value pair (key=value)", "")
+		updateVarSelect, err := f.Prompter.Select("Select variable to update", "", selectTable)
 		if err != nil {
 			return err
 		}
-		keyValue := strings.Split(varInput, "=")
-		if len(keyValue) != 2 {
-			return fmt.Errorf("invalid input")
-		}
-		opts.keys[keyValue[0]] = keyValue[1]
 
-		doneConfirm, err := f.Prompter.Confirm("Are you done entering variables?", false)
+		varInput, err := f.Prompter.Input("Enter selected variable value modified: ", "")
+		if err != nil {
+			return err
+		}
+		opts.keys[keyTable[updateVarSelect]] = varInput
+
+		doneConfirm, err := f.Prompter.Confirm("Are you done entering value of variable?", false)
 		if err != nil {
 			return err
 		}
@@ -92,38 +112,23 @@ func runCreateVariableNonInteractive(f *cmdutil.Factory, opts *Options) error {
 
 	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 		spinner.WithColor(cmdutil.SpinnerColor),
-		spinner.WithSuffix(fmt.Sprintf(" Creating variables of service: %s...", opts.name)),
+		spinner.WithSuffix(fmt.Sprintf(" Updating variables of service: %s...", opts.name)),
 	)
-	s.Start()
-
-	varList, err := f.ApiClient.ListVariables(context.Background(), opts.id, opts.environmentID)
-	if err != nil {
-		return err
-	}
-
-	varMap := varList.ToMap()
-	for k, v := range opts.keys {
-		if _, ok := varMap[k]; ok {
-			s.Stop()
-			return fmt.Errorf("variable %s already exists", k)
-		}
-		varMap[k] = v
-	}
-	createVarResult, err := f.ApiClient.UpdateVariables(context.Background(), opts.id, opts.environmentID, varMap)
+	createVarResult, err := f.ApiClient.UpdateVariables(context.Background(), opts.id, opts.environmentID, opts.keys)
 	if err != nil {
 		s.Stop()
 		return err
 	}
 	if !createVarResult {
 		s.Stop()
-		return fmt.Errorf("failed to create variables of service: %s", opts.name)
+		return fmt.Errorf("failed to update variables of service: %s", opts.name)
 	}
 	s.Stop()
 
-	f.Log.Infof("Successfully created variables of service: %s", opts.name)
+	f.Log.Infof("Successfully updated variables of service: %s", opts.name)
 
 	var table [][]string
-	for k, v := range varMap {
+	for k, v := range opts.keys {
 		table = append(table, []string{k, v})
 	}
 	f.Printer.Table([]string{"Key", "Value"}, table)

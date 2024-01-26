@@ -5,6 +5,7 @@ import (
 
 	variableCreateCmd "github.com/zeabur/cli/internal/cmd/variable/create"
 	variableListCmd "github.com/zeabur/cli/internal/cmd/variable/list"
+	variableUpdateCmd "github.com/zeabur/cli/internal/cmd/variable/update"
 	"github.com/zeabur/cli/internal/cmdutil"
 )
 
@@ -18,6 +19,7 @@ func NewCmdVariable(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.AddCommand(variableListCmd.NewCmdListVariables(f))
 	cmd.AddCommand(variableCreateCmd.NewCmdCreateVariable(f))
+	cmd.AddCommand(variableUpdateCmd.NewCmdUpdateVariable(f))
 
 	return cmd
 }
