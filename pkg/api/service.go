@@ -400,3 +400,21 @@ func (c *client) UploadZipToService(ctx context.Context, projectID string, servi
 
 	return nil, nil
 }
+
+func (c *client) GetDNSName(ctx context.Context, serviceID string) (string, error) {
+	var query struct {
+		Service struct {
+			DnsName string `graphql:"dnsName"`
+		} `graphql:"service(_id: $serviceID)"`
+	}
+
+	err := c.Query(ctx, &query, V{
+		"serviceID": ObjectID(serviceID),
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	return query.Service.DnsName, nil
+}
