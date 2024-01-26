@@ -72,9 +72,8 @@ func runInstruction(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	s.Stop()
-
-	f.Log.Infof("Network Information for service %s", opts.name)
-	f.Log.Infof("Private DNS name: %s", dnsName+".zeabur.internal")
+	
+	f.Log.Infof("Private DNS name for %s: %s", opts.name, dnsName+".zeabur.internal")
 
 	return nil
 }
