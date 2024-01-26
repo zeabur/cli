@@ -76,7 +76,8 @@ func runDeleteVariableInteractive(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 	varMap := varList.ToMap()
-	var keyTable, selectTable []string
+	keyTable := make([]string, 0, len(varMap))
+	selectTable := make([]string, 0, len(varMap))
 	for k, v := range varMap {
 		keyTable = append(keyTable, k)
 		selectTable = append(selectTable, fmt.Sprintf("%s = %s", k, v))
@@ -124,7 +125,7 @@ func runDeleteVariableNonInteractive(f *cmdutil.Factory, opts *Options) error {
 			delete(opts.keys, k)
 		}
 	}
-	
+
 	createVarResult, err := f.ApiClient.UpdateVariables(context.Background(), opts.id, opts.environmentID, opts.keys)
 	if err != nil {
 		s.Stop()
@@ -138,7 +139,7 @@ func runDeleteVariableNonInteractive(f *cmdutil.Factory, opts *Options) error {
 
 	f.Log.Infof("Successfully deleted variables of service: %s", opts.name)
 
-	var table [][]string
+	table := make([][]string, 0, len(opts.keys))
 	for k, v := range opts.keys {
 		table = append(table, []string{k, v})
 	}

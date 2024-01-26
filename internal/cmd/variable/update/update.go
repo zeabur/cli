@@ -72,7 +72,8 @@ func runUpdateVariableInteractive(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 	varMap := varList.ToMap()
-	var keyTable, selectTable []string
+	keyTable := make([]string, 0, len(varMap))
+	selectTable := make([]string, 0, len(varMap))
 	for k, v := range varMap {
 		keyTable = append(keyTable, k)
 		selectTable = append(selectTable, fmt.Sprintf("%s = %s", k, v))
@@ -126,8 +127,8 @@ func runUpdateVariableNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	s.Stop()
 
 	f.Log.Infof("Successfully updated variables of service: %s", opts.name)
-
-	var table [][]string
+	
+	table := make([][]string, 0, len(opts.keys))
 	for k, v := range opts.keys {
 		table = append(table, []string{k, v})
 	}
