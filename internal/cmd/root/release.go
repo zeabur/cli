@@ -22,7 +22,7 @@ func IsVersionNewerSemver(givenVerStr, currentVerStr string) (bool, error) {
 	}
 
 	result := givenVer.Compare(*currentVer)
-	if result >= 0 {
+	if result > 0 {
 		return true, nil
 	}
 
