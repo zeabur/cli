@@ -123,8 +123,8 @@ func runCreateVariableNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	s.Stop()
 
 	f.Log.Infof("Successfully created variables of service: %s", opts.name)
-
-	var table [][]string
+	
+	table := make([][]string, 0, len(varMap))
 	for k, v := range varMap {
 		table = append(table, []string{k, v})
 	}

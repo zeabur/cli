@@ -127,7 +127,7 @@ func runUpdateVariableNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	s.Stop()
 
 	f.Log.Infof("Successfully updated variables of service: %s", opts.name)
-	
+
 	table := make([][]string, 0, len(opts.keys))
 	for k, v := range opts.keys {
 		table = append(table, []string{k, v})
