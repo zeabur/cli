@@ -2,10 +2,11 @@ package model
 
 import (
 	"fmt"
-	"github.com/zeabur/cli/pkg/util"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/zeabur/cli/pkg/util"
 )
 
 // Service is the simplest model of service, which is used in most queries.
@@ -209,4 +210,23 @@ type GitRepo struct {
 	Owner string `graphql:"owner"`
 	URL   string `graphql:"url"`
 	ID    int    `graphql:"id"`
+}
+
+type ServiceInstructions struct {
+	Instructions []ServiceInstruction `graphql:"instructions"`
+}
+
+type ServiceSpecConnectionInstructionType string
+
+const (
+	ServiceSpecConnectionInstructionTypePassword ServiceSpecConnectionInstructionType = "PASSWORD"
+	ServiceSpecConnectionInstructionTypeURL      ServiceSpecConnectionInstructionType = "URL"
+	ServiceSpecConnectionInstructionTypeText     ServiceSpecConnectionInstructionType = "TEXT"
+)
+
+type ServiceInstruction struct {
+	Category string                               `graphql:"category"`
+	Content  string                               `graphql:"content"`
+	Title    string                               `graphql:"title"`
+	Type     ServiceSpecConnectionInstructionType `graphql:"type"`
 }

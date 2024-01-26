@@ -187,6 +187,23 @@ func (c *client) ServiceMetric(ctx context.Context, id, projectID, environmentID
 	return &query.ServiceMetric, nil
 }
 
+func (c *client) ServiceInstructions(ctx context.Context, id, environmentID string) ([]model.ServiceInstruction, error) {
+	var query struct {
+		ServiceInstructions []model.ServiceInstruction `graphql:"instructions(serviceID: $serviceID, environmentID: $environmentID)"`
+	}
+
+	err := c.Query(ctx, &query, V{
+		"serviceID":     ObjectID(id),
+		"environmentID": ObjectID(environmentID),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return query.ServiceInstructions, nil
+}
+
 func (c *client) RestartService(ctx context.Context, id string, environmentID string) error {
 	var mutation struct {
 		RestartService bool `graphql:"restartService(serviceID: $serviceID, environmentID: $environmentID)"`
