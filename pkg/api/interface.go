@@ -63,8 +63,8 @@ type (
 	}
 
 	VariableAPI interface {
-		ListVariables(ctx context.Context, projectID string, skip, limit int) (*model.Connection[model.Variable], error)
-		UpdateVariable(ctx context.Context, projectID string, variableID string, value string) (*model.Variable, error)
+		ListVariables(ctx context.Context, serviceID string, environmentID string) (model.Variables, error)
+		UpdateVariables(ctx context.Context, serviceID string, environmentID string, data map[string]string) (bool, error)
 	}
 
 	DomainAPI interface {

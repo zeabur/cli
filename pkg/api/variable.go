@@ -24,7 +24,7 @@ func (c *client) ListVariables(ctx context.Context, serviceID string, environmen
 	return query.Service.Variables, nil
 }
 
-func (c *client) UpdateVariable(ctx context.Context, serviceID string, environmentID string, data map[string]string) (bool, error) {
+func (c *client) UpdateVariables(ctx context.Context, serviceID string, environmentID string, data map[string]string) (bool, error) {
 	var mutation struct {
 		UpdateVariables struct {
 			UpdateEnvironmentVariable bool `graphql:"updateEnvironmentVariable"`
