@@ -19,6 +19,7 @@ import (
 	projectCmd "github.com/zeabur/cli/internal/cmd/project"
 	serviceCmd "github.com/zeabur/cli/internal/cmd/service"
 	templateCmd "github.com/zeabur/cli/internal/cmd/template"
+	variableCmd "github.com/zeabur/cli/internal/cmd/variable"
 	versionCmd "github.com/zeabur/cli/internal/cmd/version"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/pkg/api"
@@ -148,6 +149,7 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 	cmd.AddCommand(profileCmd.NewCmdProfile(f))
 	cmd.AddCommand(contextCmd.NewCmdContext(f))
 	cmd.AddCommand(completionCmd.NewCmdCompletion(f))
+	cmd.AddCommand(variableCmd.NewCmdVariable(f))
 
 	return cmd, nil
 }
