@@ -18,6 +18,7 @@ type Client interface {
 	GitAPI
 	TemplateAPI
 	DomainAPI
+	VariableAPI
 }
 
 type (
@@ -59,6 +60,11 @@ type (
 		CreateService(ctx context.Context, projectID string, name string, repoID int, branchName string) (*model.Service, error)
 		CreateEmptyService(ctx context.Context, projectID string, name string) (*model.Service, error)
 		UploadZipToService(ctx context.Context, projectID string, serviceID string, environmentID string, zipBytes []byte) (*model.Service, error)
+	}
+
+	VariableAPI interface {
+		ListVariables(ctx context.Context, projectID string, skip, limit int) (*model.Connection[model.Variable], error)
+		UpdateVariable(ctx context.Context, projectID string, variableID string, value string) (*model.Variable, error)
 	}
 
 	DomainAPI interface {
