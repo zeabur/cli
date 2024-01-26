@@ -26,20 +26,18 @@ func (c *client) ListVariables(ctx context.Context, serviceID string, environmen
 
 func (c *client) UpdateVariables(ctx context.Context, serviceID string, environmentID string, data map[string]string) (bool, error) {
 	var mutation struct {
-		UpdateVariables struct {
-			UpdateEnvironmentVariable bool `graphql:"updateEnvironmentVariable"`
-		} `graphql:"updateEnvironmentVariable(environmentID: $environmentID, serviceID: $serviceID, data: $data)"`
+		UpdateEnvironmentVariable bool `graphql:"updateEnvironmentVariable(environmentID: $environmentID, serviceID: $serviceID, data: $data)"`
 	}
 
 	err := c.Mutate(ctx, &mutation, V{
 		"environmentID": ObjectID(environmentID),
 		"serviceID":     ObjectID(serviceID),
-		"data":          data,
+		"data":          MapString(data),
 	})
 
 	if err != nil {
 		return false, err
 	}
 
-	return mutation.UpdateVariables.UpdateEnvironmentVariable, nil
+	return mutation.UpdateEnvironmentVariable, nil
 }

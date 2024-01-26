@@ -24,3 +24,11 @@ func (v Variables) Rows() [][]string {
 	}
 	return rows
 }
+
+func (v Variables) ToMap() map[string]string {
+	m := make(map[string]string)
+	for _, variable := range v {
+		m[variable.Key] = variable.Value
+	}
+	return m
+}
