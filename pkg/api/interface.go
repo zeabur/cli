@@ -61,6 +61,7 @@ type (
 		CreateService(ctx context.Context, projectID string, name string, repoID int, branchName string) (*model.Service, error)
 		CreateEmptyService(ctx context.Context, projectID string, name string) (*model.Service, error)
 		UploadZipToService(ctx context.Context, projectID string, serviceID string, environmentID string, zipBytes []byte) (*model.Service, error)
+		GetDNSName(ctx context.Context, projectID string, serviceID string) (string, error)
 	}
 
 	VariableAPI interface {
