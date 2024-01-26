@@ -7,6 +7,12 @@ import (
 // V means graphql variables, it's a alias of map[string]interface{}
 type V map[string]interface{}
 
+type MapString map[string]string
+
+func (id MapString) GetGraphQLType() string {
+	return `Map`
+}
+
 // ObjectID is the alias ofskip, limit = normalizePagination(skip, limit) string, it's used to represent the ObjectID defined in GraphQL schema.
 type ObjectID string
 
