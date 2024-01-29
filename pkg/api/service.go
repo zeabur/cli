@@ -380,7 +380,7 @@ func (c *client) UploadZipToService(ctx context.Context, projectID string, servi
 	}
 
 	client := &http.Client{
-		Timeout: 5 * time.Second,
+		Timeout: 30 * time.Second,
 	}
 
 	req, err := http.NewRequestWithContext(ctx, method, url, &requestBody)
