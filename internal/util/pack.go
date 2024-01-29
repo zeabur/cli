@@ -52,11 +52,14 @@ func PackGitRepo() ([]byte, error) {
 
 func PackZipFile() ([]byte, error) {
 	buf := new(bytes.Buffer)
-	srcDir := "."
+	srcDir, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
 
 	zipWriter := zip.NewWriter(buf)
 
-	err := filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
