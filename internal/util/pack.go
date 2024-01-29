@@ -1,9 +1,13 @@
 package util
 
 import (
+	"archive/zip"
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 )
 
 func PackZip() ([]byte, string, error) {
@@ -33,18 +37,68 @@ func PackGitRepo() ([]byte, error) {
 	output := "--output=zeabur.zip"
 
 	cmd := exec.Command("git", "archive", format, output, "HEAD")
-	out, err := cmd.CombinedOutput()
+	_, err := cmd.CombinedOutput()
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+
+	zipBytes, err := os.ReadFile("zeabur.zip")
+	if err != nil {
+		return nil, err
+	}
+
+	return zipBytes, nil
 }
 
 func PackZipFile() ([]byte, error) {
-	cmd := exec.Command("zip", "-r", "zeabur.zip", ".")
-	out, err := cmd.CombinedOutput()
+	buf := new(bytes.Buffer)
+	srcDir := "."
+
+	zipWriter := zip.NewWriter(buf)
+
+	err := filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		header, err := zip.FileInfoHeader(info)
+		if err != nil {
+			return err
+		}
+		header.Name = filepath.Join(".", path)
+
+		if info.IsDir() {
+			header.Name += "/"
+		} else {
+			header.Method = zip.Deflate
+		}
+
+		writer, err := zipWriter.CreateHeader(header)
+		if err != nil {
+			return err
+		}
+
+		if !info.IsDir() {
+			file, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+			_, err = io.Copy(writer, file)
+			return err
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+
+	err = zipWriter.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
