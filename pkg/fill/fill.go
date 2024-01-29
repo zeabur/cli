@@ -109,7 +109,7 @@ func (f *paramFiller) Service(projectID, serviceID *string) (changed bool, err e
 		return false, err
 	}
 
-	_, service, err := f.selector.SelectService(*projectID)
+	_, service, err := f.selector.SelectService(*projectID, true)
 	if err != nil {
 		return false, err
 	}
@@ -146,7 +146,7 @@ func (f *paramFiller) ServiceByName(projectCtx zcontext.Context, serviceID, serv
 
 	// if service name is empty, ask user to select a service by project id
 	if *serviceName == "" {
-		service, _, err := f.selector.SelectService(projectCtx.GetProject().GetID())
+		service, _, err := f.selector.SelectService(projectCtx.GetProject().GetID(), true)
 		if err != nil {
 			return false, err
 		}

@@ -11,3 +11,6 @@ zeabur
 
 # dist
 dist/
+
+# cli running assets
+zeabur.zip
