@@ -34,7 +34,7 @@ feat(cmd/service): Optimization for user experience
 This commit add multiple selectors for user to select services interactively.  
 ```
 
-The scope can be:
+The scope, for example, can be:
 
 - `cmd`: The command-line interface.
 - `api`: The api interface of zeabur cli. (`pkg/api/*`)
