@@ -354,6 +354,7 @@ func (c *client) UploadZipToService(ctx context.Context, projectID string, servi
 
 	var requestBody bytes.Buffer
 	multipartWriter := multipart.NewWriter(&requestBody)
+	defer multipartWriter.Close()
 
 	err := multipartWriter.WriteField("environment", environmentID)
 	if err != nil {
@@ -378,9 +379,11 @@ func (c *client) UploadZipToService(ctx context.Context, projectID string, servi
 		return nil, err
 	}
 
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
 
-	req, err := http.NewRequest(method, url, &requestBody)
+	req, err := http.NewRequestWithContext(ctx, method, url, &requestBody)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
@@ -396,6 +399,10 @@ func (c *client) UploadZipToService(ctx context.Context, projectID string, servi
 		fmt.Println(err)
 		return nil, err
 	}
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("status code: %d, ", res.StatusCode)
+	}
+
 	defer res.Body.Close()
 
 	return nil, nil
