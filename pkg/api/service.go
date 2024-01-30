@@ -8,6 +8,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/spf13/viper"
@@ -404,6 +405,13 @@ func (c *client) UploadZipToService(ctx context.Context, projectID string, servi
 	}
 
 	defer res.Body.Close()
+
+	defer func() {
+		err := os.Remove("zeabur.zip")
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	return nil, nil
 }
