@@ -41,18 +41,17 @@ func PackGitRepo() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	zipBytes, err := os.ReadFile("zeabur.zip")
-	if err != nil {
-		return nil, err
-	}
-
 	defer func() {
 		err = os.Remove("zeabur.zip")
 		if err != nil {
 			fmt.Println(err)
 		}
 	}()
+
+	zipBytes, err := os.ReadFile("zeabur.zip")
+	if err != nil {
+		return nil, err
+	}
 
 	return zipBytes, nil
 }
@@ -65,6 +64,12 @@ func PackZipFile() ([]byte, error) {
 	}
 
 	zipWriter := zip.NewWriter(buf)
+	defer func() {
+		err = zipWriter.Close()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	err = filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -101,11 +106,6 @@ func PackZipFile() ([]byte, error) {
 		return nil
 	})
 
-	if err != nil {
-		return nil, err
-	}
-
-	err = zipWriter.Close()
 	if err != nil {
 		return nil, err
 	}
