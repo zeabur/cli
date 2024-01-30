@@ -47,6 +47,13 @@ func PackGitRepo() ([]byte, error) {
 		return nil, err
 	}
 
+	defer func() {
+		err = os.Remove("zeabur.zip")
+		if err != nil {
+			fmt.Println(err)
+		}
+	}()
+
 	return zipBytes, nil
 }
 
