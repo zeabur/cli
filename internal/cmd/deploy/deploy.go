@@ -80,7 +80,7 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 
 	f.Log.Info("Select one service to deploy or create a new one.")
 
-	_, service, err := f.Selector.SelectService(project.ID)
+	_, service, err := f.Selector.SelectService(project.ID, false)
 	if err != nil {
 		return err
 	}

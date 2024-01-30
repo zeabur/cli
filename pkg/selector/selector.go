@@ -25,7 +25,7 @@ type (
 	}
 
 	ServiceSelector interface {
-		SelectService(projectID string) (zcontext.BasicInfo, *model.Service, error)
+		SelectService(projectID string, auto bool) (zcontext.BasicInfo, *model.Service, error)
 	}
 
 	EnvironmentSelector interface {
@@ -105,7 +105,7 @@ func (s *selector) SelectProject() (zcontext.BasicInfo, *model.Project, error) {
 
 }
 
-func (s *selector) SelectService(projectID string) (zcontext.BasicInfo, *model.Service, error) {
+func (s *selector) SelectService(projectID string, auto bool) (zcontext.BasicInfo, *model.Service, error) {
 	services, err := s.client.ListAllServices(context.Background(), projectID)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get services: %w", err)
@@ -115,7 +115,7 @@ func (s *selector) SelectService(projectID string) (zcontext.BasicInfo, *model.S
 		return nil, nil, nil
 	}
 
-	if len(services) == 1 {
+	if len(services) == 1 && auto {
 		s.log.Infof("Only one service in current project, select <%s> automatically\n", services[0].Name)
 		service := services[0]
 		return zcontext.NewBasicInfo(service.ID, service.Name), service, nil

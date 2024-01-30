@@ -285,7 +285,7 @@ func selectService(f *cmdutil.Factory, opts *Options) error {
 
 	projectID := f.Config.GetContext().GetProject().GetID()
 
-	serviceInfo, _, err := f.Selector.SelectService(projectID)
+	serviceInfo, _, err := f.Selector.SelectService(projectID, true)
 	if err != nil {
 		return err
 	}
