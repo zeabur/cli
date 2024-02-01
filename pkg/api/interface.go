@@ -65,7 +65,7 @@ type (
 	}
 
 	VariableAPI interface {
-		ListVariables(ctx context.Context, serviceID string, environmentID string) (model.Variables, error)
+		ListVariables(ctx context.Context, serviceID string, environmentID string) (model.Variables, model.Variables, error)
 		UpdateVariables(ctx context.Context, serviceID string, environmentID string, data map[string]string) (bool, error)
 	}
 

@@ -73,18 +73,25 @@ func runListVariablesNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		spinner.WithSuffix(fmt.Sprintf(" Fetching environment variablesof service %s ...", opts.name)),
 	)
 	s.Start()
-	variableList, err := f.ApiClient.ListVariables(context.Background(), opts.id, opts.environmentID)
+	variableList, readonlyVariableList, err := f.ApiClient.ListVariables(context.Background(), opts.id, opts.environmentID)
 	if err != nil {
 		return err
 	}
 	s.Stop()
 
-	if len(variableList) == 0 {
+	if len(variableList) == 0 && len(readonlyVariableList) == 0 {
 		f.Log.Infof("No variables found")
 		return nil
 	}
 
+	f.Log.Infof("Variables of service: %s\n", opts.name)
 	f.Printer.Table(variableList.Header(), variableList.Rows())
+
+	if len(readonlyVariableList) != 0 {
+		fmt.Println()
+		f.Log.Infof("Readonly variables of service: %s\n", opts.name)
+		f.Printer.Table(readonlyVariableList.Header(), readonlyVariableList.Rows())
+	}
 
 	return nil
 }

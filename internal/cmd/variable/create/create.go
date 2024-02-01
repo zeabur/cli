@@ -98,7 +98,7 @@ func runCreateVariableNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	)
 	s.Start()
 
-	varList, err := f.ApiClient.ListVariables(context.Background(), opts.id, opts.environmentID)
+	varList, _, err := f.ApiClient.ListVariables(context.Background(), opts.id, opts.environmentID)
 	if err != nil {
 		return err
 	}
@@ -122,8 +122,8 @@ func runCreateVariableNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	}
 	s.Stop()
 
-	f.Log.Infof("Successfully created variables of service: %s", opts.name)
-	
+	f.Log.Infof("Successfully created variables of service: %s\n", opts.name)
+
 	table := make([][]string, 0, len(varMap))
 	for k, v := range varMap {
 		table = append(table, []string{k, v})

@@ -5,7 +5,7 @@ import (
 	"github.com/zeabur/cli/pkg/model"
 )
 
-func (c *client) ListVariables(ctx context.Context, serviceID string, environmentID string) (model.Variables, error) {
+func (c *client) ListVariables(ctx context.Context, serviceID string, environmentID string) (model.Variables, model.Variables, error) {
 	var query struct {
 		Service struct {
 			Variables model.Variables `graphql:"variables(environmentID: $environmentID, exposed: true)"`
@@ -18,10 +18,20 @@ func (c *client) ListVariables(ctx context.Context, serviceID string, environmen
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return query.Service.Variables, nil
+	variableList := make(model.Variables, 0, len(query.Service.Variables))
+	readonlyVariableList := make(model.Variables, 0, len(query.Service.Variables))
+	for _, variable := range query.Service.Variables {
+		if variable.ServiceID == serviceID {
+			variableList = append(variableList, variable)
+		} else {
+			readonlyVariableList = append(readonlyVariableList, variable)
+		}
+	}
+
+	return variableList, readonlyVariableList, nil
 }
 
 func (c *client) UpdateVariables(ctx context.Context, serviceID string, environmentID string, data map[string]string) (bool, error) {
