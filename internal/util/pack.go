@@ -8,28 +8,33 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/klauspost/compress/flate"
 )
 
 func PackZip() ([]byte, string, error) {
-	fileName, err := os.Getwd()
+	currentDir, err := os.Getwd()
 	if err != nil {
 		return nil, "", err
 	}
-	fmt.Println("Current working directory: ", fileName)
+	fmt.Println("Current working directory: ", currentDir)
 
 	if _, err := os.Stat(".git"); err == nil {
-		bytes, err := PackGitRepo()
+		bytesString, err := PackGitRepo()
 		if err != nil {
+			fmt.Println("Error packing git repository to zip file!!!")
 			return nil, "", err
 		}
-		return bytes, fileName, nil
+		return bytesString, currentDir, nil
 	}
 
-	bytes, err := PackZipFile()
+	bytesString, err := PackZipFile()
 	if err != nil {
+		fmt.Println("Error packing current directory to zip file!!!")
 		return nil, "", err
 	}
-	return bytes, fileName, nil
+
+	return bytesString, currentDir, nil
 }
 
 func PackGitRepo() ([]byte, error) {
@@ -58,54 +63,63 @@ func PackGitRepo() ([]byte, error) {
 
 func PackZipFile() ([]byte, error) {
 	buf := new(bytes.Buffer)
-	srcDir, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-
 	zipWriter := zip.NewWriter(buf)
-	defer func() {
-		err = zipWriter.Close()
-		if err != nil {
-			fmt.Println(err)
-		}
-	}()
 
-	err = filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
+	// Register a custom compressor for better compression.
+	zipWriter.RegisterCompressor(zip.Deflate, func(out io.Writer) (io.WriteCloser, error) {
+		return flate.NewWriter(out, flate.BestCompression)
+	})
 
-		header, err := zip.FileInfoHeader(info)
-		if err != nil {
-			return err
-		}
-		header.Name = filepath.Join(".", path)
-
-		if info.IsDir() {
-			header.Name += "/"
-		} else {
-			header.Method = zip.Deflate
-		}
-
-		writer, err := zipWriter.CreateHeader(header)
+	err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		if !info.IsDir() {
-			file, err := os.Open(path)
+		// Skip the . directory.
+		if path != "." {
+			header, err := zip.FileInfoHeader(info)
 			if err != nil {
 				return err
 			}
-			defer file.Close()
-			_, err = io.Copy(writer, file)
-			return err
+
+			header.Name, err = filepath.Rel(".", path)
+			if err != nil {
+				return err
+			}
+
+			if info.IsDir() {
+				header.Name += "/"
+			} else {
+				header.Method = zip.Deflate
+			}
+
+			writer, err := zipWriter.CreateHeader(header)
+			if err != nil {
+				return err
+			}
+
+			if !info.IsDir() {
+				file, err := os.Open(path)
+				if err != nil {
+					return err
+				}
+				defer file.Close()
+				_, err = io.Copy(writer, file)
+				if err != nil {
+					return err
+				}
+			}
 		}
 
 		return nil
 	})
 
+	if err != nil {
+		return nil, err
+	}
+
+	// Close the zip writer.
+	err = zipWriter.Close()
 	if err != nil {
 		return nil, err
 	}
