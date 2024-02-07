@@ -46,23 +46,6 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 				f.Log = log.NewInfoLevel()
 			}
 
-			if f.AutoCheckUpdate && !f.Debug && version != "dev" {
-				currentVersion := TrimPrefixV(version)
-				upstreamVersionInfo, err := GetLatestRelease("zeabur/cli")
-				upstreamVersion := TrimPrefixV(upstreamVersionInfo.TagName)
-				if err != nil {
-					f.Log.Warn("Failed to get the latest version info from GitHub")
-				} else {
-					needUpdate, err := IsVersionNewerSemver(upstreamVersion, currentVersion)
-					if err != nil {
-						f.Log.Warnf("Failed to compare the current version with the latest version: %s", err.Error())
-					} else if needUpdate {
-						f.Log.Infof("A new version of Zeabur CLI is available: %s, you are using %s", upstreamVersion, currentVersion)
-						f.Log.Infof("Please visit %s to download the latest version", upstreamVersionInfo.URL)
-					}
-				}
-			}
-
 			// require that the user is authenticated before running most commands
 			if cmdutil.IsAuthCheckEnabled(cmd) {
 				// do not return error, guide user to login instead
@@ -118,6 +101,23 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 						}
 
 						f.Log.Info("Token refreshed successfully")
+					}
+				}
+			}
+
+			if f.AutoCheckUpdate && !f.Debug && version != "dev" {
+				currentVersion := TrimPrefixV(version)
+				upstreamVersionInfo, err := GetLatestRelease("zeabur/cli")
+				upstreamVersion := TrimPrefixV(upstreamVersionInfo.TagName)
+				if err != nil {
+					f.Log.Warn("Failed to get the latest version info from GitHub")
+				} else {
+					needUpdate, err := IsVersionNewerSemver(upstreamVersion, currentVersion)
+					if err != nil {
+						f.Log.Warnf("Failed to compare the current version with the latest version: %s", err.Error())
+					} else if needUpdate {
+						f.Log.Infof("A new version of Zeabur CLI is available: %s, you are using %s", upstreamVersion, currentVersion)
+						f.Log.Infof("Please visit %s to download the latest version", upstreamVersionInfo.URL)
 					}
 				}
 			}
