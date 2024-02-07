@@ -48,23 +48,6 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 				f.Log = log.NewInfoLevel()
 			}
 
-			if f.AutoCheckUpdate && !f.Debug && version != "dev" {
-				currentVersion := TrimPrefixV(version)
-				upstreamVersionInfo, err := GetLatestRelease("zeabur/cli")
-				upstreamVersion := TrimPrefixV(upstreamVersionInfo.TagName)
-				if err != nil {
-					f.Log.Warn("Failed to get the latest version info from GitHub")
-				} else {
-					needUpdate, err := IsVersionNewerSemver(upstreamVersion, currentVersion)
-					if err != nil {
-						f.Log.Warnf("Failed to compare the current version with the latest version: %s", err.Error())
-					} else if needUpdate {
-						f.Log.Infof("A new version of Zeabur CLI is available: %s, you are using %s", upstreamVersion, currentVersion)
-						f.Log.Infof("Please visit %s to download the latest version", upstreamVersionInfo.URL)
-					}
-				}
-			}
-
 			// require that the user is authenticated before running most commands
 			if cmdutil.IsAuthCheckEnabled(cmd) {
 				// do not return error, guide user to login instead
@@ -91,34 +74,54 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 				f.ParamFiller = fill.NewParamFiller(f.Selector)
 			}
 
-			// refresh the token if the token is from OAuth2 and it's expired
-			if f.AutoRefreshToken && f.LoggedIn() && f.Config.GetToken() != nil {
-				if f.Config.GetToken().Expiry.Before(time.Now()) {
-					f.Log.Info("Token is from OAuth2 and it's expired, refreshing it")
-
-					token := f.Config.GetToken()
-					token.Expiry = time.Now()
-					newToken, err := f.AuthClient.RefreshToken(token)
-					if err != nil {
-						return fmt.Errorf("failed to refresh token, it is recommended to logout and login again: %w", err)
-					}
-					f.Config.SetToken(newToken)
-					f.Config.SetTokenString(newToken.AccessToken)
-					f.Log.Debug("New token: ", newToken)
-					if err := f.Config.Write(); err != nil {
-						return fmt.Errorf("failed to save config: %w", err)
-					}
-
-					f.Log.Info("Token refreshed successfully")
-				}
-			}
-
 			return nil
 		},
 		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
 			err := f.Config.Write()
 			if err != nil {
 				return fmt.Errorf("failed to save config: %w", err)
+			}
+
+			// refresh the token if the token is from OAuth2 & it's expired
+			// skip help, version and auth commands
+			if cmd.Name() != "help" && cmd.Name() != "version" && cmd.Parent().Name() != "auth" {
+				if f.AutoRefreshToken && f.LoggedIn() && f.Config.GetToken() != nil {
+					if f.Config.GetToken().Expiry.Before(time.Now()) {
+						f.Log.Info("Token is from OAuth2 and it's expired, refreshing it")
+
+						token := f.Config.GetToken()
+						token.Expiry = time.Now()
+						newToken, err := f.AuthClient.RefreshToken(token)
+						if err != nil {
+							return fmt.Errorf("failed to refresh token, it is recommended to logout and login again: %w", err)
+						}
+						f.Config.SetToken(newToken)
+						f.Config.SetTokenString(newToken.AccessToken)
+						f.Log.Debug("New token: ", newToken)
+						if err := f.Config.Write(); err != nil {
+							return fmt.Errorf("failed to save config: %w", err)
+						}
+
+						f.Log.Info("Token refreshed successfully")
+					}
+				}
+			}
+
+			if f.AutoCheckUpdate && !f.Debug && version != "dev" {
+				currentVersion := TrimPrefixV(version)
+				upstreamVersionInfo, err := GetLatestRelease("zeabur/cli")
+				upstreamVersion := TrimPrefixV(upstreamVersionInfo.TagName)
+				if err != nil {
+					f.Log.Warn("Failed to get the latest version info from GitHub")
+				} else {
+					needUpdate, err := IsVersionNewerSemver(upstreamVersion, currentVersion)
+					if err != nil {
+						f.Log.Warnf("Failed to compare the current version with the latest version: %s", err.Error())
+					} else if needUpdate {
+						f.Log.Infof("A new version of Zeabur CLI is available: %s, you are using %s", upstreamVersion, currentVersion)
+						f.Log.Infof("Please visit %s to download the latest version", upstreamVersionInfo.URL)
+					}
+				}
 			}
 
 			return nil
