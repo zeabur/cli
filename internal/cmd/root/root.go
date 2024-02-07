@@ -3,8 +3,12 @@ package root
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/MakeNowJust/heredoc"
 	"github.com/spf13/cobra"
+	"golang.org/x/oauth2"
+
 	authCmd "github.com/zeabur/cli/internal/cmd/auth"
 	completionCmd "github.com/zeabur/cli/internal/cmd/completion"
 	contextCmd "github.com/zeabur/cli/internal/cmd/context"
@@ -23,8 +27,6 @@ import (
 	"github.com/zeabur/cli/pkg/fill"
 	"github.com/zeabur/cli/pkg/log"
 	"github.com/zeabur/cli/pkg/selector"
-	"golang.org/x/oauth2"
-	"time"
 )
 
 // NewCmdRoot creates the root command
