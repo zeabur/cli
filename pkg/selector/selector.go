@@ -79,12 +79,12 @@ func (s *selector) SelectProject() (zcontext.BasicInfo, *model.Project, error) {
 		}
 		regions = regions[1:]
 
-		regionIDs := make([]string, 0, len(regions))
+		regionOptions := make([]string, 0, len(regions))
 		for _, region := range regions {
-			regionIDs = append(regionIDs, region.ID)
+			regionOptions = append(regionOptions, fmt.Sprintf("%s (%s)", region.Description, region.Name))
 		}
 
-		projectRegionIndex, err := s.prompter.Select("Select project region", "", regionIDs)
+		projectRegionIndex, err := s.prompter.Select("Select project region", "", regionOptions)
 		if err != nil {
 			return nil, nil, fmt.Errorf("select project region failed: %w", err)
 		}

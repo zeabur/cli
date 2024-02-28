@@ -60,12 +60,12 @@ func runCreateInteractive(f *cmdutil.Factory, opts *Options) error {
 	regions = regions[1:]
 	s.Stop()
 
-	regionIDs := make([]string, 0, len(regions))
+	regionOptions := make([]string, 0, len(regions))
 	for _, region := range regions {
-		regionIDs = append(regionIDs, region.ID)
+		regionOptions = append(regionOptions, fmt.Sprintf("%s (%s)", region.Description, region.Name))
 	}
 
-	projectRegionIndex, err := f.Prompter.Select("Select project region", "", regionIDs)
+	projectRegionIndex, err := f.Prompter.Select("Select project region", "", regionOptions)
 	if err != nil {
 		return err
 	}
