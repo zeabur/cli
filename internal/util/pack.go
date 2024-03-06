@@ -3,13 +3,15 @@ package util
 import (
 	"archive/zip"
 	"bytes"
+	"compress/flate"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"strings"
 
-	"github.com/klauspost/compress/flate"
+	gitignore "github.com/sabhiram/go-gitignore"
 )
 
 func PackZip() ([]byte, string, error) {
@@ -17,97 +19,78 @@ func PackZip() ([]byte, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
-	fmt.Println("Current working directory: ", currentDir)
 
-	if _, err := os.Stat(".git"); err == nil {
-		bytesString, err := PackGitRepo()
-		if err != nil {
-			fmt.Println("Error packing git repository to zip file!!!")
-			return nil, "", err
-		}
-		return bytesString, currentDir, nil
-	}
-
-	bytesString, err := PackZipFile()
+	bytesString, err := PackZipWithoutGitIgnoreFiles()
 	if err != nil {
-		fmt.Println("Error packing current directory to zip file!!!")
 		return nil, "", err
 	}
 
 	return bytesString, currentDir, nil
 }
 
-func PackGitRepo() ([]byte, error) {
-	format := "--format=zip"
-	output := "--output=zeabur.zip"
-
-	cmd := exec.Command("git", "archive", format, output, "HEAD")
-	_, err := cmd.CombinedOutput()
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		err = os.Remove("zeabur.zip")
-		if err != nil {
-			fmt.Println(err)
-		}
-	}()
-
-	zipBytes, err := os.ReadFile("zeabur.zip")
-	if err != nil {
-		return nil, err
-	}
-
-	return zipBytes, nil
-}
-
-func PackZipFile() ([]byte, error) {
+func PackZipWithoutGitIgnoreFiles() ([]byte, error) {
 	buf := new(bytes.Buffer)
 	zipWriter := zip.NewWriter(buf)
 
-	// Register a custom compressor for better compression.
+	// Register a custom compressor for better compression
 	zipWriter.RegisterCompressor(zip.Deflate, func(out io.Writer) (io.WriteCloser, error) {
 		return flate.NewWriter(out, flate.BestCompression)
 	})
 
-	err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
+	ignoreObject, err := gitignore.CompileIgnoreFile("./.gitignore")
+	if err != nil {
+		fmt.Println("Error compiling .gitignore file:", err)
+		return nil, err
+	}
+
+	err = filepath.Walk(".", func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			fmt.Println("Error accessing path:", path, err)
+			return err
+		}
+
+		if path == "." {
+			return nil
+		}
+
+		if strings.HasPrefix(path, ".git") {
+			return nil
+		}
+
+		if ignoreObject.MatchesPath(path) {
+			return nil
+		}
+
+		header, err := zip.FileInfoHeader(info)
 		if err != nil {
 			return err
 		}
 
-		// Skip the . directory.
-		if path != "." {
-			header, err := zip.FileInfoHeader(info)
+		header.Name, err = filepath.Rel(".", path)
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			header.Name += "/"
+		} else {
+			header.Method = zip.Deflate
+		}
+
+		writer, err := zipWriter.CreateHeader(header)
+		if err != nil {
+			return err
+		}
+
+		if !info.IsDir() {
+			file, err := os.Open(path)
 			if err != nil {
 				return err
 			}
-
-			header.Name, err = filepath.Rel(".", path)
+			defer file.Close()
+			_, err = io.Copy(writer, file)
 			if err != nil {
 				return err
-			}
-
-			if info.IsDir() {
-				header.Name += "/"
-			} else {
-				header.Method = zip.Deflate
-			}
-
-			writer, err := zipWriter.CreateHeader(header)
-			if err != nil {
-				return err
-			}
-
-			if !info.IsDir() {
-				file, err := os.Open(path)
-				if err != nil {
-					return err
-				}
-				defer file.Close()
-				_, err = io.Copy(writer, file)
-				if err != nil {
-					return err
-				}
 			}
 		}
 
@@ -118,7 +101,6 @@ func PackZipFile() ([]byte, error) {
 		return nil, err
 	}
 
-	// Close the zip writer.
 	err = zipWriter.Close()
 	if err != nil {
 		return nil, err
