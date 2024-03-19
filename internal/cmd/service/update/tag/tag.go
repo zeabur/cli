@@ -60,6 +60,13 @@ func runInteractive(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
+	varInput, err := f.Prompter.Input("Enter a new image tag", "latest")
+	if err != nil {
+		return err
+	}
+
+	opts.tag = varInput
+
 	return runNonInteractive(f, opts)
 }
 
