@@ -40,7 +40,7 @@ func NewCmdTag(f *cmdutil.Factory) *cobra.Command {
 	util.AddServiceParam(cmd, &opts.id, &opts.name)
 	util.AddEnvOfServiceParam(cmd, &opts.environmentID)
 	cmd.Flags().BoolVarP(&opts.skipConfirm, "yes", "y", false, "Skip confirmation")
-	cmd.Flags().StringVarP(&opts.tag, "tag", "t", "", "The new tag of the image")
+	cmd.Flags().StringVarP(&opts.tag, "tag", "t", "latest", "The new tag of the image")
 
 	return cmd
 }
