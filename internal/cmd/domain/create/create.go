@@ -3,10 +3,12 @@ package create
 import (
 	"context"
 	"fmt"
+
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
+	"github.com/zeabur/cli/pkg/fill"
 )
 
 type Options struct {
@@ -58,7 +60,13 @@ func runCreateDomain(f *cmdutil.Factory, opts *Options) error {
 func runCreateDomainInteractive(f *cmdutil.Factory, opts *Options) error {
 	zctx := f.Config.GetContext()
 
-	if _, err := f.ParamFiller.ServiceByNameWithEnvironment(zctx, &opts.id, &opts.name, &opts.environmentID); err != nil {
+	if _, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
+		ProjectCtx:    zctx,
+		ServiceID:     &opts.id,
+		ServiceName:   &opts.name,
+		EnvironmentID: &opts.environmentID,
+		CreateNew:     false,
+	}); err != nil {
 		return err
 	}
 
@@ -135,7 +143,13 @@ func runCreateDomainInteractive(f *cmdutil.Factory, opts *Options) error {
 func runCreateDomainNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	zctx := f.Config.GetContext()
 
-	if _, err := f.ParamFiller.ServiceByNameWithEnvironment(zctx, &opts.id, &opts.name, &opts.environmentID); err != nil {
+	if _, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
+		ProjectCtx:    zctx,
+		ServiceID:     &opts.id,
+		ServiceName:   &opts.name,
+		EnvironmentID: &opts.environmentID,
+		CreateNew:     false,
+	}); err != nil {
 		return err
 	}
 

@@ -2,6 +2,8 @@ package fill
 
 import (
 	"fmt"
+
+	"github.com/zeabur/cli/pkg/model"
 	"github.com/zeabur/cli/pkg/selector"
 	"github.com/zeabur/cli/pkg/zcontext"
 )
@@ -20,12 +22,12 @@ type ParamFiller interface {
 	Service(projectID, serviceID *string) (changed bool, err error)
 	// ServiceByName makes sure either serviceID or serviceName is not empty by asking user to select a service,
 	// if necessary, it will ask user to select a project first
-	ServiceByName(projectCtx zcontext.Context, serviceID, serviceName *string) (changed bool, err error)
+	ServiceByName(options ServiceByNameOptions) (changed bool, err error)
 	// ServiceWithEnvironment fills the serviceID and environmentID if they are empty by asking user to select a service and an environment,
 	// when the projectID is not empty, it will ask user to select a project first
 	ServiceWithEnvironment(projectID, serviceID, environmentID *string) (changed bool, err error)
 	// ServiceByNameWithEnvironment behaves like ServiceByName, but it will also fill the environmentID if it is empty
-	ServiceByNameWithEnvironment(projectCtx zcontext.Context, serviceID, serviceName, environmentID *string) (changed bool, err error)
+	ServiceByNameWithEnvironment(options ServiceByNameWithEnvironmentOptions) (changed bool, err error)
 }
 
 type paramFiller struct {
@@ -109,7 +111,11 @@ func (f *paramFiller) Service(projectID, serviceID *string) (changed bool, err e
 		return false, err
 	}
 
-	_, service, err := f.selector.SelectService(*projectID, true)
+	_, service, err := f.selector.SelectService(selector.SelectServiceOptions{
+		ProjectID: *projectID,
+		Auto:      true,
+		CreateNew: true,
+	})
 	if err != nil {
 		return false, err
 	}
@@ -119,7 +125,19 @@ func (f *paramFiller) Service(projectID, serviceID *string) (changed bool, err e
 	return true, nil
 }
 
-func (f *paramFiller) ServiceByName(projectCtx zcontext.Context, serviceID, serviceName *string) (changed bool, err error) {
+type ServiceByNameOptions struct {
+	ProjectCtx  zcontext.Context
+	ServiceID   *string
+	ServiceName *string
+	CreateNew   bool
+	FilterFunc  func(service *model.Service) bool
+}
+
+func (f *paramFiller) ServiceByName(opt ServiceByNameOptions) (changed bool, err error) {
+	projectCtx := opt.ProjectCtx
+	serviceID := opt.ServiceID
+	serviceName := opt.ServiceName
+
 	if err := paramNilCheck(serviceID, serviceName); err != nil {
 		return false, err
 	}
@@ -146,7 +164,12 @@ func (f *paramFiller) ServiceByName(projectCtx zcontext.Context, serviceID, serv
 
 	// if service name is empty, ask user to select a service by project id
 	if *serviceName == "" {
-		service, _, err := f.selector.SelectService(projectCtx.GetProject().GetID(), true)
+		service, _, err := f.selector.SelectService(selector.SelectServiceOptions{
+			ProjectID:  projectCtx.GetProject().GetID(),
+			Auto:       true,
+			CreateNew:  opt.CreateNew,
+			FilterFunc: opt.FilterFunc,
+		})
 		if err != nil {
 			return false, err
 		}
@@ -186,14 +209,32 @@ func (f *paramFiller) ServiceWithEnvironment(projectID, serviceID, environmentID
 	return true, nil
 }
 
-func (f *paramFiller) ServiceByNameWithEnvironment(
-	projectCtx zcontext.Context, serviceID, serviceName, environmentID *string) (changed bool, err error) {
+type ServiceByNameWithEnvironmentOptions struct {
+	ProjectCtx    zcontext.Context
+	ServiceID     *string
+	ServiceName   *string
+	EnvironmentID *string
+	CreateNew     bool
+	FilterFunc    func(service *model.Service) bool
+}
+
+func (f *paramFiller) ServiceByNameWithEnvironment(opt ServiceByNameWithEnvironmentOptions) (changed bool, err error) {
+	projectCtx := opt.ProjectCtx
+	serviceID := opt.ServiceID
+	serviceName := opt.ServiceName
+	environmentID := opt.EnvironmentID
 
 	if err = paramNilCheck(serviceID, serviceName, environmentID); err != nil {
 		return false, err
 	}
 
-	changed1, err := f.ServiceByName(projectCtx, serviceID, serviceName)
+	changed1, err := f.ServiceByName(ServiceByNameOptions{
+		ProjectCtx:  projectCtx,
+		ServiceID:   serviceID,
+		ServiceName: serviceName,
+		CreateNew:   opt.CreateNew,
+		FilterFunc:  opt.FilterFunc,
+	})
 	if err != nil {
 		return false, err
 	}

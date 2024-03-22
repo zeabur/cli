@@ -1,4 +1,4 @@
-package suspend
+package tag
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
 	"github.com/zeabur/cli/pkg/fill"
+	"github.com/zeabur/cli/pkg/model"
 )
 
 type Options struct {
@@ -16,42 +17,45 @@ type Options struct {
 
 	environmentID string
 
+	tag string
+
 	skipConfirm bool
 }
 
-func NewCmdSuspend(f *cmdutil.Factory) *cobra.Command {
+func NewCmdTag(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}
 	zctx := f.Config.GetContext()
 
 	cmd := &cobra.Command{
-		Use:   "suspend",
-		Short: "suspend a service",
+		Use:   "tag",
+		Short: "Update image tag of a prebuilt service",
 		PreRunE: util.RunEChain(
 			util.NeedProjectContextWhenNonInteractive(f),
 			util.DefaultIDNameByContext(zctx.GetService(), &opts.id, &opts.name),
 			util.DefaultIDByContext(zctx.GetEnvironment(), &opts.environmentID),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runSuspend(f, opts)
+			return runUpdate(f, opts)
 		},
 	}
 
 	util.AddServiceParam(cmd, &opts.id, &opts.name)
 	util.AddEnvOfServiceParam(cmd, &opts.environmentID)
 	cmd.Flags().BoolVarP(&opts.skipConfirm, "yes", "y", false, "Skip confirmation")
+	cmd.Flags().StringVarP(&opts.tag, "tag", "t", "latest", "The new tag of the image")
 
 	return cmd
 }
 
-func runSuspend(f *cmdutil.Factory, opts *Options) error {
+func runUpdate(f *cmdutil.Factory, opts *Options) error {
 	if f.Interactive {
-		return runSuspendInteractive(f, opts)
+		return runInteractive(f, opts)
 	} else {
-		return runSuspendNonInteractive(f, opts)
+		return runNonInteractive(f, opts)
 	}
 }
 
-func runSuspendInteractive(f *cmdutil.Factory, opts *Options) error {
+func runInteractive(f *cmdutil.Factory, opts *Options) error {
 	zctx := f.Config.GetContext()
 
 	if _, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
@@ -60,14 +64,24 @@ func runSuspendInteractive(f *cmdutil.Factory, opts *Options) error {
 		ServiceName:   &opts.name,
 		EnvironmentID: &opts.environmentID,
 		CreateNew:     false,
+		FilterFunc: func(service *model.Service) bool {
+			return service.Template == "PREBUILT"
+		},
 	}); err != nil {
 		return err
 	}
 
-	return runSuspendNonInteractive(f, opts)
+	varInput, err := f.Prompter.Input("Enter a new image tag", "latest")
+	if err != nil {
+		return err
+	}
+
+	opts.tag = varInput
+
+	return runNonInteractive(f, opts)
 }
 
-func runSuspendNonInteractive(f *cmdutil.Factory, opts *Options) error {
+func runNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	if err := checkParams(opts); err != nil {
 		return err
 	}
@@ -81,7 +95,6 @@ func runSuspendNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		opts.id = service.ID
 	}
 
-	// to show friendly message
 	idOrName := opts.name
 	if idOrName == "" {
 		idOrName = opts.id
@@ -89,7 +102,7 @@ func runSuspendNonInteractive(f *cmdutil.Factory, opts *Options) error {
 
 	// double check
 	if f.Interactive && !opts.skipConfirm {
-		confirm, err := f.Prompter.Confirm(fmt.Sprintf("Are you sure to deploy service <%s>?", idOrName), true)
+		confirm, err := f.Prompter.Confirm(fmt.Sprintf("Are you sure to update image tag of service <%s>?", idOrName), true)
 		if err != nil {
 			return err
 		}
@@ -98,12 +111,10 @@ func runSuspendNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		}
 	}
 
-	err := f.ApiClient.SuspendService(context.Background(), opts.id, opts.environmentID)
+	err := f.ApiClient.UpdateImageTag(context.Background(), opts.id, opts.environmentID, opts.tag)
 	if err != nil {
-		return fmt.Errorf("suspend service failed: %w", err)
+		return err
 	}
-
-	f.Log.Infof("Service <%s> suspended successfully", idOrName)
 
 	return nil
 }
@@ -115,6 +126,10 @@ func checkParams(opts *Options) error {
 
 	if opts.environmentID == "" {
 		return fmt.Errorf("--env-id is required")
+	}
+
+	if opts.tag == "" {
+		return fmt.Errorf("--tag is required")
 	}
 
 	return nil

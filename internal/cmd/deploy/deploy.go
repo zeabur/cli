@@ -8,6 +8,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
+	"github.com/zeabur/cli/pkg/model"
+	"github.com/zeabur/cli/pkg/selector"
 	"github.com/zeabur/cli/pkg/zcontext"
 )
 
@@ -80,7 +82,14 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 
 	f.Log.Info("Select one service to deploy or create a new one.")
 
-	_, service, err := f.Selector.SelectService(project.ID, false)
+	_, service, err := f.Selector.SelectService(selector.SelectServiceOptions{
+		ProjectID: project.ID,
+		Auto:      false,
+		CreateNew: true,
+		FilterFunc: func(service *model.Service) bool {
+			return service.Template == "GIT"
+		},
+	})
 	if err != nil {
 		return err
 	}

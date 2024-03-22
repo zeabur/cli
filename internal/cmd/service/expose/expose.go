@@ -3,8 +3,10 @@ package expose
 import (
 	"context"
 	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/util"
+	"github.com/zeabur/cli/pkg/fill"
 
 	"github.com/zeabur/cli/internal/cmdutil"
 )
@@ -74,8 +76,13 @@ func runExposeNonInteractive(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runExposeInteractive(f *cmdutil.Factory, opts *Options) error {
-	if _, err := f.ParamFiller.ServiceByNameWithEnvironment(
-		f.Config.GetContext(), &opts.id, &opts.name, &opts.environmentID); err != nil {
+	if _, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
+		ProjectCtx:    f.Config.GetContext(),
+		ServiceID:     &opts.id,
+		ServiceName:   &opts.name,
+		EnvironmentID: &opts.environmentID,
+		CreateNew:     false,
+	}); err != nil {
 		return err
 	}
 

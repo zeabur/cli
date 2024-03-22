@@ -425,3 +425,21 @@ func (c *client) GetDNSName(ctx context.Context, serviceID string) (string, erro
 
 	return query.Service.DnsName, nil
 }
+
+func (c *client) UpdateImageTag(ctx context.Context, serviceID, environmentID, tag string) error {
+	var mutation struct {
+		UpdateImageTag bool `graphql:"updateServiceImage(serviceID: $serviceID, environmentID: $environmentID, tag: $tag)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{
+		"serviceID":     ObjectID(serviceID),
+		"environmentID": ObjectID(environmentID),
+		"tag":           tag,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
