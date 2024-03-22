@@ -16,6 +16,9 @@ builds:
       - linux
       - windows
       - darwin
+    goarch:
+      - amd64
+      - arm64
 
 archives:
   - name_template: "zeabur_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
