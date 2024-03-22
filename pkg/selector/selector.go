@@ -25,7 +25,7 @@ type (
 	}
 
 	ServiceSelector interface {
-		SelectService(projectID string, auto bool) (zcontext.BasicInfo, *model.Service, error)
+		SelectService(opt SelectServiceOptions) (zcontext.BasicInfo, *model.Service, error)
 	}
 
 	EnvironmentSelector interface {
@@ -105,10 +105,34 @@ func (s *selector) SelectProject() (zcontext.BasicInfo, *model.Project, error) {
 
 }
 
-func (s *selector) SelectService(projectID string, auto bool) (zcontext.BasicInfo, *model.Service, error) {
+type SelectServiceOptions struct {
+	// ProjectID is the project id to select service from
+	ProjectID string
+	// Auto select the only service in the project
+	Auto bool
+	// CreateNew shows an option to create a new service
+	CreateNew bool
+	// FilterFunc filters the services
+	FilterFunc func(service *model.Service) bool
+}
+
+func (s *selector) SelectService(opt SelectServiceOptions) (zcontext.BasicInfo, *model.Service, error) {
+	projectID := opt.ProjectID
+	auto := opt.Auto
+
 	services, err := s.client.ListAllServices(context.Background(), projectID)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get services: %w", err)
+	}
+
+	if opt.FilterFunc != nil {
+		filtered := make([]*model.Service, 0, len(services))
+		for _, service := range services {
+			if opt.FilterFunc(service) {
+				filtered = append(filtered, service)
+			}
+		}
+		services = filtered
 	}
 
 	if len(services) == 0 {
@@ -125,7 +149,10 @@ func (s *selector) SelectService(projectID string, auto bool) (zcontext.BasicInf
 	for i, service := range services {
 		serviceNames[i] = service.Name
 	}
-	serviceNames = append(serviceNames, "Create a new service")
+
+	if opt.CreateNew {
+		serviceNames = append(serviceNames, "Create a new service")
+	}
 
 	index, err := s.prompter.Select("Select a service", serviceNames[0], serviceNames)
 	if err != nil {

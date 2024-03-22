@@ -3,10 +3,12 @@ package network
 import (
 	"context"
 	"fmt"
+
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
+	"github.com/zeabur/cli/pkg/fill"
 )
 
 type Options struct {
@@ -43,7 +45,13 @@ func NewCmdPrivateNetwork(f *cmdutil.Factory) *cobra.Command {
 
 func runInstruction(f *cmdutil.Factory, opts *Options) error {
 	zctx := f.Config.GetContext()
-	if _, err := f.ParamFiller.ServiceByNameWithEnvironment(zctx, &opts.id, &opts.name, &opts.environmentID); err != nil {
+	if _, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
+		ProjectCtx:    zctx,
+		ServiceID:     &opts.id,
+		ServiceName:   &opts.name,
+		EnvironmentID: &opts.environmentID,
+		CreateNew:     false,
+	}); err != nil {
 		return err
 	}
 
@@ -72,7 +80,7 @@ func runInstruction(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	s.Stop()
-	
+
 	f.Log.Infof("Private DNS name for %s: %s", opts.name, dnsName+".zeabur.internal")
 
 	return nil

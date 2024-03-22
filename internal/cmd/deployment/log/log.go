@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
+	"github.com/zeabur/cli/pkg/fill"
 	"github.com/zeabur/cli/pkg/model"
 )
 
@@ -62,7 +63,16 @@ func runLog(f *cmdutil.Factory, opts *Options) error {
 func runLogInteractive(f *cmdutil.Factory, opts *Options) error {
 	if opts.deploymentID == "" {
 		zctx := f.Config.GetContext()
-		_, err := f.ParamFiller.ServiceByNameWithEnvironment(zctx, &opts.serviceID, &opts.serviceName, &opts.environmentID)
+		_, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
+			ProjectCtx:    zctx,
+			ServiceID:     &opts.serviceID,
+			ServiceName:   &opts.serviceName,
+			EnvironmentID: &opts.environmentID,
+			CreateNew:     false,
+			FilterFunc: func(service *model.Service) bool {
+				return service.Template == "GIT"
+			},
+		})
 		if err != nil {
 			return err
 		}

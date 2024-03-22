@@ -3,9 +3,11 @@ package get
 import (
 	"context"
 	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/util"
 	"github.com/zeabur/cli/pkg/api"
+	"github.com/zeabur/cli/pkg/fill"
 	"github.com/zeabur/cli/pkg/model"
 
 	"github.com/zeabur/cli/internal/cmdutil"
@@ -50,7 +52,11 @@ func runGet(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runGetInteractive(f *cmdutil.Factory, opts *Options) error {
-	if _, err := f.ParamFiller.ServiceByName(f.Config.GetContext(), &opts.id, &opts.name); err != nil {
+	if _, err := f.ParamFiller.ServiceByName(fill.ServiceByNameOptions{
+		ProjectCtx:  f.Config.GetContext(),
+		ServiceID:   &opts.id,
+		ServiceName: &opts.name,
+	}); err != nil {
 		return err
 	}
 

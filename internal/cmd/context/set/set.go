@@ -4,7 +4,9 @@ package set
 import (
 	"context"
 	"fmt"
+
 	"github.com/MakeNowJust/heredoc"
+	"github.com/zeabur/cli/pkg/selector"
 
 	"github.com/spf13/cobra"
 
@@ -285,7 +287,11 @@ func selectService(f *cmdutil.Factory, opts *Options) error {
 
 	projectID := f.Config.GetContext().GetProject().GetID()
 
-	serviceInfo, _, err := f.Selector.SelectService(projectID, true)
+	serviceInfo, _, err := f.Selector.SelectService(selector.SelectServiceOptions{
+		ProjectID: projectID,
+		Auto:      true,
+		CreateNew: true,
+	})
 	if err != nil {
 		return err
 	}

@@ -4,9 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
+	"github.com/zeabur/cli/pkg/fill"
+	"github.com/zeabur/cli/pkg/model"
 )
 
 type Options struct {
@@ -48,7 +51,16 @@ func runList(f *cmdutil.Factory, opts *Options) error {
 
 func runListInteractive(f *cmdutil.Factory, opts *Options) error {
 	zctx := f.Config.GetContext()
-	_, err := f.ParamFiller.ServiceByNameWithEnvironment(zctx, &opts.serviceID, &opts.serviceName, &opts.environmentID)
+	_, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
+		ProjectCtx:    zctx,
+		ServiceID:     &opts.serviceID,
+		ServiceName:   &opts.serviceName,
+		EnvironmentID: &opts.environmentID,
+		CreateNew:     false,
+		FilterFunc: func(service *model.Service) bool {
+			return service.Template == "GIT"
+		},
+	})
 	if err != nil {
 		return err
 	}
