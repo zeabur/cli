@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"compress/flate"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -39,7 +40,9 @@ func PackZipWithoutGitIgnoreFiles() ([]byte, error) {
 
 	ignoreObject, err := gitignore.CompileIgnoreFile("./.gitignore")
 	if err != nil {
-		fmt.Println("Error compiling .gitignore file:", err)
+		if !errors.Is(err, fs.ErrNotExist) {
+			fmt.Println("Error compiling .gitignore file:", err)
+		}
 	}
 
 	err = filepath.Walk(".", func(path string, info fs.FileInfo, err error) error {
