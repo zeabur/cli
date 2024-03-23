@@ -42,7 +42,7 @@ func NewCmdTag(f *cmdutil.Factory) *cobra.Command {
 	util.AddServiceParam(cmd, &opts.id, &opts.name)
 	util.AddEnvOfServiceParam(cmd, &opts.environmentID)
 	cmd.Flags().BoolVarP(&opts.skipConfirm, "yes", "y", false, "Skip confirmation")
-	cmd.Flags().StringVarP(&opts.tag, "tag", "t", "latest", "The new tag of the image")
+	cmd.Flags().StringVarP(&opts.tag, "tag", "t", "", "The new tag of the image")
 
 	return cmd
 }
@@ -71,12 +71,13 @@ func runInteractive(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
-	varInput, err := f.Prompter.Input("Enter a new image tag", "latest")
-	if err != nil {
-		return err
+	if opts.tag == "" {
+		varInput, err := f.Prompter.Input("Enter a new image tag", "latest")
+		if err != nil {
+			return err
+		}
+		opts.tag = varInput
 	}
-
-	opts.tag = varInput
 
 	return runNonInteractive(f, opts)
 }
@@ -102,7 +103,7 @@ func runNonInteractive(f *cmdutil.Factory, opts *Options) error {
 
 	// double check
 	if f.Interactive && !opts.skipConfirm {
-		confirm, err := f.Prompter.Confirm(fmt.Sprintf("Are you sure to update image tag of service <%s>?", idOrName), true)
+		confirm, err := f.Prompter.Confirm(fmt.Sprintf("Are you sure to update image tag of service %s to %s?", idOrName, opts.tag), true)
 		if err != nil {
 			return err
 		}
