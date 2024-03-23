@@ -40,7 +40,6 @@ func PackZipWithoutGitIgnoreFiles() ([]byte, error) {
 	ignoreObject, err := gitignore.CompileIgnoreFile("./.gitignore")
 	if err != nil {
 		fmt.Println("Error compiling .gitignore file:", err)
-		return nil, err
 	}
 
 	err = filepath.Walk(".", func(path string, info fs.FileInfo, err error) error {
@@ -57,7 +56,7 @@ func PackZipWithoutGitIgnoreFiles() ([]byte, error) {
 			return nil
 		}
 
-		if ignoreObject.MatchesPath(path) {
+		if ignoreObject != nil && ignoreObject.MatchesPath(path) {
 			return nil
 		}
 
