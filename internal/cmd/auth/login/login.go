@@ -3,8 +3,11 @@ package login
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 
+	"github.com/hasura/go-graphql-client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
@@ -58,13 +61,21 @@ func RunLogin(f *cmdutil.Factory, opts *Options) error {
 		f.ApiClient = opts.NewClient(f.Config.GetTokenString())
 		user, err := f.ApiClient.GetUserInfo(context.Background())
 		if err != nil {
-			return fmt.Errorf("failed to get user info: %w", err)
+			var graphqlErrors graphql.Errors
+			if errors.As(err, &graphqlErrors) &&
+				len(graphqlErrors) > 0 &&
+				strings.HasPrefix(graphqlErrors[0].Message, "401 Unauthorized") {
+				f.Log.Debug("Token is expired or invalid, need to login again")
+			} else {
+				return fmt.Errorf("failed to get user info: %w", err)
+			}
+		} else {
+			f.Log.Debugw("Already logged in", "token string", f.Config.GetTokenString(),
+				"token detail", f.Config.GetToken(), "user", user)
+			f.Log.Infof("Already logged in as %s, "+
+				"if you want to use a different account, please logout first", user.Name)
+			return nil
 		}
-		f.Log.Debugw("Already logged in", "token string", f.Config.GetTokenString(),
-			"token detail", f.Config.GetToken(), "user", user)
-		f.Log.Infof("Already logged in as %s, "+
-			"if you want to use a different account, please logout first", user.Name)
-		return nil
 	}
 
 	var (
