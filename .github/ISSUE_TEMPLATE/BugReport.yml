@@ -17,6 +17,14 @@ body:
     attributes:
       label: Expected behaviour
       description: A clear and concise description of what you expected to happen.
+
+  - type: input
+    id: version
+    attributes:
+      label: Zeabur CLI version
+      description: You can find the version by running `zeabur version`
+    validations:
+      required: true
  
   - type: textarea
     attributes:
