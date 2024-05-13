@@ -277,7 +277,7 @@ func (c *client) GetPrebuiltItems(ctx context.Context) ([]model.PrebuiltItem, er
 
 func (c *client) CreatePrebuiltService(ctx context.Context, projectID string, marketplaceCode string) (*model.Service, error) {
 	var mutation struct {
-		CreatePrebuiltService model.Service `graphql:"createGenericService(projectID: $projectID, marketplaceCode: $marketplaceCode)"`
+		CreatePrebuiltService model.Service `graphql:"createPrebuiltService(projectID: $projectID, marketplaceCode: $marketplaceCode)"`
 	}
 
 	err := c.Mutate(ctx, &mutation, V{
