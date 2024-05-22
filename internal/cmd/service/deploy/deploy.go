@@ -3,6 +3,7 @@ package deploy
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
@@ -63,7 +64,9 @@ func runDeployNonInteractive(f *cmdutil.Factory, opts *Options) error {
 
 	ctx := context.Background()
 
-	if opts.template == "PREBUILT" {
+	template := strings.ToUpper(opts.template)
+	switch template {
+	case "PREBUILT":
 		opts.name = opts.marketplaceCode
 		service, err := f.ApiClient.CreatePrebuiltService(ctx, opts.projectID, opts.marketplaceCode)
 		if err != nil {
@@ -71,9 +74,18 @@ func runDeployNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		}
 
 		f.Log.Infof("Service %s created", service.Name)
-	}
+		return nil
+	case "GIT":
+		_, err = f.ApiClient.CreateService(context.Background(), f.Config.GetContext().GetProject().GetID(), opts.name, opts.repoID, opts.branchName)
+		if err != nil {
+			return fmt.Errorf("create service failed: %w", err)
+		}
 
-	return nil
+		f.Log.Infof("Service %s created", opts.name)
+		return nil
+	default:
+		return fmt.Errorf("unsupported service template %s", opts.template)
+	}
 }
 
 func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
@@ -82,62 +94,67 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
-	serviceTemplate, err := f.Prompter.Select("Select service template", "PREBUILT", []string{"PREBUILT", "GIT"})
-	if err != nil {
-		return err
+	if opts.template == "" {
+		options := []string{"PREBUILT", "GIT"}
+		serviceTemplate, err := f.Prompter.Select("Select service template", options[0], options)
+		if err != nil {
+			return err
+		}
+		opts.template = options[serviceTemplate]
 	}
 
 	ctx := context.Background()
 
-	if serviceTemplate == 0 {
+	switch strings.ToUpper(opts.template) {
+
+	case "PREBUILT":
+
+		if opts.marketplaceCode == "" {
+
+			s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+				spinner.WithColor(cmdutil.SpinnerColor),
+				spinner.WithSuffix(" Fetching prebuilt marketplace..."),
+				spinner.WithFinalMSG(cmdutil.SuccessIcon+" Prebuilt marketplace fetched 🌇\n"),
+			)
+			s.Start()
+			prebuiltItems, err := f.ApiClient.GetPrebuiltItems(ctx)
+			if err != nil {
+				return fmt.Errorf("get prebuilt marketplace failed: %w", err)
+			}
+			s.Stop()
+
+			prebuiltItemsList := make([]string, len(prebuiltItems))
+			for i, item := range prebuiltItems {
+				prebuiltItemsList[i] = item.Name + " (" + item.Description + ")"
+			}
+
+			index, err := f.Prompter.Select("Select prebuilt item", "", prebuiltItemsList)
+			if err != nil {
+				return fmt.Errorf("select prebuilt item failed: %w", err)
+			}
+
+			opts.marketplaceCode = prebuiltItems[index].ID
+		}
+
 		s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
-			spinner.WithColor(cmdutil.SpinnerColor),
-			spinner.WithSuffix(" Fetching prebuilt marketplae..."),
-			spinner.WithFinalMSG(cmdutil.SuccessIcon+" Prebuilt marketplace fetched 🌇\n"),
-		)
-		s.Start()
-		prebuiltItems, err := f.ApiClient.GetPrebuiltItems(ctx)
-		if err != nil {
-			return fmt.Errorf("get prebuilt marketplace failed: %w", err)
-		}
-		s.Stop()
-
-		prebuiltItemsList := make([]string, len(prebuiltItems))
-		for i, item := range prebuiltItems {
-			prebuiltItemsList[i] = item.Name + " (" + item.Description + ")"
-		}
-
-		index, err := f.Prompter.Select("Select prebuilt item", "", prebuiltItemsList)
-		if err != nil {
-			return fmt.Errorf("select prebuilt item failed: %w", err)
-		}
-
-		opts.marketplaceCode = prebuiltItems[index].ID
-
-		// use a closure to get the service name after creation
-		serviceName := ""
-		getServiceName := func() string {
-			return serviceName
-		}
-
-		s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 			spinner.WithColor(cmdutil.SpinnerColor),
 			spinner.WithSuffix(" Creating service..."),
 		)
-		// use a closure to update the spinner's final message(especially the service name)
-		s.PreUpdate = func(s *spinner.Spinner) {
-			s.FinalMSG = fmt.Sprintf("%s Service %s created 🚀\n", cmdutil.SuccessIcon, getServiceName())
-		}
 		s.Start()
 
 		service, err := f.ApiClient.CreatePrebuiltService(ctx, opts.projectID, opts.marketplaceCode)
 		if err != nil {
 			return fmt.Errorf("create prebuilt service failed: %w", err)
 		}
-		serviceName = service.Name
 
 		s.Stop()
-	} else if serviceTemplate == 1 {
+
+		fmt.Printf("%s Service %s created 🚀\n", cmdutil.SuccessIcon, service.Name)
+		fmt.Printf("https://dash.zeabur.com/projects/%s/services/%s", opts.projectID, service.ID)
+
+		return nil
+
+	case "GIT":
 		var s *spinner.Spinner
 
 		s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
@@ -197,9 +214,12 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 			return err
 		}
 		s.Stop()
-	}
 
-	return nil
+		return nil
+
+	default:
+		return fmt.Errorf("unsupported service template %s", opts.template)
+	}
 }
 
 func paramCheck(opts *Options) error {
@@ -207,8 +227,20 @@ func paramCheck(opts *Options) error {
 		return fmt.Errorf("please specify service template with --template")
 	}
 
+	if strings.ToUpper(opts.template) != "PREBUILT" && strings.ToUpper(opts.template) != "GIT" {
+		return fmt.Errorf("unsupported service template %s, only support PREBUILT and GIT", opts.template)
+	}
+
 	if opts.template == "PREBUILT" && opts.marketplaceCode == "" {
-		return fmt.Errorf("please specify marketplace item code with --item-code")
+		return fmt.Errorf("please specify marketplace item code with --marketplace-code")
+	}
+
+	if opts.template == "GIT" && opts.repoID == 0 {
+		return fmt.Errorf("please specify git repository ID with --repo-id")
+	}
+
+	if opts.template == "GIT" && opts.branchName == "" {
+		return fmt.Errorf("please specify git branch name with --branch-name")
 	}
 
 	return nil
