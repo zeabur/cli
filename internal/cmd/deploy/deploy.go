@@ -16,6 +16,9 @@ import (
 type Options struct {
 	name       string
 	domainName string
+
+	// create will create a new service instead of selecting one if true
+	create bool
 }
 
 func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
@@ -32,6 +35,7 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVar(&opts.name, "name", "", "Service name")
 	cmd.Flags().StringVar(&opts.domainName, "domain", "", "Domain name")
+	cmd.Flags().BoolVar(&opts.create, "create", false, "Create a new service")
 
 	return cmd
 }
@@ -82,16 +86,19 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 
 	f.Log.Info("Select one service to deploy or create a new one.")
 
-	_, service, err := f.Selector.SelectService(selector.SelectServiceOptions{
-		ProjectID: project.ID,
-		Auto:      false,
-		CreateNew: true,
-		FilterFunc: func(service *model.Service) bool {
-			return service.Template == "GIT"
-		},
-	})
-	if err != nil {
-		return err
+	var service *model.Service
+	if !opts.create {
+		_, service, err = f.Selector.SelectService(selector.SelectServiceOptions{
+			ProjectID: project.ID,
+			Auto:      false,
+			CreateNew: true,
+			FilterFunc: func(service *model.Service) bool {
+				return service.Template == "GIT"
+			},
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	bytes, fileName, err := util.PackZip()
@@ -108,7 +115,12 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 		)
 		s.Start()
 
-		service, err = f.ApiClient.CreateEmptyService(context.Background(), project.ID, fileName)
+		name := fileName
+		if opts.name != "" {
+			name = opts.name
+		}
+
+		service, err = f.ApiClient.CreateEmptyService(context.Background(), project.ID, name)
 		if err != nil {
 			return err
 		}
