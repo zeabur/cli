@@ -46,16 +46,12 @@ func (c *client) ListAllTemplates(ctx context.Context) (model.Templates, error) 
 	return templates, nil
 }
 
-func (c *client) DeployTemplate(ctx context.Context, code string, variables map[string]interface{}, repoConfigs model.RepoConfigs) (*model.Project, error) {
+func (c *client) DeployTemplate(ctx context.Context, rawSpecYaml string, variables model.Map, repoConfigs model.RepoConfigs) (*model.Project, error) {
 	var mutation struct {
-		DeployTemplate model.Project `graphql:"deployTemplate(code: $code, variables: $variables, repoConfigs: $repoConfigs)"`
+		DeployTemplate model.Project `graphql:"deployTemplate(rawSpecYaml: $rawSpecYaml, variables: $variables)"`
 	}
 
-	err := c.Mutate(ctx, &mutation, V{
-		"code":        code,
-		"variables":   variables,
-		"repoConfigs": repoConfigs,
-	})
+	err := c.Mutate(ctx, &mutation, V{"rawSpecYaml": rawSpecYaml, "variables": variables})
 	if err != nil {
 		return nil, err
 	}

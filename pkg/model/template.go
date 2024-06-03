@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/zeabur/cli/pkg/util"
 	"time"
+
+	"github.com/zeabur/cli/pkg/util"
 )
 
 type Template struct {
@@ -67,6 +68,8 @@ type RepoConfig struct {
 }
 
 type RepoConfigs []*RepoConfig
+
+type Map map[string]string
 
 type ServiceInTemplate struct {
 	BranchName         string                 `json:"branchName"`

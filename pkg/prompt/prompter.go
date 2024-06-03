@@ -81,6 +81,16 @@ func (p *prompter) Input(prompt, defaultValue string) (result string, err error)
 	return
 }
 
+func (p *prompter) InputWithHelp(prompt, defaultValue, help string) (result string, err error) {
+	err = survey.AskOne(&survey.Input{
+		Message: prompt,
+		Default: defaultValue,
+		Help:    help,
+	}, &result)
+
+	return
+}
+
 func (p *prompter) Confirm(prompt string, defaultValue bool) (bool, error) {
 	res := defaultValue
 	confirm := survey.Confirm{
