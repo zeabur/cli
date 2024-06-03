@@ -23,12 +23,12 @@ No need to install, you can use it directly with npx. Make sure you have Node.js
 If you can open the browser:
 
 ```shell
-npx @zeabur/cli auth login
+npx zeabur auth login
 ```
 
 Or you can use token to login:
 ```shell
-npx @zeabur/cli auth login --token <your-token>
+npx zeabur auth login --token <your-token>
 ```
 
 Zeabur CLI will open a browser window and ask you to login with your Zeabur account.
@@ -39,32 +39,32 @@ Zeabur CLI will open a browser window and ask you to login with your Zeabur acco
 
 ```shell
 # list all projects
-npx @zeabur/cli project ls
+npx zeabur project ls
 
 # set project context, the following commands will use this project context
 # you can use arrow keys to select the project
-npx @zeabur/cli context set project
+npx zeabur context set project
 
 # list all services in the project
-npx @zeabur/cli service ls
+npx zeabur service ls
 
 # set service context(optional)
-npx @zeabur/cli context set service
+npx zeabur context set service
 
 # set environment context(optional)
-npx @zeabur/cli context set env
+npx zeabur context set env
 
 # restart the service
-npx @zeabur/cli service restart
+npx zeabur service restart
 
 # get the latest deployment info
-npx @zeabur/cli deployment get
+npx zeabur deployment get
 
 # get the latest deployment log(runtime)
-npx @zeabur/cli deployment log -t=runtime
+npx zeabur deployment log -t=runtime
 
 # get the latest deployment log(build)
-npx @zeabur/cli deployment log -t=build
+npx zeabur deployment log -t=build
 ```
 
 ### 4. Manage your resources(Non-interactive mode)
@@ -76,45 +76,45 @@ Note: you can add `-i=false` to all commands to disable interactive mode.
 
 ```shell
 # list all projects
-npx @zeabur/cli project ls -i=false
+npx zeabur project ls -i=false
 
 # set project context, the following commands will use this project context
-npx @zeabur/cli context set project --name <project-name>
+npx zeabur context set project --name <project-name>
 # or you can use project id
-# npx @zeabur/cli context set project --id <project-id>
+# npx zeabur context set project --id <project-id>
 
 # list all services in the project
-npx @zeabur/cli service ls
+npx zeabur service ls
 
 # set service context(optional)
-npx @zeabur/cli context set service --name <service-name>
+npx zeabur context set service --name <service-name>
 # or you can use service id
-# npx @zeabur/cli context set service --id <service-id>
+# npx zeabur context set service --id <service-id>
 
 # set environment context(optional)(only --id is supported)
-npx @zeabur/cli context set env --id <env-id>
+npx zeabur context set env --id <env-id>
 
 # restart the service
 # if service context is set, you can omit the service name; so does environment context
-npx @zeabur/cli service restart --env-id <env-id> --service-name <service-name>
+npx zeabur service restart --env-id <env-id> --service-name <service-name>
 # or you can use service id
-# npx @zeabur/cli service restart --env-id <env-id> --service-id <service-id>
+# npx zeabur service restart --env-id <env-id> --service-id <service-id>
 
 # get the latest deployment info(if contexts are set, you can omit the parameters)
-npx @zeabur/cli deployment get --env-id <env-id> --service-name <service-name>
+npx zeabur deployment get --env-id <env-id> --service-name <service-name>
 # or you can use service id
-# npx @zeabur/cli deployment get --env-id <env-id> --service-id <service-id>
+# npx zeabur deployment get --env-id <env-id> --service-id <service-id>
 
 # get the latest deployment log(runtime)(service id is also supported)
-npx @zeabur/cli deployment log -t=runtime --env-id <env-id> --service-name <service-name>
+npx zeabur deployment log -t=runtime --env-id <env-id> --service-name <service-name>
 # get the latest deployment log(build)(service id is also supported)
-npx @zeabur/cli deployment log -t=build --env-id <env-id> --service-name <service-name>
+npx zeabur deployment log -t=build --env-id <env-id> --service-name <service-name>
 ```
 
 5. More commands
 
 ```shell
-npx @zeabur/cli <command> --help
+npx zeabur <command> --help
 ```
 
 ## Development Guide
