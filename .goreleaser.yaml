@@ -41,12 +41,3 @@ changelog:
 release:
   extra_files:
     - glob: "README.md"
-
-brews:
-  - name: cli
-    repository:
-      owner: zeabur
-      name: homebrew-tap
-      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
-    homepage: "https://zeabur.com"
-    description: "Zeabur's official command line tool"
