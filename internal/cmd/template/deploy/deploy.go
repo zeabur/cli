@@ -76,10 +76,8 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 		}
 	}
 
-	if f.Interactive {
-		if _, err := f.ParamFiller.Project(&opts.projectID); err != nil {
-			return err
-		}
+	if _, err := f.ParamFiller.ProjectCreatePreferred(&opts.projectID); err != nil {
+		return err
 	}
 
 	type RawTemplate struct {
@@ -151,7 +149,6 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 	)
 
 	s.Start()
-
 	res, err := f.ApiClient.DeployTemplate(
 		context.Background(),
 		string(file),
