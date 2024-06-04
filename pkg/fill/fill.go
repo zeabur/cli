@@ -11,6 +11,9 @@ import (
 type ParamFiller interface {
 	// Project fills the projectID if it is empty by asking user to select a project
 	Project(projectID *string) (changed bool, err error)
+	// ProjectCreatePreferred fills the projectID if it is empty by asking user to select a project
+	// and makes "Create New Project…" the prioritized option
+	ProjectCreatePreferred(projectID *string) (changed bool, err error)
 	// ProjectByName makes sure either projectID or projectName is not empty
 	// if necessary, it will ask user to select a project first
 	ProjectByName(projectID, projectName *string) (changed bool, err error)
@@ -48,6 +51,25 @@ func (f *paramFiller) Project(projectID *string) (changed bool, err error) {
 	}
 
 	_, project, err := f.selector.SelectProject()
+	if err != nil {
+		return false, err
+	}
+
+	*projectID = project.ID
+
+	return true, nil
+}
+
+func (f *paramFiller) ProjectCreatePreferred(projectID *string) (changed bool, err error) {
+	if err = paramNilCheck(projectID); err != nil {
+		return false, err
+	}
+
+	if *projectID != "" {
+		return false, nil
+	}
+
+	_, project, err := f.selector.SelectProject(selector.WithCreatePreferred())
 	if err != nil {
 		return false, err
 	}
@@ -247,7 +269,6 @@ func (f *paramFiller) ServiceByNameWithEnvironment(opt ServiceByNameWithEnvironm
 	}
 
 	return changed1 || changed2, nil
-
 }
 
 func paramNilCheck(params ...*string) error {
