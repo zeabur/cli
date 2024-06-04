@@ -19,7 +19,8 @@ import (
 )
 
 type Options struct {
-	file string
+	file      string
+	projectID string
 }
 
 func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
@@ -34,6 +35,7 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&opts.file, "file", "f", "", "Template file")
+	cmd.Flags().StringVar(&opts.projectID, "project-id", "", "Project ID to deploy on")
 
 	return cmd
 }
@@ -41,8 +43,7 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 func runDeploy(f *cmdutil.Factory, opts *Options) error {
 	var err error
 
-	err = paramCheck(opts)
-	if err != nil {
+	if err := paramCheck(opts); err != nil {
 		return err
 	}
 
@@ -75,6 +76,12 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 		}
 	}
 
+	if f.Interactive {
+		if _, err := f.ParamFiller.Project(&opts.projectID); err != nil {
+			return err
+		}
+	}
+
 	type RawTemplate struct {
 		APIVersion string `yaml:"apiVersion"`
 		Kind       string `yaml:"kind"`
@@ -99,7 +106,6 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 
 	vars := model.Map{}
 	for _, v := range raw.Spec.Variables {
-
 		switch v.Type {
 		case "DOMAIN":
 			for {
@@ -145,7 +151,14 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 	)
 
 	s.Start()
-	res, err := f.ApiClient.DeployTemplate(context.Background(), string(file), vars, model.RepoConfigs{})
+
+	res, err := f.ApiClient.DeployTemplate(
+		context.Background(),
+		string(file),
+		vars,
+		model.RepoConfigs{},
+		opts.projectID,
+	)
 	s.Stop()
 
 	if err != nil {
