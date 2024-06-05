@@ -115,5 +115,8 @@ type (
 			projectID string,
 		) (*model.Project, error)
 		DeleteTemplate(ctx context.Context, code string) error
+
+		CreateTemplateFromFile(ctx context.Context, rawSpecYaml string) (*model.Template, error)
+		UpdateTemplateFromFile(ctx context.Context, code, rawSpecYaml string) (bool, error)
 	}
 )

@@ -71,6 +71,32 @@ func (c *client) DeployTemplate(
 	return &mutation.DeployTemplate, nil
 }
 
+func (c *client) CreateTemplateFromFile(ctx context.Context, rawSpecYaml string) (*model.Template, error) {
+	var mutation struct {
+		CreateTemplateFromFile model.Template `graphql:"createTemplateFromFile(rawSpecYaml: $rawSpecYaml)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{"rawSpecYaml": rawSpecYaml})
+	if err != nil {
+		return nil, err
+	}
+
+	return &mutation.CreateTemplateFromFile, nil
+}
+
+func (c *client) UpdateTemplateFromFile(ctx context.Context, code, rawSpecYaml string) (bool, error) {
+	var mutation struct {
+		UpdateTemplateFromFile bool `graphql:"updateTemplateFromFile(code: $code, rawSpecYaml: $rawSpecYaml)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{"rawSpecYaml": rawSpecYaml, "code": code})
+	if err != nil {
+		return false, err
+	}
+
+	return mutation.UpdateTemplateFromFile, nil
+}
+
 func (c *client) GetTemplate(ctx context.Context, code string) (*model.Template, error) {
 	var query struct {
 		Template model.Template `graphql:"template(code: $code)"`
