@@ -21,7 +21,7 @@ type (
 	}
 
 	ProjectSelector interface {
-		SelectProject() (zcontext.BasicInfo, *model.Project, error)
+		SelectProject(opts ...SelectProjectOptionsApplyer) (zcontext.BasicInfo, *model.Project, error)
 	}
 
 	ServiceSelector interface {
@@ -47,15 +47,33 @@ func New(client api.Client, log *zap.SugaredLogger, prompter prompt.Prompter) Se
 	}
 }
 
-func (s *selector) SelectProject() (zcontext.BasicInfo, *model.Project, error) {
+type SelectProjectOptions struct {
+	// CreatePreferred selects "Create New Project…" by default,
+	// and not auto-select the only project.
+	CreatePreferred bool
+}
+
+type SelectProjectOptionsApplyer func(*SelectProjectOptions)
+
+func WithCreatePreferred() SelectProjectOptionsApplyer {
+	return func(opt *SelectProjectOptions) {
+		opt.CreatePreferred = true
+	}
+}
+
+func (s *selector) SelectProject(opts ...SelectProjectOptionsApplyer) (zcontext.BasicInfo, *model.Project, error) {
+	options := SelectProjectOptions{
+		CreatePreferred: false,
+	}
+	for _, applyer := range opts {
+		applyer(&options)
+	}
+
 	projects, err := s.client.ListAllProjects(context.Background())
 	if err != nil {
 		return nil, nil, fmt.Errorf("list projects failed: %w", err)
 	}
-	if len(projects) == 0 {
-		return nil, nil, fmt.Errorf("no projects found")
-	}
-	if len(projects) == 1 {
+	if len(projects) == 1 && !options.CreatePreferred {
 		s.log.Infof("Only one project found, select <%s> automatically\n", projects[0].Name)
 		project := projects[0]
 		return zcontext.NewBasicInfo(project.ID, project.Name), project, nil
@@ -66,7 +84,13 @@ func (s *selector) SelectProject() (zcontext.BasicInfo, *model.Project, error) {
 		projectsName[i] = project.Name
 	}
 	projectsName = append(projectsName, "Create a new project")
-	index, err := s.prompter.Select("Select project", projectsName[0], projectsName)
+
+	defaultChoice := projectsName[0]
+	if options.CreatePreferred {
+		defaultChoice = projectsName[len(projectsName)-1] // the final item = create project
+	}
+
+	index, err := s.prompter.Select("Select project", defaultChoice, projectsName)
 	if err != nil {
 		return nil, nil, fmt.Errorf("select project failed: %w", err)
 	}
@@ -102,7 +126,6 @@ func (s *selector) SelectProject() (zcontext.BasicInfo, *model.Project, error) {
 	project := projects[index]
 
 	return zcontext.NewBasicInfo(project.ID, project.Name), project, nil
-
 }
 
 type SelectServiceOptions struct {
@@ -160,7 +183,7 @@ func (s *selector) SelectService(opt SelectServiceOptions) (zcontext.BasicInfo, 
 	}
 
 	if index == len(services) {
-		var from = []rune("abcdefghijklmnopqrstuvwxyz")
+		from := []rune("abcdefghijklmnopqrstuvwxyz")
 		b := make([]rune, 8)
 		for i := range b {
 			b[i] = from[rand.Intn(len(from))]

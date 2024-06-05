@@ -107,7 +107,13 @@ type (
 		ListAllTemplates(ctx context.Context) (model.Templates, error)
 		GetTemplate(ctx context.Context, code string) (*model.Template, error)
 
-		DeployTemplate(ctx context.Context, rawSpecYaml string, variables model.Map, repoConfigs model.RepoConfigs) (*model.Project, error)
+		DeployTemplate(
+			ctx context.Context,
+			rawSpecYaml string,
+			variables model.Map,
+			repoConfigs model.RepoConfigs,
+			projectID string,
+		) (*model.Project, error)
 		DeleteTemplate(ctx context.Context, code string) error
 	}
 )
