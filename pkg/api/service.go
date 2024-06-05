@@ -292,6 +292,23 @@ func (c *client) CreatePrebuiltService(ctx context.Context, projectID string, ma
 	return &mutation.CreatePrebuiltService, nil
 }
 
+func (c *client) CreateRawService(ctx context.Context, projectID string, rawSchema string) (*model.Service, error) {
+	var mutation struct {
+		CreateCustomService model.Service `graphql:"createPrebuiltService(projectID: $projectID, rawSchema: $rawSchema)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{
+		"projectID": ObjectID(projectID),
+		"schema":    rawSchema,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &mutation.CreateCustomService, nil
+}
+
 func (c *client) CreateCustomService(ctx context.Context, projectID string, schema model.ServiceSpecSchemaInput) (*model.Service, error) {
 	var mutation struct {
 		CreateCustomService model.Service `graphql:"createPrebuiltService(projectID: $projectID, schema: $schema)"`
