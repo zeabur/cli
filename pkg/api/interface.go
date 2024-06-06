@@ -58,8 +58,8 @@ type (
 		SuspendService(ctx context.Context, id string, environmentID string) error
 		ExposeService(ctx context.Context, id string, environmentID string, projectID string, name string) (*model.TempTCPPort, error)
 		CreatePrebuiltService(ctx context.Context, projectID string, marketplaceCode string) (*model.Service, error)
-		CreateCustomService(ctx context.Context, projectID string, schema model.ServiceSpecSchemaInput) (*model.Service, error)
-		CreateRawService(ctx context.Context, projectID string, rawSchema string) (*model.Service, error)
+		CreatePrebuiltServiceCustom(ctx context.Context, projectID string, schema model.ServiceSpecSchemaInput) (*model.Service, error)
+		CreatePrebuiltServiceRaw(ctx context.Context, projectID string, rawSchema string) (*model.Service, error)
 		CreateService(ctx context.Context, projectID string, name string, repoID int, branchName string) (*model.Service, error)
 		CreateEmptyService(ctx context.Context, projectID string, name string) (*model.Service, error)
 		UploadZipToService(ctx context.Context, projectID string, serviceID string, environmentID string, zipBytes []byte) (*model.Service, error)

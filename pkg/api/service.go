@@ -292,7 +292,7 @@ func (c *client) CreatePrebuiltService(ctx context.Context, projectID string, ma
 	return &mutation.CreatePrebuiltService, nil
 }
 
-func (c *client) CreateRawService(ctx context.Context, projectID string, rawSchema string) (*model.Service, error) {
+func (c *client) CreatePrebuiltServiceRaw(ctx context.Context, projectID string, rawSchema string) (*model.Service, error) {
 	var mutation struct {
 		CreateCustomService model.Service `graphql:"createPrebuiltService(projectID: $projectID, rawSchema: $rawSchema)"`
 	}
@@ -309,7 +309,7 @@ func (c *client) CreateRawService(ctx context.Context, projectID string, rawSche
 	return &mutation.CreateCustomService, nil
 }
 
-func (c *client) CreateCustomService(ctx context.Context, projectID string, schema model.ServiceSpecSchemaInput) (*model.Service, error) {
+func (c *client) CreatePrebuiltServiceCustom(ctx context.Context, projectID string, schema model.ServiceSpecSchemaInput) (*model.Service, error) {
 	var mutation struct {
 		CreateCustomService model.Service `graphql:"createPrebuiltService(projectID: $projectID, schema: $schema)"`
 	}
