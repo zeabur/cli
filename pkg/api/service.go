@@ -292,6 +292,40 @@ func (c *client) CreatePrebuiltService(ctx context.Context, projectID string, ma
 	return &mutation.CreatePrebuiltService, nil
 }
 
+func (c *client) CreatePrebuiltServiceRaw(ctx context.Context, projectID string, rawSchema string) (*model.Service, error) {
+	var mutation struct {
+		CreateCustomService model.Service `graphql:"createPrebuiltService(projectID: $projectID, rawSchema: $rawSchema)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{
+		"projectID": ObjectID(projectID),
+		"schema":    rawSchema,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &mutation.CreateCustomService, nil
+}
+
+func (c *client) CreatePrebuiltServiceCustom(ctx context.Context, projectID string, schema model.ServiceSpecSchemaInput) (*model.Service, error) {
+	var mutation struct {
+		CreateCustomService model.Service `graphql:"createPrebuiltService(projectID: $projectID, schema: $schema)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{
+		"projectID": ObjectID(projectID),
+		"schema":    schema,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &mutation.CreateCustomService, nil
+}
+
 func (c *client) SearchGitRepositories(ctx context.Context, keyword *string) ([]model.GitRepo, error) {
 	var query struct {
 		SearchGitRepositories []model.GitRepo `graphql:"searchGitRepositories(Limit: 5, provider: GITHUB, keyword: $keyword)"`

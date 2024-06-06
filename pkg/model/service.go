@@ -230,3 +230,73 @@ type ServiceInstruction struct {
 	Title    string                               `graphql:"title"`
 	Type     ServiceSpecConnectionInstructionType `graphql:"type"`
 }
+
+type ServiceSpecSchemaInput struct {
+	ID          string   `json:"id" graphql:"id"`
+	Name        string   `json:"name" graphql:"name"`
+	Description string   `json:"description" graphql:"description"`
+	Tags        []string `json:"tags" graphql:"tags"`
+	Icon        string   `json:"icon" graphql:"icon"`
+	Docs        string   `json:"docs" graphql:"docs"`
+
+	Source       *ServiceSpecSourceInput       `json:"source" graphql:"source"`
+	Ports        []ServiceSpecPortInput        `json:"ports" graphql:"ports"`
+	Volumes      []ServiceSpecVolumeEntryInput `json:"volumes" graphql:"volumes"`
+	Instructions []ServiceInstruction          `json:"instructions" graphql:"instructions"`
+	Env          []ServiceSpecEnvInput         `json:"env" graphql:"env"`
+	InitRules    []ServiceSpecInitRuleInput    `json:"initRules" graphql:"initRules"`
+	Configs      []ServiceSpecConfigInput      `json:"configs" graphql:"configs"`
+}
+
+type ServiceSpecEnvInput struct {
+	Key      string `json:"key" graphql:"key"`
+	Required bool   `json:"required" graphql:"required"`
+	Default  string `json:"default" graphql:"default"`
+	Expose   bool   `json:"expose" graphql:"expose"`
+	Readonly bool   `json:"readonly" graphql:"readonly"`
+}
+
+type ServiceSpecSourceInput struct {
+	Image   string   `json:"image" graphql:"image"`
+	Command []string `json:"command" graphql:"command"`
+	Args    []string `json:"args" graphql:"args"`
+
+	// Git only fields
+	Source        string   `json:"source,omitempty" graphql:"source"`
+	RepoID        int      `json:"repoID,omitempty" graphql:"repoID"`
+	Branch        string   `json:"branch,omitempty" graphql:"branch"`
+	SubModuleName string   `json:"subModuleName,omitempty" graphql:"subModuleName"`
+	WatchPaths    []string `json:"watchPaths,omitempty" graphql:"watchPaths"`
+}
+
+type ServiceSpecPortInput struct {
+	ID   string `json:"id" graphql:"id"`
+	Port int    `json:"port" graphql:"port"`
+	// Type is the type of the port, e.g. TCP, UDP, HTTP.
+	Type string `json:"type" graphql:"type"`
+}
+
+type ServiceSpecVolumeEntryInput struct {
+	ID string `json:"id" graphql:"id"`
+	// Dir should be started with `/` (absolute).
+	Dir string `json:"dir" graphql:"dir"`
+}
+
+type ServiceSpecInitVolumeMountInput struct {
+	ID        string `json:"id" graphql:"id"`
+	MountPath string `json:"mountPath" graphql:"mountPath"`
+	SubPath   string `json:"subPath" graphql:"subPath"`
+}
+
+type ServiceSpecInitRuleInput struct {
+	ID      string   `json:"id" graphql:"id"`
+	Image   string   `json:"image" graphql:"image"`
+	Command []string `json:"command" graphql:"command"`
+
+	Volumes []ServiceSpecInitVolumeMountInput `json:"volumes" graphql:"volumes"`
+}
+
+type ServiceSpecConfigInput struct {
+	Path     string `json:"path" graphql:"path"`
+	Template string `json:"template" graphql:"template"`
+}
