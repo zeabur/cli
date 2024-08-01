@@ -31,7 +31,7 @@ jobs:
           cache: true
 
       - name: install mockery
-        run: go install github.com/vektra/mockery/v2@v2.32.0
+        run: go install github.com/vektra/mockery/v2@v2.43.2
 
       - uses: goreleaser/goreleaser-action@v4
         with:
