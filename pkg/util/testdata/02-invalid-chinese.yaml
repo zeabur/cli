@@ -1,0 +1,35 @@
+apiVersion: zeabur.com/v1
+kind: Template
+metadata:
+    name: 實體 CTF
+spec:
+    description: 大地遊戲實體 Flag 回報網站。平常 Code 太久，該出去摸草了。
+    icon: https://raw.githubusercontent.com/SCAICT/physical-CTF/main/public/logo.png
+    coverImage: https://raw.githubusercontent.com/SCAICT/physical-CTF/main/demo/home.png
+    variables:
+        - key: ADMIN_PASSWORD
+          type: STRING
+          name: 管理員密碼
+          description: 管理員後臺密碼
+    tags:
+        - Website
+        - Starter
+    readme: |-
+        # 實體 CTF
+
+        大地遊戲實體 Flag 回報網站。平常 Code 太久，該出去摸草了。
+
+        歡迎使用 Physical CTF 回報網站。這個網頁應用程式讓用戶可以提交和蒐集旗子 (flags)，並且在後台管理旗子。
+
+        這個遊戲通常的玩法是印出數個帶有 QRCode 的旗子（通常使用 A4 紙列印並黏貼在竹筷上），然後關主或是兩隊互相將旗子藏在指定範圍內的角落。於時間內搜集最多旗子的隊伍獲勝。
+
+        完整說明：<https://github.com/SCAICT/physical-CTF>
+    services:
+        - name: 網站
+          template: GIT
+          spec:
+            source:
+                source: GITHUB
+                repo: 823136585
+                branch: main
+          domainKey: ""
