@@ -13,6 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/zeabur/cli/internal/cmdutil"
+	"github.com/zeabur/cli/pkg/util"
 )
 
 type Options struct {
@@ -68,6 +69,10 @@ func runCreate(f *cmdutil.Factory, opts Options) error {
 		if err != nil {
 			return fmt.Errorf("read file failed: %w", err)
 		}
+	}
+
+	if err := util.ValidateTemplate(file); err != nil {
+		return fmt.Errorf("validate template: %w", err)
 	}
 
 	type RawTemplate struct {

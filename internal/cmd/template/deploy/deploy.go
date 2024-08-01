@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/pkg/model"
+	"github.com/zeabur/cli/pkg/util"
 	"gopkg.in/yaml.v3"
 )
 
@@ -74,6 +75,10 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 		if err != nil {
 			return fmt.Errorf("read file failed: %w", err)
 		}
+	}
+
+	if err := util.ValidateTemplate(file); err != nil {
+		return fmt.Errorf("validate template: %w", err)
 	}
 
 	if _, err := f.ParamFiller.ProjectCreatePreferred(&opts.projectID); err != nil {
