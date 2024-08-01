@@ -29,7 +29,7 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "deploy",
-		Short: "Deploy a template",
+		Short: "Validate and deploy a template",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDeploy(f, opts)
 		},
