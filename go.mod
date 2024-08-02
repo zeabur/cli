@@ -12,6 +12,7 @@ require (
 	github.com/coreos/go-semver v0.3.0
 	github.com/fatih/color v1.13.0
 	github.com/google/go-github v17.0.0+incompatible
+	github.com/hashicorp/go-envparse v0.1.0
 	github.com/hasura/go-graphql-client v0.9.3
 	github.com/onsi/ginkgo/v2 v2.11.0
 	github.com/onsi/gomega v1.27.8
