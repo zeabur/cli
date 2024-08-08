@@ -139,6 +139,10 @@ type SelectServiceOptions struct {
 	FilterFunc func(service *model.Service) bool
 }
 
+// SelectService selects a service from the project.
+//
+// Note that it may returns nil (with no error) if there is no service in the project.
+// If user selected "Create a new service", it also returns a nil.
 func (s *selector) SelectService(opt SelectServiceOptions) (zcontext.BasicInfo, *model.Service, error) {
 	projectID := opt.ProjectID
 	auto := opt.Auto
