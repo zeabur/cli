@@ -141,6 +141,11 @@ func (f *paramFiller) Service(projectID, serviceID *string) (changed bool, err e
 	if err != nil {
 		return false, err
 	}
+	if service == nil {
+		fmt.Printf("Project %s contains no services.\n\n", *projectID)
+		*projectID = ""
+		return f.Service(projectID, serviceID)
+	}
 
 	*serviceID = service.ID
 
@@ -194,6 +199,11 @@ func (f *paramFiller) ServiceByName(opt ServiceByNameOptions) (changed bool, err
 		})
 		if err != nil {
 			return false, err
+		}
+		if service == nil {
+			fmt.Printf("Project %s contains no matched services.\n\n", projectCtx.GetProject().GetID())
+			opt.ProjectCtx.ClearAll()
+			return f.ServiceByName(opt)
 		}
 
 		*serviceID = service.GetID()
