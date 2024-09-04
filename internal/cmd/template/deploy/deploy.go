@@ -20,8 +20,9 @@ import (
 )
 
 type Options struct {
-	file      string
-	projectID string
+	file           string
+	projectID      string
+	skipValidation bool
 }
 
 func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
@@ -37,6 +38,7 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVarP(&opts.file, "file", "f", "", "Template file")
 	cmd.Flags().StringVar(&opts.projectID, "project-id", "", "Project ID to deploy on")
+	cmd.Flags().BoolVar(&opts.skipValidation, "skip-validation", false, "Skip template validation")
 
 	return cmd
 }
@@ -77,8 +79,10 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 		}
 	}
 
-	if err := util.ValidateTemplate(file); err != nil {
-		return fmt.Errorf("validate template: %w", err)
+	if !opts.skipValidation {
+		if err := util.ValidateTemplate(file); err != nil {
+			return fmt.Errorf("validate template: %w", err)
+		}
 	}
 
 	if _, err := f.ParamFiller.ProjectCreatePreferred(&opts.projectID); err != nil {
