@@ -32,6 +32,7 @@ type (
 		GetProject(ctx context.Context, id string, ownerName string, name string) (*model.Project, error)
 		CreateProject(ctx context.Context, region string, name *string) (*model.Project, error)
 		DeleteProject(ctx context.Context, id string) error
+		ExportProject(ctx context.Context, id string, environmentID string) (*model.ExportedTemplate, error)
 
 		GetRegions(ctx context.Context) ([]model.Region, error)
 	}

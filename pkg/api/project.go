@@ -58,6 +58,24 @@ func (c *client) GetProject(ctx context.Context, id string, ownerUsername string
 	return c.getProjectByID(ctx, id)
 }
 
+func (c *client) ExportProject(ctx context.Context, id string, environmentID string) (*model.ExportedTemplate, error) {
+	var query struct {
+		Project struct {
+			ExportedTemplate model.ExportedTemplate `graphql:"exportedTemplate(environmentID: $environmentID)"`
+		} `graphql:"project(_id: $id)"`
+	}
+
+	err := c.Query(ctx, &query, V{
+		"id":            ObjectID(id),
+		"environmentID": environmentID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &query.Project.ExportedTemplate, nil
+}
+
 func (c *client) getProjectByID(ctx context.Context, id string) (*model.Project, error) {
 	var query struct {
 		Project model.Project `graphql:"project(_id: $id)"`
