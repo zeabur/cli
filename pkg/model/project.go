@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/zeabur/cli/pkg/util"
 	"time"
+
+	"github.com/zeabur/cli/pkg/util"
 )
 
 // Note: it's not recommended to embed other models in a model,
@@ -102,4 +103,10 @@ type Region struct {
 	Name        string         `graphql:"name"`
 	Coordinates []float64      `graphql:"coordinates"`
 	Provider    RegionProvider `graphql:"provider"`
+}
+
+// ExportedTemplate is the exported template of the given project.
+type ExportedTemplate struct {
+	ResourceYAML string   `graphql:"resourceYAML"`
+	Warnings     []string `graphql:"warnings"`
 }
