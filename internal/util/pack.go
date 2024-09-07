@@ -74,7 +74,7 @@ func PackZipWithoutGitIgnoreFiles() ([]byte, error) {
 		}
 
 		if info.IsDir() {
-			header.Name += "/"
+			header.Name += string(filepath.Separator)
 		} else {
 			header.Method = zip.Deflate
 		}
