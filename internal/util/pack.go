@@ -73,6 +73,9 @@ func PackZipWithoutGitIgnoreFiles() ([]byte, error) {
 			return err
 		}
 
+		// For Windows, we should replace the backslashes with forward slashes
+		header.Name = filepath.ToSlash(header.Name)
+
 		if info.IsDir() {
 			header.Name += string(filepath.Separator)
 		} else {
