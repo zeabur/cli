@@ -13,8 +13,10 @@ import (
 type Service struct {
 	ID   string `graphql:"_id"`
 	Name string `graphql:"name"`
-	//Template  ServiceTemplate    `graphql:"template"`
-	//Project *Project `graphql:"project"`
+	// Template  ServiceTemplate    `graphql:"template"`
+	Project *struct {
+		ID string `graphql:"_id"`
+	} `graphql:"project"`
 
 	CreatedAt time.Time `graphql:"createdAt"`
 
