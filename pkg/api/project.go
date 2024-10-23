@@ -156,3 +156,16 @@ func (c *client) GetRegions(ctx context.Context) ([]model.Region, error) {
 
 	return query.Regions, nil
 }
+
+func (c *client) GetServers(ctx context.Context) ([]model.Server, error) {
+	var query struct {
+		Servers []model.Server `graphql:"servers"`
+	}
+
+	err := c.Query(ctx, &query, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return query.Servers, nil
+}
