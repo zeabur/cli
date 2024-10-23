@@ -52,17 +52,16 @@ func runCreateInteractive(f *cmdutil.Factory, opts *Options) error {
 		spinner.WithSuffix(" Fetching available project regions..."),
 	)
 	s.Start()
-	regions, err := f.ApiClient.GetRegions(context.Background())
+	regions, err := f.ApiClient.GetGenericRegions(context.Background())
 	if err != nil {
 		return err
 	}
 
-	regions = regions[1:]
 	s.Stop()
 
 	regionOptions := make([]string, 0, len(regions))
 	for _, region := range regions {
-		regionOptions = append(regionOptions, fmt.Sprintf("%s (%s)", region.Description, region.Name))
+		regionOptions = append(regionOptions, region.String())
 	}
 
 	projectRegionIndex, err := f.Prompter.Select("Select project region", "", regionOptions)
@@ -70,7 +69,7 @@ func runCreateInteractive(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
-	projectRegion := regions[projectRegionIndex].ID
+	projectRegion := regions[projectRegionIndex].GetID()
 
 	s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 		spinner.WithColor(cmdutil.SpinnerColor),
