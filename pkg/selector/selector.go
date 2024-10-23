@@ -97,15 +97,14 @@ func (s *selector) SelectProject(opts ...SelectProjectOptionsApplyer) (zcontext.
 
 	if index == len(projects) {
 
-		regions, err := s.client.GetRegions(context.Background())
+		regions, err := s.client.GetGenericRegions(context.Background())
 		if err != nil {
 			return nil, nil, fmt.Errorf("get regions failed: %w", err)
 		}
-		regions = regions[1:]
 
 		regionOptions := make([]string, 0, len(regions))
 		for _, region := range regions {
-			regionOptions = append(regionOptions, fmt.Sprintf("%s (%s)", region.Description, region.Name))
+			regionOptions = append(regionOptions, region.String())
 		}
 
 		projectRegionIndex, err := s.prompter.Select("Select project region", "", regionOptions)
@@ -113,7 +112,7 @@ func (s *selector) SelectProject(opts ...SelectProjectOptionsApplyer) (zcontext.
 			return nil, nil, fmt.Errorf("select project region failed: %w", err)
 		}
 
-		projectRegion := regions[projectRegionIndex].ID
+		projectRegion := regions[projectRegionIndex].GetID()
 
 		project, err := s.client.CreateProject(context.Background(), projectRegion, nil)
 		if err != nil {
