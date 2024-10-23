@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/zeabur/cli/pkg/util"
@@ -103,6 +104,14 @@ type Region struct {
 	Name        string         `graphql:"name"`
 	Coordinates []float64      `graphql:"coordinates"`
 	Provider    RegionProvider `graphql:"provider"`
+}
+
+func (r Region) GetID() string {
+	return r.ID
+}
+
+func (r Region) String() string {
+	return fmt.Sprintf("%s (%s)", r.Description, r.Name)
 }
 
 // ExportedTemplate is the exported template of the given project.

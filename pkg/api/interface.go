@@ -36,6 +36,7 @@ type (
 
 		GetRegions(ctx context.Context) ([]model.Region, error)
 		GetServers(ctx context.Context) ([]model.Server, error)
+		GetGenericRegions(ctx context.Context) ([]model.GenericRegion, error)
 	}
 
 	EnvironmentAPI interface {

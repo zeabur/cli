@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/zeabur/cli/pkg/model"
 )
@@ -168,4 +169,25 @@ func (c *client) GetServers(ctx context.Context) ([]model.Server, error) {
 	}
 
 	return query.Servers, nil
+}
+
+func (c *client) GetGenericRegions(ctx context.Context) ([]model.GenericRegion, error) {
+	regions, err := c.GetRegions(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get regions: %w", err)
+	}
+	servers, err := c.GetServers(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get servers: %w", err)
+	}
+
+	genericRegions := make([]model.GenericRegion, 0, len(regions)+len(servers))
+	for _, region := range regions {
+		genericRegions = append(genericRegions, region)
+	}
+	for _, server := range servers {
+		genericRegions = append(genericRegions, server)
+	}
+
+	return genericRegions, nil
 }
