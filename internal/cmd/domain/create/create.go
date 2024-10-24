@@ -93,12 +93,17 @@ func runCreateDomainInteractive(f *cmdutil.Factory, opts *Options) error {
 		opts.domainName = domainInput
 	}
 
+	project, err := f.ApiClient.GetProject(context.Background(), zctx.GetProject().GetID(), "", "")
+	if err != nil {
+		return err
+	}
+
 	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 		spinner.WithColor(cmdutil.SpinnerColor),
 		spinner.WithSuffix(" Checking domain availability ..."),
 	)
 	s.Start()
-	available, _, err := f.ApiClient.CheckDomainAvailable(context.Background(), opts.domainName, opts.IsGenerated)
+	available, _, err := f.ApiClient.CheckDomainAvailable(context.Background(), opts.domainName, opts.IsGenerated, project.Region.ID)
 	if err != nil {
 		return err
 	}

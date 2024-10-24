@@ -28,6 +28,7 @@ type Project struct {
 	//Collaborators []User    `graphql:"collaborators"`
 	IconURL string `graphql:"iconURL"`
 	//Services []Service `graphql:"services"`
+	Region Region `graphql:"region"`
 }
 
 // ProjectConnection is a connection to a list of items.

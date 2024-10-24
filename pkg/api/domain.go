@@ -86,7 +86,7 @@ func (c *client) RemoveDomain(ctx context.Context, domain string) (bool, error) 
 	return mutation.RemoveDomain, nil
 }
 
-func (c *client) CheckDomainAvailable(ctx context.Context, domain string, isGenerated bool) (bool, string, error) {
+func (c *client) CheckDomainAvailable(ctx context.Context, domain string, isGenerated bool, region string) (bool, string, error) {
 	var mutation struct {
 		CheckDomainAvailable struct {
 			IsAvailable bool
@@ -97,6 +97,7 @@ func (c *client) CheckDomainAvailable(ctx context.Context, domain string, isGene
 	err := c.Mutate(ctx, &mutation, V{
 		"domain":      domain,
 		"isGenerated": isGenerated,
+		"region":      region,
 	})
 
 	if err != nil {

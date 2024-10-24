@@ -111,34 +111,46 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 		return fmt.Errorf("parse yaml failed: %w", err)
 	}
 
+	project, err := f.ApiClient.GetProject(context.Background(), opts.projectID, "", "")
+	if err != nil {
+		return fmt.Errorf("get project info failed: %w", err)
+	}
+
 	vars := model.Map{}
 	for _, v := range raw.Spec.Variables {
 		switch v.Type {
 		case "DOMAIN":
+			// only flex shared cluster (hkg1, sfo1, hnd1 ...) support generated domain
+			// Notice: flex shared cluster in China mainland (sha1) does not support generated domain
+			if len(project.Region.ID) != 4 || project.Region.ID == "sha1" {
+				f.Log.Warnf("Selected region does not support generated domain, please bind a custom domain after template deployed.\n")
+				continue
+			}
+
 			for {
-				val, err := f.Prompter.InputWithHelp(v.Description, "For example, if you enter \"myapp\", the domain will be \"myapp.zeabur.app\"", "")
+				val, err := f.Prompter.InputWithHelp(v.Description, "For example, if you enter \"myapp\", the domain will be \"myapp."+project.Region.ID+".zeabur.app\"", "")
 				if err != nil {
 					return err
 				}
 
 				s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 					spinner.WithColor(cmdutil.SpinnerColor),
-					spinner.WithSuffix(" Checking if domain "+val+".zeabur.app is available ..."),
+					spinner.WithSuffix(" Checking if domain "+val+"."+project.Region.ID+".zeabur.app is available ..."),
 				)
 
 				s.Start()
-				available, _, err := f.ApiClient.CheckDomainAvailable(context.Background(), val, true)
+				available, _, err := f.ApiClient.CheckDomainAvailable(context.Background(), val, true, project.Region.ID)
 				if err != nil {
 					return err
 				}
 				s.Stop()
 
 				if !available {
-					f.Log.Warnf("Domain %s.zeabur.app is not available, please try another one.\n", val)
+					f.Log.Warnf("Domain %s.%s.zeabur.app is not available, please try another one.\n", val, project.Region.ID)
 					continue
 				}
 
-				f.Log.Infof("Domain %s.zeabur.app is available!\n", val)
+				f.Log.Infof("Domain %s.%s.zeabur.app is available!\n", val, project.Region.ID)
 				vars[v.Key] = val
 				break
 			}

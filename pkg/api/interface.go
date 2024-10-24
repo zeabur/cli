@@ -79,7 +79,7 @@ type (
 		AddDomain(ctx context.Context, serviceID string, environmentID string, isGenerated bool, domain string, options ...string) (*string, error)
 		ListDomains(ctx context.Context, serviceID string, environmentID string) (model.Domains, error)
 		RemoveDomain(ctx context.Context, domain string) (bool, error)
-		CheckDomainAvailable(ctx context.Context, domain string, isGenerated bool) (bool, string, error)
+		CheckDomainAvailable(ctx context.Context, domain string, isGenerated bool, region string) (bool, string, error)
 	}
 
 	DeploymentAPI interface {
