@@ -190,7 +190,7 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 
 	f.Log.Infof("Template successfully deployed into project %q (https://dash.zeabur.com/projects/%s).", res.Name, res.ID)
 
-	if d, ok := vars["PUBLIC_DOMAIN"]; ok {
+	if d, ok := vars["PUBLIC_DOMAIN"]; ok && len(project.Region.ID) == 4 && project.Region.ID != "sha1" {
 		s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 			spinner.WithColor(cmdutil.SpinnerColor),
 			spinner.WithSuffix(" Waiting service status ..."),
@@ -206,14 +206,14 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 			}
 
 			time.Sleep(2 * time.Second)
-			get, err := http.Get(fmt.Sprintf("https://%s.zeabur.app/", d))
+			get, err := http.Get(fmt.Sprintf("https://%s.%s.zeabur.app/", d, project.Region.ID))
 			if err != nil {
 				continue
 			}
 
 			if get.StatusCode%100 != 5 {
 				s.Stop()
-				f.Log.Infof("Service ready, you can now visit via https://%s.zeabur.app/", d)
+				f.Log.Infof("Service ready, you can now visit via https://%s.%s.zeabur.app/", d, project.Region.ID)
 				break
 			}
 

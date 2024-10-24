@@ -91,7 +91,7 @@ func (c *client) CheckDomainAvailable(ctx context.Context, domain string, isGene
 		CheckDomainAvailable struct {
 			IsAvailable bool
 			Reason      string
-		} `graphql:"checkDomainAvailable(domain: $domain, isGenerated: $isGenerated)"`
+		} `graphql:"checkDomainAvailable(domain: $domain, isGenerated: $isGenerated, region: $region)"`
 	}
 
 	err := c.Mutate(ctx, &mutation, V{
