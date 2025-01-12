@@ -9,7 +9,6 @@ import (
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
 	"github.com/zeabur/cli/pkg/fill"
-	"github.com/zeabur/cli/pkg/model"
 )
 
 type Options struct {
@@ -57,9 +56,6 @@ func runListInteractive(f *cmdutil.Factory, opts *Options) error {
 		ServiceName:   &opts.serviceName,
 		EnvironmentID: &opts.environmentID,
 		CreateNew:     false,
-		FilterFunc: func(service *model.Service) bool {
-			return service.Template == "GIT"
-		},
 	})
 	if err != nil {
 		return err

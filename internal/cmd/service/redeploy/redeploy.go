@@ -8,7 +8,6 @@ import (
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
 	"github.com/zeabur/cli/pkg/fill"
-	"github.com/zeabur/cli/pkg/model"
 )
 
 type Options struct {
@@ -61,9 +60,6 @@ func runRedeployInteractive(f *cmdutil.Factory, opts *Options) error {
 		ServiceName:   &opts.name,
 		EnvironmentID: &opts.environmentID,
 		CreateNew:     false,
-		FilterFunc: func(service *model.Service) bool {
-			return service.Template == "GIT"
-		},
 	}); err != nil {
 		return err
 	}

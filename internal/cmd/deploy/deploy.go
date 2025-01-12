@@ -165,9 +165,6 @@ func selectInteractively(f *cmdutil.Factory, opts *Options) (*model.Service, *mo
 			ProjectID: project.ID,
 			Auto:      false,
 			CreateNew: true,
-			FilterFunc: func(service *model.Service) bool {
-				return service.Template == "GIT"
-			},
 		})
 		if err != nil {
 			return nil, nil, err

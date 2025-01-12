@@ -59,9 +59,6 @@ func runGetInteractive(f *cmdutil.Factory, opts *Options) error {
 			ServiceName:   &opts.serviceName,
 			EnvironmentID: &opts.environmentID,
 			CreateNew:     false,
-			FilterFunc: func(service *model.Service) bool {
-				return service.Template == "GIT"
-			},
 		})
 		if err != nil {
 			return err
