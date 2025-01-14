@@ -103,13 +103,13 @@ func runCreateDomainInteractive(f *cmdutil.Factory, opts *Options) error {
 		spinner.WithSuffix(" Checking domain availability ..."),
 	)
 	s.Start()
-	available, _, err := f.ApiClient.CheckDomainAvailable(context.Background(), opts.domainName, opts.IsGenerated, project.Region.ID)
+	checkDomainAvailableReply, err := f.ApiClient.CheckDomainAvailable(context.Background(), opts.domainName, opts.IsGenerated, project.Region.ID)
 	if err != nil {
 		return err
 	}
 	s.Stop()
 
-	if !available {
+	if !checkDomainAvailableReply.IsAvailable {
 		f.Log.Warnf("Domain %s is not available", opts.domainName)
 		return nil
 	}

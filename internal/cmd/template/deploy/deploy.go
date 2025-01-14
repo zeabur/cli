@@ -116,42 +116,61 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 		return fmt.Errorf("get project info failed: %w", err)
 	}
 
+	// Preflight: Check if region supports generated domain
+	checkDomainAvailablePreflightReply, err := f.ApiClient.CheckDomainAvailable(context.Background(), "", true, project.Region.ID)
+	if err != nil {
+		return err
+	}
+	getExpectedDomain := func(domain string) string {
+		if len(checkDomainAvailablePreflightReply.AvailableSuffixes) == 0 {
+			return domain // FIXME: not defined
+		}
+
+		return domain + checkDomainAvailablePreflightReply.AvailableSuffixes[0]
+	}
+
+	// The domain that has been bound. It will be used to check if the service is ready.
+	boundDomains := []string{}
+
 	vars := model.Map{}
 	for _, v := range raw.Spec.Variables {
 		switch v.Type {
 		case "DOMAIN":
-			// only flex shared cluster (hkg1, sfo1, hnd1 ...) support generated domain
-			// Notice: flex shared cluster in China mainland (sha1) does not support generated domain
-			if len(project.Region.ID) != 4 || project.Region.ID == "sha1" {
+			if checkDomainAvailablePreflightReply.Reason == "INVALID_REGION" {
 				f.Log.Warnf("Selected region does not support generated domain, please bind a custom domain after template deployed.\n")
-				continue
+				break
 			}
 
 			for {
-				val, err := f.Prompter.InputWithHelp(v.Description, "For example, if you enter \"myapp\", the domain will be \"myapp."+project.Region.ID+".zeabur.app\"", "")
+				help := fmt.Sprintf("For example, if you enter %q, the domain will be %q", "myapp", getExpectedDomain("myapp"))
+
+				val, err := f.Prompter.InputWithHelp(v.Description, help, "")
 				if err != nil {
 					return err
 				}
 
+				expectedDomain := getExpectedDomain(val)
+
 				s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 					spinner.WithColor(cmdutil.SpinnerColor),
-					spinner.WithSuffix(" Checking if domain "+val+"."+project.Region.ID+".zeabur.app is available ..."),
+					spinner.WithSuffix(" Checking if domain "+expectedDomain+" is available ..."),
 				)
 
 				s.Start()
-				available, _, err := f.ApiClient.CheckDomainAvailable(context.Background(), val, true, project.Region.ID)
+				checkDomainAvailableReply, err := f.ApiClient.CheckDomainAvailable(context.Background(), val, true, project.Region.ID)
 				if err != nil {
 					return err
 				}
 				s.Stop()
 
-				if !available {
-					f.Log.Warnf("Domain %s.%s.zeabur.app is not available, please try another one.\n", val, project.Region.ID)
+				if !checkDomainAvailableReply.IsAvailable {
+					f.Log.Warnf("Domain %s is not available, please try another one.\n", expectedDomain)
 					continue
 				}
 
-				f.Log.Infof("Domain %s.%s.zeabur.app is available!\n", val, project.Region.ID)
+				f.Log.Infof("Domain %s is available!\n", expectedDomain)
 				vars[v.Key] = val
+				boundDomains = append(boundDomains, expectedDomain)
 				break
 			}
 		default:
@@ -190,7 +209,7 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 
 	f.Log.Infof("Template successfully deployed into project %q (https://dash.zeabur.com/projects/%s).", res.Name, res.ID)
 
-	if d, ok := vars["PUBLIC_DOMAIN"]; ok && len(project.Region.ID) == 4 && project.Region.ID != "sha1" {
+	for _, domain := range boundDomains {
 		s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 			spinner.WithColor(cmdutil.SpinnerColor),
 			spinner.WithSuffix(" Waiting service status ..."),
@@ -206,14 +225,14 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 			}
 
 			time.Sleep(2 * time.Second)
-			get, err := http.Get(fmt.Sprintf("https://%s.%s.zeabur.app/", d, project.Region.ID))
+			get, err := http.Get("https://" + domain)
 			if err != nil {
 				continue
 			}
 
 			if get.StatusCode%100 != 5 {
 				s.Stop()
-				f.Log.Infof("Service ready, you can now visit via https://%s.%s.zeabur.app/", d, project.Region.ID)
+				f.Log.Infof("Service ready, you can now visit via https://%s", domain)
 				break
 			}
 
