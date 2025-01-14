@@ -86,12 +86,15 @@ func (c *client) RemoveDomain(ctx context.Context, domain string) (bool, error) 
 	return mutation.RemoveDomain, nil
 }
 
-func (c *client) CheckDomainAvailable(ctx context.Context, domain string, isGenerated bool, region string) (bool, string, error) {
+type CheckDomainAvailableReply struct {
+	IsAvailable       bool
+	Reason            string
+	AvailableSuffixes []string
+}
+
+func (c *client) CheckDomainAvailable(ctx context.Context, domain string, isGenerated bool, region string) (CheckDomainAvailableReply, error) {
 	var mutation struct {
-		CheckDomainAvailable struct {
-			IsAvailable bool
-			Reason      string
-		} `graphql:"checkDomainAvailable(domain: $domain, isGenerated: $isGenerated, region: $region)"`
+		CheckDomainAvailable CheckDomainAvailableReply `graphql:"checkDomainAvailable(domain: $domain, isGenerated: $isGenerated, region: $region)"`
 	}
 
 	err := c.Mutate(ctx, &mutation, V{
@@ -99,10 +102,9 @@ func (c *client) CheckDomainAvailable(ctx context.Context, domain string, isGene
 		"isGenerated": isGenerated,
 		"region":      region,
 	})
-
 	if err != nil {
-		return false, "", err
+		return CheckDomainAvailableReply{}, err
 	}
 
-	return mutation.CheckDomainAvailable.IsAvailable, mutation.CheckDomainAvailable.Reason, nil
+	return mutation.CheckDomainAvailable, nil
 }
