@@ -120,22 +120,21 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 	for _, v := range raw.Spec.Variables {
 		switch v.Type {
 		case "DOMAIN":
-			// only flex shared cluster (hkg1, sfo1, hnd1 ...) support generated domain
 			// Notice: flex shared cluster in China mainland (sha1) does not support generated domain
-			if len(project.Region.ID) != 4 || project.Region.ID == "sha1" {
+			if project.Region.ID == "sha1" {
 				f.Log.Warnf("Selected region does not support generated domain, please bind a custom domain after template deployed.\n")
 				continue
 			}
 
 			for {
-				val, err := f.Prompter.InputWithHelp(v.Description, "For example, if you enter \"myapp\", the domain will be \"myapp."+project.Region.ID+".zeabur.app\"", "")
+				val, err := f.Prompter.InputWithHelp(v.Description, "For example, if you enter \"myapp\", the domain will be \"myapp.zeabur.app\"", "")
 				if err != nil {
 					return err
 				}
 
 				s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 					spinner.WithColor(cmdutil.SpinnerColor),
-					spinner.WithSuffix(" Checking if domain "+val+"."+project.Region.ID+".zeabur.app is available ..."),
+					spinner.WithSuffix(" Checking if domain "+val+".zeabur.app is available ..."),
 				)
 
 				s.Start()
@@ -146,11 +145,11 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 				s.Stop()
 
 				if !available {
-					f.Log.Warnf("Domain %s.%s.zeabur.app is not available, please try another one.\n", val, project.Region.ID)
+					f.Log.Warnf("Domain %s.zeabur.app is not available, please try another one.\n", val)
 					continue
 				}
 
-				f.Log.Infof("Domain %s.%s.zeabur.app is available!\n", val, project.Region.ID)
+				f.Log.Infof("Domain %s.zeabur.app is available!\n", val)
 				vars[v.Key] = val
 				break
 			}
@@ -190,7 +189,7 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 
 	f.Log.Infof("Template successfully deployed into project %q (https://dash.zeabur.com/projects/%s).", res.Name, res.ID)
 
-	if d, ok := vars["PUBLIC_DOMAIN"]; ok && len(project.Region.ID) == 4 && project.Region.ID != "sha1" {
+	if d, ok := vars["PUBLIC_DOMAIN"]; ok && project.Region.ID != "sha1" {
 		s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 			spinner.WithColor(cmdutil.SpinnerColor),
 			spinner.WithSuffix(" Waiting service status ..."),
@@ -206,14 +205,14 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 			}
 
 			time.Sleep(2 * time.Second)
-			get, err := http.Get(fmt.Sprintf("https://%s.%s.zeabur.app/", d, project.Region.ID))
+			get, err := http.Get(fmt.Sprintf("https://%s.zeabur.app/", d))
 			if err != nil {
 				continue
 			}
 
 			if get.StatusCode%100 != 5 {
 				s.Stop()
-				f.Log.Infof("Service ready, you can now visit via https://%s.%s.zeabur.app/", d, project.Region.ID)
+				f.Log.Infof("Service ready, you can now visit via https://%s.zeabur.app/", d)
 				break
 			}
 
