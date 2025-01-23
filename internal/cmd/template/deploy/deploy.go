@@ -187,7 +187,7 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
-	f.Log.Infof("Template successfully deployed into project %q (https://dash.zeabur.com/projects/%s).", res.Name, res.ID)
+	f.Log.Infof("Template successfully deployed into project %q (https://zeabur.com/projects/%s).", res.Name, res.ID)
 
 	if d, ok := vars["PUBLIC_DOMAIN"]; ok && project.Region.ID != "sha1" {
 		s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
@@ -201,7 +201,7 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 		for {
 			if time.Since(start) > 2*time.Minute {
 				s.Stop()
-				return fmt.Errorf("failed to wait service ready, check logs in https://dash.zeabur.com/projects/%s", res.ID)
+				return fmt.Errorf("failed to wait service ready, check logs in https://zeabur.com/projects/%s", res.ID)
 			}
 
 			time.Sleep(2 * time.Second)

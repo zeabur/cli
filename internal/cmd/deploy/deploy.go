@@ -91,7 +91,7 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 
 	if domainName == "" {
 		fmt.Println("Service deployed successfully, you can access it via:")
-		fmt.Println("https://dash.zeabur.com/projects/" + service.Project.ID + "/services/" + service.ID + "?envID=" + environment.ID)
+		fmt.Println("https://zeabur.com/projects/" + service.Project.ID + "/services/" + service.ID + "?envID=" + environment.ID)
 		return nil
 	}
 

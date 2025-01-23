@@ -150,7 +150,7 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 		s.Stop()
 
 		fmt.Printf("%s Service %s created 🚀\n", cmdutil.SuccessIcon, service.Name)
-		fmt.Printf("https://dash.zeabur.com/projects/%s/services/%s", opts.projectID, service.ID)
+		fmt.Printf("https://zeabur.com/projects/%s/services/%s", opts.projectID, service.ID)
 
 		return nil
 
