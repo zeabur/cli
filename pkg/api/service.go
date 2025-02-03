@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/spf13/viper"
+	"github.com/zeabur/cli/pkg/constant"
 	"github.com/zeabur/cli/pkg/model"
 )
 
@@ -382,7 +383,7 @@ func (c *client) CreateEmptyService(ctx context.Context, projectID string, name 
 }
 
 func (c *client) UploadZipToService(ctx context.Context, projectID string, serviceID string, environmentID string, zipBytes []byte) (*model.Service, error) {
-	url := "https://gateway.zeabur.com/projects/" + projectID + "/services/" + serviceID + "/deploy"
+	url := constant.ZeaburServerURL + "/projects/" + projectID + "/services/" + serviceID + "/deploy"
 
 	method := "POST"
 
