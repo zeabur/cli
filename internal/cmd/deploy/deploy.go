@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
+	"github.com/zeabur/cli/pkg/constant"
 	"github.com/zeabur/cli/pkg/model"
 	"github.com/zeabur/cli/pkg/selector"
 	"github.com/zeabur/cli/pkg/zcontext"
@@ -91,7 +92,7 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 
 	if domainName == "" {
 		fmt.Println("Service deployed successfully, you can access it via:")
-		fmt.Println("https://zeabur.com/projects/" + service.Project.ID + "/services/" + service.ID + "?envID=" + environment.ID)
+		fmt.Println(constant.ZeaburDashURL + "/projects/" + service.Project.ID + "/services/" + service.ID + "?envID=" + environment.ID)
 		return nil
 	}
 

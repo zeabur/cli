@@ -14,6 +14,7 @@ import (
 	"github.com/hasura/go-graphql-client"
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
+	"github.com/zeabur/cli/pkg/constant"
 	"github.com/zeabur/cli/pkg/model"
 	"github.com/zeabur/cli/pkg/util"
 	"gopkg.in/yaml.v3"
@@ -187,7 +188,7 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
-	f.Log.Infof("Template successfully deployed into project %q (https://zeabur.com/projects/%s).", res.Name, res.ID)
+	f.Log.Infof("Template successfully deployed into project %q (%s/projects/%s).", res.Name, constant.ZeaburDashURL, res.ID)
 
 	if d, ok := vars["PUBLIC_DOMAIN"]; ok && project.Region.ID != "sha1" {
 		s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
@@ -201,7 +202,7 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 		for {
 			if time.Since(start) > 2*time.Minute {
 				s.Stop()
-				return fmt.Errorf("failed to wait service ready, check logs in https://zeabur.com/projects/%s", res.ID)
+				return fmt.Errorf("failed to wait service ready, check logs in %s/projects/%s", constant.ZeaburDashURL, res.ID)
 			}
 
 			time.Sleep(2 * time.Second)
