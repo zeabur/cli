@@ -56,16 +56,13 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 
 					var (
 						tokenString string
-						token       *oauth2.Token
 						err         error
 					)
 
-					token, err = f.AuthClient.Login()
+					tokenString, err = f.AuthClient.GenerateToken(context.Background())
 					if err != nil {
 						return fmt.Errorf("failed to login: %w", err)
 					}
-					tokenString = token.AccessToken
-					f.Config.SetToken(token)
 					f.Config.SetTokenString(tokenString)
 				}
 				// set up the client
@@ -80,31 +77,6 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 			err := f.Config.Write()
 			if err != nil {
 				return fmt.Errorf("failed to save config: %w", err)
-			}
-
-			// refresh the token if the token is from OAuth2 & it's expired
-			// skip help, version and auth commands
-			if cmd.Name() != "help" && cmd.Name() != "version" && cmd.Parent().Name() != "auth" {
-				if f.AutoRefreshToken && f.LoggedIn() && f.Config.GetToken() != nil {
-					if f.Config.GetToken().Expiry.Before(time.Now()) {
-						f.Log.Info("Token is from OAuth2 and it's expired, refreshing it")
-
-						token := f.Config.GetToken()
-						token.Expiry = time.Now()
-						newToken, err := f.AuthClient.RefreshToken(token)
-						if err != nil {
-							return fmt.Errorf("failed to refresh token, it is recommended to logout and login again: %w", err)
-						}
-						f.Config.SetToken(newToken)
-						f.Config.SetTokenString(newToken.AccessToken)
-						f.Log.Debug("New token: ", newToken)
-						if err := f.Config.Write(); err != nil {
-							return fmt.Errorf("failed to save config: %w", err)
-						}
-
-						f.Log.Info("Token refreshed successfully")
-					}
-				}
 			}
 
 			if f.AutoCheckUpdate && !f.Debug && version != "dev" {

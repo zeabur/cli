@@ -87,12 +87,13 @@ func RunLogin(f *cmdutil.Factory, opts *Options) error {
 	if f.Interactive {
 		f.Log.Info("A browser window will be opened for you to login, please confirm")
 		// get token from web
-		token, err = f.AuthClient.Login()
+		token, err := f.AuthClient.GenerateToken(context.Background())
 		if err != nil {
 			return fmt.Errorf("failed to login: %w", err)
 		}
-		tokenString = token.AccessToken
-		f.Config.SetToken(token)
+		tokenString = token
+
+		f.Config.SetTokenString(tokenString)
 	} else {
 		// get token from flag, env or config
 		if tokenString = f.Config.GetTokenString(); tokenString == "" {
@@ -100,9 +101,7 @@ func RunLogin(f *cmdutil.Factory, opts *Options) error {
 		}
 	}
 
-	f.Config.SetTokenString(tokenString)
-
-	f.Log.Debugw("Token", "token", tokenString, "token detail", token)
+	f.Log.Debugw("Token", "token", tokenString)
 
 	// because we just logged in, we need to create a new client
 	f.ApiClient = opts.NewClient(tokenString)
