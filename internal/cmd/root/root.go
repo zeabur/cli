@@ -2,12 +2,11 @@
 package root
 
 import (
+	"context"
 	"fmt"
-	"time"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/spf13/cobra"
-	"golang.org/x/oauth2"
 
 	authCmd "github.com/zeabur/cli/internal/cmd/auth"
 	completionCmd "github.com/zeabur/cli/internal/cmd/completion"
@@ -112,8 +111,6 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 	// Persistent flags
 	cmd.PersistentFlags().BoolVar(&f.Debug, "debug", false, "Enable debug logging")
 	cmd.PersistentFlags().BoolVarP(&f.Interactive, config.KeyInteractive, "i", true, "use interactive mode")
-	cmd.PersistentFlags().BoolVar(&f.AutoRefreshToken, config.KeyAutoRefreshToken, true,
-		"automatically refresh token when it's expired, only works when the token is from browser(OAuth2)")
 	cmd.PersistentFlags().BoolVar(&f.AutoCheckUpdate, config.KeyAutoCheckUpdate, true, "automatically check update")
 
 	// Child commands

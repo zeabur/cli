@@ -10,7 +10,6 @@ import (
 	"github.com/hasura/go-graphql-client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"golang.org/x/oauth2"
 
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/pkg/api"
@@ -70,8 +69,7 @@ func RunLogin(f *cmdutil.Factory, opts *Options) error {
 				return fmt.Errorf("failed to get user info: %w", err)
 			}
 		} else {
-			f.Log.Debugw("Already logged in", "token string", f.Config.GetTokenString(),
-				"token detail", f.Config.GetToken(), "user", user)
+			f.Log.Debugw("Already logged in", "token", f.Config.GetTokenString(), "user", user)
 			f.Log.Infof("Already logged in as %s, "+
 				"if you want to use a different account, please logout first", user.Name)
 			return nil
@@ -80,7 +78,6 @@ func RunLogin(f *cmdutil.Factory, opts *Options) error {
 
 	var (
 		tokenString string
-		token       *oauth2.Token
 		err         error
 	)
 
