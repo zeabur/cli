@@ -2,6 +2,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"time"
 
@@ -54,7 +55,12 @@ func initFactory() *cmdutil.Factory {
 
 	factory.Printer = printer.New()
 
-	factory.AuthClient = auth.NewZeaburWebAppOAuthClient()
+	cbs, err := auth.NewCallbackServer()
+	if err != nil {
+		panic(fmt.Sprintf("failed to create callback server (internal error): %v", err))
+	}
+
+	factory.AuthClient = auth.NewImplicitFlowClient(cbs)
 
 	factory.Prompter = prompt.New()
 

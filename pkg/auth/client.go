@@ -3,140 +3,86 @@ package auth
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
-	"net/http"
+	"net/url"
 
 	"github.com/cli/browser"
-	"golang.org/x/oauth2"
-
-	"github.com/zeabur/cli/pkg/webapp"
 )
 
-type (
-	// WebAppClient is a client for OAuth2 authorization code flow.
-	WebAppClient struct {
-		httpClient *http.Client
-
-		ClientID               string
-		ClientSecret           string
-		RedirectURIWithoutPort string
-		RedirectURIWithPort    string // we will fill port after local server is started
-		AuthorizeURL           string
-		TokenURL               string
-		Scopes                 []string
-
-		config oauth2.Config
-	}
-
-	// Options is the options for WebAppClient.
-	Options struct {
-		ClientID               string
-		ClientSecret           string
-		RedirectURIWithoutPort string
-
-		AuthorizeURL string
-		TokenURL     string
-		HTTPClient   *http.Client
-		Scopes       []string
-		AuthStyle    oauth2.AuthStyle
-	}
-)
-
-// NewZeaburWebAppOAuthClient creates a new WebAppClient for Zeabur OAuth server.
-func NewZeaburWebAppOAuthClient() *WebAppClient {
-	opts := Options{
-		ClientID:               ZeaburOAuthCLIClientID,
-		ClientSecret:           ZeaburOAuthCLIClientSecret,
-		RedirectURIWithoutPort: OAuthLocalServerCallbackURL,
-		Scopes:                 []string{"project:write", "user:write", "service:write", "environment:write"},
-
-		AuthorizeURL: ZeaburOAuthAuthorizeURL,
-		TokenURL:     ZeaburOAuthTokenURL,
-		AuthStyle:    oauth2.AuthStyleInParams,
-	}
-
-	return NewWebAppClient(opts)
+type Client interface {
+	GenerateToken(ctx context.Context) (string, error)
 }
 
-// NewWebAppClient creates a new WebAppClient.
-func NewWebAppClient(opts Options) *WebAppClient {
-	c := &WebAppClient{
-		ClientID:               opts.ClientID,
-		ClientSecret:           opts.ClientSecret,
-		RedirectURIWithoutPort: opts.RedirectURIWithoutPort,
-		Scopes:                 opts.Scopes,
+type ImplicitFlowClient struct {
+	Endpoint url.URL
 
-		AuthorizeURL: opts.AuthorizeURL,
-		TokenURL:     opts.TokenURL,
-	}
-
-	if opts.HTTPClient != nil {
-		c.httpClient = opts.HTTPClient
-	} else {
-		c.httpClient = http.DefaultClient
-	}
-
-	c.config = oauth2.Config{
-		ClientID:     c.ClientID,
-		ClientSecret: c.ClientSecret,
-		Scopes:       c.Scopes,
-		RedirectURL:  "", // we will fill port after local server is started
-		Endpoint: oauth2.Endpoint{
-			AuthURL:   c.AuthorizeURL,
-			TokenURL:  c.TokenURL,
-			AuthStyle: opts.AuthStyle,
-		},
-	}
-
-	return c
+	callbackServer *CallbackServer
 }
 
-// Login helps the user to login to the OAuth server with a web browser.
-func (c *WebAppClient) Login() (token *oauth2.Token, err error) {
-	flow, err := webapp.InitFlow()
+func NewImplicitFlowClient(callbackServer *CallbackServer) *ImplicitFlowClient {
+	endpointURL, err := url.Parse(ZeaburApiKeyConfirmEndpoint)
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("failed to parse endpoint URL (internal error): %v", err))
 	}
 
-	redirectURIWithPort, err := flow.RedirectURIWithPort(c.RedirectURIWithoutPort)
+	return &ImplicitFlowClient{
+		Endpoint:       *endpointURL,
+		callbackServer: callbackServer,
+	}
+}
+
+func (c *ImplicitFlowClient) GenerateToken(ctx context.Context) (token string, err error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	// Generate a state that is only used for the callback
+	state, err := randomString(40)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get redirect URI with port: %w", err)
+		return "", fmt.Errorf("failed to generate state: %w", err)
 	}
 
-	c.config.RedirectURL = redirectURIWithPort
-
-	browserURL, err := flow.BrowserURL(c.AuthorizeURL, c.config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to construct OAuth URL: %w", err)
-	}
-
-	// A localhost server on a random available port will receive the web redirect.
 	go func() {
-		_ = flow.StartServer(nil)
+		_ = c.callbackServer.Serve()
+	}()
+	defer func() {
+		_ = c.callbackServer.Close()
 	}()
 
-	//Note: the user's web browser must run on the same device as the running app.
-	err = browser.OpenURL(browserURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open browser: %w", err)
+	// Construct the confirmation URL
+	endpoint := c.Endpoint
+
+	query := endpoint.Query()
+	query.Add("client_name", "zeabur-cli")
+	query.Add("state", state)
+	query.Add("callback_url", c.callbackServer.GetCallbackURL())
+
+	endpoint.RawQuery = query.Encode()
+
+	// Open the browser
+	if err := browser.OpenURL(endpoint.String()); err != nil {
+		return "", fmt.Errorf("failed to open browser (url=%s): %w", endpoint.String(), err)
 	}
 
-	accessToken, err := flow.Wait(context.TODO(), c.config)
+	// Wait for the token
+	tokenResponse, err := c.callbackServer.WaitForToken(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get access token: %w", err)
+		return "", fmt.Errorf("failed to wait for token: %w", err)
 	}
 
-	return accessToken, nil
+	if tokenResponse.State != state {
+		return "", fmt.Errorf("state mismatch: expected=%s, got=%s", state, tokenResponse.State)
+	}
+
+	return tokenResponse.Token, nil
 }
 
-// RefreshToken refreshes the token.
-func (c *WebAppClient) RefreshToken(old *oauth2.Token) (newToken *oauth2.Token, err error) {
-	newToken, err = c.config.TokenSource(context.Background(), old).Token()
+func randomString(length int) (string, error) {
+	b := make([]byte, length/2)
+	_, err := rand.Read(b)
 	if err != nil {
-		return nil, fmt.Errorf("failed to refresh token: %w", err)
+		return "", err
 	}
-
-	return newToken, nil
+	return hex.EncodeToString(b), nil
 }
-
-var _ Client = (*WebAppClient)(nil)

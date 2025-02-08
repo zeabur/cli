@@ -13,6 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/zeabur/cli/internal/cmdutil"
+	"github.com/zeabur/cli/pkg/constant"
 	"github.com/zeabur/cli/pkg/util"
 )
 
@@ -102,6 +103,6 @@ func runCreate(f *cmdutil.Factory, opts Options) error {
 		return err
 	}
 
-	f.Log.Infof("Template %q (https://zeabur.com/templates/%s) created", t.Name, t.Code)
+	f.Log.Infof("Template %q (%s/templates/%s) created", t.Name, constant.ZeaburDashURL, t.Code)
 	return nil
 }

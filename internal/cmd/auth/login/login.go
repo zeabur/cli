@@ -10,7 +10,6 @@ import (
 	"github.com/hasura/go-graphql-client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"golang.org/x/oauth2"
 
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/pkg/api"
@@ -70,8 +69,7 @@ func RunLogin(f *cmdutil.Factory, opts *Options) error {
 				return fmt.Errorf("failed to get user info: %w", err)
 			}
 		} else {
-			f.Log.Debugw("Already logged in", "token string", f.Config.GetTokenString(),
-				"token detail", f.Config.GetToken(), "user", user)
+			f.Log.Debugw("Already logged in", "token", f.Config.GetTokenString(), "user", user)
 			f.Log.Infof("Already logged in as %s, "+
 				"if you want to use a different account, please logout first", user.Name)
 			return nil
@@ -80,19 +78,19 @@ func RunLogin(f *cmdutil.Factory, opts *Options) error {
 
 	var (
 		tokenString string
-		token       *oauth2.Token
 		err         error
 	)
 
 	if f.Interactive {
 		f.Log.Info("A browser window will be opened for you to login, please confirm")
 		// get token from web
-		token, err = f.AuthClient.Login()
+		token, err := f.AuthClient.GenerateToken(context.Background())
 		if err != nil {
 			return fmt.Errorf("failed to login: %w", err)
 		}
-		tokenString = token.AccessToken
-		f.Config.SetToken(token)
+		tokenString = token
+
+		f.Config.SetTokenString(tokenString)
 	} else {
 		// get token from flag, env or config
 		if tokenString = f.Config.GetTokenString(); tokenString == "" {
@@ -100,9 +98,7 @@ func RunLogin(f *cmdutil.Factory, opts *Options) error {
 		}
 	}
 
-	f.Config.SetTokenString(tokenString)
-
-	f.Log.Debugw("Token", "token", tokenString, "token detail", token)
+	f.Log.Debugw("Token", "token", tokenString)
 
 	// because we just logged in, we need to create a new client
 	f.ApiClient = opts.NewClient(tokenString)

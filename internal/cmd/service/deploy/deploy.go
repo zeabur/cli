@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
+	"github.com/zeabur/cli/pkg/constant"
 )
 
 type Options struct {
@@ -150,7 +151,7 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 		s.Stop()
 
 		fmt.Printf("%s Service %s created 🚀\n", cmdutil.SuccessIcon, service.Name)
-		fmt.Printf("https://zeabur.com/projects/%s/services/%s", opts.projectID, service.ID)
+		fmt.Printf("%s/projects/%s/services/%s", constant.ZeaburDashURL, opts.projectID, service.ID)
 
 		return nil
 
