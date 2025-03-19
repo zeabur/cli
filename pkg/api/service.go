@@ -3,12 +3,15 @@ package api
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"mime/multipart"
 	"net/http"
+	"strconv"
 	"time"
+
+	"crypto/sha256"
 
 	"github.com/spf13/viper"
 	"github.com/zeabur/cli/pkg/constant"
@@ -383,62 +386,116 @@ func (c *client) CreateEmptyService(ctx context.Context, projectID string, name 
 }
 
 func (c *client) UploadZipToService(ctx context.Context, projectID string, serviceID string, environmentID string, zipBytes []byte) (*model.Service, error) {
-	url := constant.ZeaburServerURL + "/projects/" + projectID + "/services/" + serviceID + "/deploy"
+	// Step 1: Calculate SHA256 hash of content
+	h := sha256.New()
+	if _, err := h.Write(zipBytes); err != nil {
+		return nil, fmt.Errorf("failed to calculate content hash: %w", err)
+	}
+	contentHash := base64.StdEncoding.EncodeToString(h.Sum(nil))
 
-	method := "POST"
-
-	var requestBody bytes.Buffer
-	multipartWriter := multipart.NewWriter(&requestBody)
-	defer multipartWriter.Close()
-
-	err := multipartWriter.WriteField("environment", environmentID)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
+	// Step 2: Create upload session
+	createUploadReq := struct {
+		ContentHash          string `json:"content_hash"`
+		ContentHashAlgorithm string `json:"content_hash_algorithm"`
+		ContentLength        int64  `json:"content_length"`
+	}{
+		ContentHash:          contentHash,
+		ContentHashAlgorithm: "sha256",
+		ContentLength:        int64(len(zipBytes)),
 	}
 
-	fileWriter, err := multipartWriter.CreateFormFile("code", "zeabur.zip")
+	createUploadBody, err := json.Marshal(createUploadReq)
 	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-	_, err = io.Copy(fileWriter, bytes.NewReader(zipBytes))
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
+		return nil, fmt.Errorf("failed to marshal create upload request: %w", err)
 	}
 
-	err = multipartWriter.Close()
+	createUploadResp, err := http.NewRequestWithContext(ctx, "POST", constant.ZeaburServerURL+"/v2/upload", bytes.NewReader(createUploadBody))
 	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-
-	client := &http.Client{
-		Timeout: 30 * time.Second,
-	}
-
-	req, err := http.NewRequestWithContext(ctx, method, url, &requestBody)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
+		return nil, fmt.Errorf("failed to create upload request: %w", err)
 	}
 
 	token := viper.GetString("token")
+	createUploadResp.Header.Set("Content-Type", "application/json")
+	createUploadResp.Header.Set("Cookie", "token="+token)
 
-	req.Header.Set("Content-Type", multipartWriter.FormDataContentType())
-	req.Header.Set("Cookie", "token="+token)
-
-	res, err := client.Do(req)
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(createUploadResp)
 	if err != nil {
-		fmt.Println(err)
-		return nil, err
+		return nil, fmt.Errorf("failed to create upload session: %w", err)
 	}
-	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("status code: %d, ", res.StatusCode)
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		return nil, fmt.Errorf("failed to create upload session: status code %d", resp.StatusCode)
 	}
 
-	defer res.Body.Close()
+	var uploadSession struct {
+		PresignHeader struct {
+			ContentType string `json:"Content-Type"`
+		} `json:"presign_header"`
+		PresignMethod string `json:"presign_method"`
+		PresignURL    string `json:"presign_url"`
+		UploadID      string `json:"upload_id"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&uploadSession); err != nil {
+		return nil, fmt.Errorf("failed to decode upload session response: %w", err)
+	}
+
+	// Step 3: Upload file to S3
+	uploadReq, err := http.NewRequestWithContext(ctx, uploadSession.PresignMethod, uploadSession.PresignURL, bytes.NewReader(zipBytes))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create S3 upload request: %w", err)
+	}
+
+	uploadReq.Header.Set("Content-Type", uploadSession.PresignHeader.ContentType)
+	uploadReq.Header.Set("Content-Length", strconv.FormatInt(int64(len(zipBytes)), 10))
+
+	uploadResp, err := client.Do(uploadReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to upload to S3: %w", err)
+	}
+	defer uploadResp.Body.Close()
+
+	if uploadResp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to upload to S3: status code %d", uploadResp.StatusCode)
+	}
+
+	// Step 4: Prepare upload for deployment
+	prepareReq := struct {
+		UploadType    string `json:"upload_type"`
+		ServiceID     string `json:"service_id"`
+		EnvironmentID string `json:"environment_id"`
+	}{
+		UploadType:    "existing_service",
+		ServiceID:     serviceID,
+		EnvironmentID: environmentID,
+	}
+
+	prepareBody, err := json.Marshal(prepareReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal prepare request: %w", err)
+	}
+
+	prepareResp, err := http.NewRequestWithContext(ctx, "POST",
+		fmt.Sprintf("%s/v2/upload/%s/prepare", constant.ZeaburServerURL, uploadSession.UploadID),
+		bytes.NewReader(prepareBody))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create prepare request: %w", err)
+	}
+
+	prepareResp.Header.Set("Content-Type", "application/json")
+	prepareResp.Header.Set("Cookie", "token="+token)
+
+	resp, err = client.Do(prepareResp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare upload: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to prepare upload: status code %d", resp.StatusCode)
+	}
 
 	return nil, nil
 }
