@@ -11,14 +11,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: "1.22"
 
       - name: install mockery
-        run: go install github.com/vektra/mockery/v2@v2.43.2
+        run: go install github.com/vektra/mockery/v2@v2
 
       - name: generate mocks
         run: make mock

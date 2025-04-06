@@ -19,21 +19,21 @@ jobs:
     permissions: write-all
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - run: git fetch --force --tags
 
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: "1.22"
           cache: true
 
       - name: install mockery
-        run: go install github.com/vektra/mockery/v2@v2.43.2
+        run: go install github.com/vektra/mockery/v2@v2
 
-      - uses: goreleaser/goreleaser-action@v4
+      - uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
           version: latest

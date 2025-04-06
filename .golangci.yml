@@ -14,7 +14,4 @@ linters:
 
 linters-settings:
   govet:
-    check-shadowing: false
     disable: ["fieldalignment"]
-  errcheck:
-    exclude-functions:
