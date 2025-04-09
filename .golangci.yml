@@ -1,20 +1,31 @@
-# Refer to golangci-lint's example config file for more options and information:
-# https://github.com/golangci/golangci-lint/blob/master/.golangci.reference.yml
-
+version: "2"
 run:
-  timeout: 5m
   modules-download-mode: readonly
-
 linters:
   enable:
     - prealloc
-    - tparallel
-    - thelper
     - testpackage
-
-linters-settings:
-  govet:
-    check-shadowing: false
-    disable: ["fieldalignment"]
-  errcheck:
-    exclude-functions:
+    - thelper
+    - tparallel
+  settings:
+    govet:
+      disable:
+        - fieldalignment
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

@@ -16,15 +16,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: "1.22"
-          cache: false
 
       - name: install mockery
-        run: go install github.com/vektra/mockery/v2@v2.43.2
+        run: go install github.com/vektra/mockery/v2@v2
 
       - name: generate mocks
         run: make mock
@@ -33,7 +32,6 @@ jobs:
         run: go mod download
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v7
         with:
-          version: v1.59
           only-new-issues: true
