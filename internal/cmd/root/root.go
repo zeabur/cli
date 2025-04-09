@@ -18,6 +18,7 @@ import (
 	projectCmd "github.com/zeabur/cli/internal/cmd/project"
 	serviceCmd "github.com/zeabur/cli/internal/cmd/service"
 	templateCmd "github.com/zeabur/cli/internal/cmd/template"
+	uploadCmd "github.com/zeabur/cli/internal/cmd/upload"
 	variableCmd "github.com/zeabur/cli/internal/cmd/variable"
 	versionCmd "github.com/zeabur/cli/internal/cmd/version"
 	"github.com/zeabur/cli/internal/cmdutil"
@@ -115,6 +116,7 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 
 	// Child commands
 	cmd.AddCommand(deployCmd.NewCmdDeploy(f))
+	cmd.AddCommand(uploadCmd.NewCmdUpload(f))
 	cmd.AddCommand(versionCmd.NewCmdVersion(f, version, commit, date))
 	cmd.AddCommand(authCmd.NewCmdAuth(f))
 	cmd.AddCommand(projectCmd.NewCmdProject(f))

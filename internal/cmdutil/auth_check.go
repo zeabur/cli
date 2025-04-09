@@ -15,7 +15,7 @@ func DisableAuthCheck(cmd *cobra.Command) {
 
 func IsAuthCheckEnabled(cmd *cobra.Command) bool {
 	switch cmd.Name() {
-	case "help", cobra.ShellCompRequestCmd, cobra.ShellCompNoDescRequestCmd:
+	case "help", cobra.ShellCompRequestCmd, cobra.ShellCompNoDescRequestCmd, "upload":
 		return false
 	}
 
