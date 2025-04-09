@@ -2,7 +2,6 @@ project_name: zeabur
 
 before:
   hooks:
-    - make mock
     - go mod tidy
     - go generate ./...
 
