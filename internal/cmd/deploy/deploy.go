@@ -70,9 +70,23 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 			return err
 		}
 
-		environment, err = f.ApiClient.GetEnvironment(context.Background(), opts.environmentID)
-		if err != nil {
-			return err
+		if opts.environmentID != "" {
+			environment, err = f.ApiClient.GetEnvironment(context.Background(), opts.environmentID)
+			if err != nil {
+				return err
+			}
+		} else {
+			// get the default environment
+			environments, err := f.ApiClient.ListEnvironments(context.Background(), service.Project.ID)
+			if err != nil {
+				return err
+			}
+
+			if len(environments) == 0 {
+				return fmt.Errorf("no environment found")
+			}
+
+			environment = environments[0]
 		}
 	}
 
