@@ -2,6 +2,7 @@ package model
 
 type GenericRegion interface {
 	GetID() string
+	IsAvailable() bool
 	String() string
 }
 

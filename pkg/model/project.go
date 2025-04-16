@@ -115,6 +115,10 @@ func (r Region) String() string {
 	return fmt.Sprintf("%s (%s)", r.Description, r.Name)
 }
 
+func (r Region) IsAvailable() bool {
+	return r.Available
+}
+
 // ExportedTemplate is the exported template of the given project.
 type ExportedTemplate struct {
 	ResourceYAML string   `graphql:"resourceYAML"`
