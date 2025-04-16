@@ -104,7 +104,9 @@ func (s *selector) SelectProject(opts ...SelectProjectOptionsApplyer) (zcontext.
 
 		regionOptions := make([]string, 0, len(regions))
 		for _, region := range regions {
-			regionOptions = append(regionOptions, region.String())
+			if region.IsAvailable() {
+				regionOptions = append(regionOptions, region.String())
+			}
 		}
 
 		projectRegionIndex, err := s.prompter.Select("Select project region", "", regionOptions)

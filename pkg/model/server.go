@@ -28,3 +28,7 @@ func (s Server) String() string {
 
 	return fmt.Sprintf("%s (%s)", s.Name, identifier)
 }
+
+func (s Server) IsAvailable() bool {
+	return true
+}
