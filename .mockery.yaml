@@ -1,4 +1,0 @@
-all: True
-testonly: False
-with-expecter: True
-keeptree: True
