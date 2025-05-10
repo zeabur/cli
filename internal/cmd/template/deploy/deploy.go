@@ -182,7 +182,11 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 	if err != nil {
 		var graphqlErrors graphql.Errors
 		if errors.As(err, &graphqlErrors) && len(graphqlErrors) > 0 {
-			f.Log.Errorf("%s (code: %s)", graphqlErrors[0].Message, graphqlErrors[0].Extensions["code"])
+			description := ""
+			if desc, ok := graphqlErrors[0].Extensions["description"]; ok {
+				description = fmt.Sprintf("\nDescription: %s", desc)
+			}
+			f.Log.Errorf("%s (code: %s)%s", graphqlErrors[0].Message, graphqlErrors[0].Extensions["code"], description)
 			return nil
 		}
 		return err
