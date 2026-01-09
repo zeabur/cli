@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/zeabur/cli/pkg/model"
 	"github.com/zeabur/cli/pkg/zcontext"
 
 	"github.com/briandowns/spinner"
@@ -59,9 +60,11 @@ func runCreateInteractive(f *cmdutil.Factory, opts *Options) error {
 
 	s.Stop()
 
+	availableRegions := make([]model.GenericRegion, 0, len(regions))
 	regionOptions := make([]string, 0, len(regions))
 	for _, region := range regions {
 		if region.IsAvailable() {
+			availableRegions = append(availableRegions, region)
 			regionOptions = append(regionOptions, region.String())
 		}
 	}
@@ -71,7 +74,7 @@ func runCreateInteractive(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
-	projectRegion := regions[projectRegionIndex].GetID()
+	projectRegion := availableRegions[projectRegionIndex].GetID()
 
 	s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 		spinner.WithColor(cmdutil.SpinnerColor),
