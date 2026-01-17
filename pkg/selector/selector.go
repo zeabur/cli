@@ -102,9 +102,11 @@ func (s *selector) SelectProject(opts ...SelectProjectOptionsApplyer) (zcontext.
 			return nil, nil, fmt.Errorf("get regions failed: %w", err)
 		}
 
+		availableRegions := make([]model.GenericRegion, 0, len(regions))
 		regionOptions := make([]string, 0, len(regions))
 		for _, region := range regions {
 			if region.IsAvailable() {
+				availableRegions = append(availableRegions, region)
 				regionOptions = append(regionOptions, region.String())
 			}
 		}
@@ -114,7 +116,7 @@ func (s *selector) SelectProject(opts ...SelectProjectOptionsApplyer) (zcontext.
 			return nil, nil, fmt.Errorf("select project region failed: %w", err)
 		}
 
-		projectRegion := regions[projectRegionIndex].GetID()
+		projectRegion := availableRegions[projectRegionIndex].GetID()
 
 		project, err := s.client.CreateProject(context.Background(), projectRegion, nil)
 		if err != nil {
