@@ -24,6 +24,7 @@ type Options struct {
 	file           string
 	projectID      string
 	skipValidation bool
+	vars           map[string]string
 }
 
 func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
@@ -40,6 +41,7 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().StringVarP(&opts.file, "file", "f", "", "Template file")
 	cmd.Flags().StringVar(&opts.projectID, "project-id", "", "Project ID to deploy on")
 	cmd.Flags().BoolVar(&opts.skipValidation, "skip-validation", false, "Skip template validation")
+	cmd.Flags().StringToStringVar(&opts.vars, "var", nil, "Template variables (e.g. --var KEY=value)")
 
 	return cmd
 }
@@ -118,7 +120,27 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	vars := model.Map{}
+
+	// In non-interactive mode, check all required variables upfront
+	if !f.Interactive {
+		var missingVars []string
+		for _, v := range raw.Spec.Variables {
+			if _, ok := opts.vars[v.Key]; !ok {
+				missingVars = append(missingVars, fmt.Sprintf("  --var %s=<value>  (%s)", v.Key, v.Description))
+			}
+		}
+		if len(missingVars) > 0 {
+			return fmt.Errorf("missing required variables in non-interactive mode:\n%s", strings.Join(missingVars, "\n"))
+		}
+	}
+
 	for _, v := range raw.Spec.Variables {
+		// Check if variable is provided via --var flag
+		if val, ok := opts.vars[v.Key]; ok {
+			vars[v.Key] = val
+			continue
+		}
+
 		switch v.Type {
 		case "DOMAIN":
 			// Notice: flex shared cluster in China mainland (sha1) does not support generated domain
