@@ -535,3 +535,16 @@ func (c *client) UpdateImageTag(ctx context.Context, serviceID, environmentID, t
 
 	return nil
 }
+
+func (c *client) DeleteService(ctx context.Context, id string, environmentID string) error {
+	var mutation struct {
+		DeleteService bool `graphql:"deleteService(_id: $id, environmentID: $environmentID)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{
+		"id":            ObjectID(id),
+		"environmentID": ObjectID(environmentID),
+	})
+
+	return err
+}
