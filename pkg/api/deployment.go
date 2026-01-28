@@ -6,8 +6,8 @@ import (
 	"github.com/zeabur/cli/pkg/model"
 )
 
-func (c *client) ListDeployments(ctx context.Context, serviceID string, environmentID string, skip, limit int) (*model.DeploymentConnection, error) {
-	_, limit = normalizePagination(skip, limit)
+func (c *client) ListDeployments(ctx context.Context, serviceID string, environmentID string, perPage int) (*model.DeploymentConnection, error) {
+	_, perPage = normalizePagination(0, perPage)
 
 	var query struct {
 		Deployments model.DeploymentConnection `graphql:"deployments(serviceID: $serviceID, environmentID: $environmentID, perPage: $perPage)"`
@@ -16,7 +16,7 @@ func (c *client) ListDeployments(ctx context.Context, serviceID string, environm
 	err := c.Query(ctx, &query, V{
 		"serviceID":     ObjectID(serviceID),
 		"environmentID": ObjectID(environmentID),
-		"perPage":       limit,
+		"perPage":       perPage,
 	})
 	if err != nil {
 		return nil, err
@@ -26,7 +26,7 @@ func (c *client) ListDeployments(ctx context.Context, serviceID string, environm
 }
 
 func (c *client) ListAllDeployments(ctx context.Context, serviceID string, environmentID string) (model.Deployments, error) {
-	conn, err := c.ListDeployments(ctx, serviceID, environmentID, 0, 5)
+	conn, err := c.ListDeployments(ctx, serviceID, environmentID, 5)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (c *client) GetDeployment(ctx context.Context, id string) (*model.Deploymen
 }
 
 func (c *client) GetLatestDeployment(ctx context.Context, serviceID string, environmentID string) (*model.Deployment, bool, error) {
-	deployments, err := c.ListDeployments(ctx, serviceID, environmentID, 0, 1)
+	deployments, err := c.ListDeployments(ctx, serviceID, environmentID, 1)
 	if err != nil {
 		return nil, false, err
 	}

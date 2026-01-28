@@ -214,7 +214,13 @@ func (f *paramFiller) ServiceByName(opt ServiceByNameOptions) (changed bool, err
 			Auto:      true,
 			CreateNew: false,
 			FilterFunc: func(s *model.Service) bool {
-				return s.Name == *serviceName
+				if s.Name != *serviceName {
+					return false
+				}
+				if opt.FilterFunc != nil {
+					return opt.FilterFunc(s)
+				}
+				return true
 			},
 		})
 		if err != nil {

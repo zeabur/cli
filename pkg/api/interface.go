@@ -83,7 +83,7 @@ type (
 	}
 
 	DeploymentAPI interface {
-		ListDeployments(ctx context.Context, serviceID string, environmentID string, skip, limit int) (*model.DeploymentConnection, error)
+		ListDeployments(ctx context.Context, serviceID string, environmentID string, perPage int) (*model.DeploymentConnection, error)
 		ListAllDeployments(ctx context.Context, serviceID string, environmentID string) (model.Deployments, error)
 		GetDeployment(ctx context.Context, id string) (*model.Deployment, error)
 		GetLatestDeployment(ctx context.Context, serviceID string, environmentID string) (*model.Deployment, bool, error)
