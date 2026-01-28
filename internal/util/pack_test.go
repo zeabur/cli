@@ -1,11 +1,14 @@
-package util
+package util_test
 
 import (
 	"archive/zip"
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/zeabur/cli/internal/util"
 )
 
 func TestPackZipWithZeaburIgnore(t *testing.T) {
@@ -21,7 +24,11 @@ func TestPackZipWithZeaburIgnore(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to get current dir: %v", err)
 	}
-	defer os.Chdir(originalDir)
+	defer func() {
+		if err := os.Chdir(originalDir); err != nil {
+			t.Errorf("Failed to restore directory: %v", err)
+		}
+	}()
 
 	if err := os.Chdir(tmpDir); err != nil {
 		t.Fatalf("Failed to change to temp dir: %v", err)
@@ -60,7 +67,7 @@ func TestPackZipWithZeaburIgnore(t *testing.T) {
 	}
 
 	// Pack the zip
-	zipBytes, err := PackZipWithoutGitIgnoreFiles()
+	zipBytes, err := util.PackZipWithoutGitIgnoreFiles()
 	if err != nil {
 		t.Fatalf("PackZipWithoutGitIgnoreFiles failed: %v", err)
 	}
@@ -101,7 +108,7 @@ func TestPackZipWithZeaburIgnore(t *testing.T) {
 
 	// Check that .git directory is excluded
 	for path := range filesInZip {
-		if filepath.HasPrefix(path, ".git/") || filepath.HasPrefix(path, ".git\\") {
+		if strings.HasPrefix(path, ".git/") || strings.HasPrefix(path, ".git\\") {
 			t.Errorf("File %s should be excluded (.git directory) but found in zip", path)
 		}
 	}
@@ -120,7 +127,11 @@ func TestPackZipWithoutZeaburIgnore(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to get current dir: %v", err)
 	}
-	defer os.Chdir(originalDir)
+	defer func() {
+		if err := os.Chdir(originalDir); err != nil {
+			t.Errorf("Failed to restore directory: %v", err)
+		}
+	}()
 
 	if err := os.Chdir(tmpDir); err != nil {
 		t.Fatalf("Failed to change to temp dir: %v", err)
@@ -146,7 +157,7 @@ func TestPackZipWithoutZeaburIgnore(t *testing.T) {
 	}
 
 	// Pack the zip
-	zipBytes, err := PackZipWithoutGitIgnoreFiles()
+	zipBytes, err := util.PackZipWithoutGitIgnoreFiles()
 	if err != nil {
 		t.Fatalf("PackZipWithoutGitIgnoreFiles failed: %v", err)
 	}
