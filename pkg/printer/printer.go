@@ -6,8 +6,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-type defaultPrinter struct {
-}
+type defaultPrinter struct{}
 
 func New() Printer {
 	return &defaultPrinter{}

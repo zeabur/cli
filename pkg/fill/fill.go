@@ -208,10 +208,23 @@ func (f *paramFiller) ServiceByName(opt ServiceByNameOptions) (changed bool, err
 
 		*serviceID = service.GetID()
 		*serviceName = service.GetName()
+	} else {
+		service, _, err := f.selector.SelectService(selector.SelectServiceOptions{
+			ProjectID: projectCtx.GetProject().GetID(),
+			Auto:      true,
+			CreateNew: false,
+			FilterFunc: func(s *model.Service) bool {
+				return s.Name == *serviceName
+			},
+		})
+		if err != nil {
+			return false, err
+		}
+		if service == nil {
+			return false, fmt.Errorf("service %s not found in project", *serviceName)
+		}
+		*serviceID = service.GetID()
 	}
-
-	// if service name is not empty, do nothing,
-	// we have already set project id
 
 	return true, nil
 }

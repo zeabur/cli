@@ -6,8 +6,7 @@ import (
 	"github.com/zeabur/cli/internal/cmdutil"
 )
 
-type Options struct {
-}
+type Options struct{}
 
 func NewCmdClear(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}

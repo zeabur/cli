@@ -6,8 +6,7 @@ import (
 	"github.com/zeabur/cli/internal/cmdutil"
 )
 
-type logoutOptions struct {
-}
+type logoutOptions struct{}
 
 func NewCmdLogout(f *cmdutil.Factory) *cobra.Command {
 	opts := &logoutOptions{}

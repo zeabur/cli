@@ -14,7 +14,6 @@ func (c *client) ListEnvironments(ctx context.Context, projectID string) (model.
 	err := c.Query(ctx, &query, V{
 		"projectID": ObjectID(projectID),
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +29,6 @@ func (c *client) GetEnvironment(ctx context.Context, id string) (*model.Environm
 	err := c.Query(ctx, &query, V{
 		"id": ObjectID(id),
 	})
-
 	if err != nil {
 		return nil, err
 	}

@@ -101,7 +101,6 @@ func PackZipWithoutGitIgnoreFiles() ([]byte, error) {
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}

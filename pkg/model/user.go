@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/zeabur/cli/pkg/util"
 	"time"
+
+	"github.com/zeabur/cli/pkg/util"
 )
 
 // BannedReasonType is the type of reason a user is banned
@@ -22,8 +23,8 @@ const (
 type User struct {
 	CreatedAt *time.Time `json:"createdAt" graphql:"createdAt"`
 	BannedAt  *time.Time `json:"bannedAt" graphql:"bannedAt"`
-	//BannedReason    *BannedReasonType  `json:"bannedReason" graphql:"bannedReason"`
-	//EmailPreference map[string]bool    `json:"emailPreference" graphql:"emailPreference"`
+	// BannedReason    *BannedReasonType  `json:"bannedReason" graphql:"bannedReason"`
+	// EmailPreference map[string]bool    `json:"emailPreference" graphql:"emailPreference"`
 	AgreedAt *time.Time `json:"agreedAt" graphql:"agreedAt"`
 	// DiscordID is the user's Discord ID.
 	DiscordID *string `json:"discordID" graphql:"discordID"`

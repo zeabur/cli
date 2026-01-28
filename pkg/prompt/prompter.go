@@ -10,8 +10,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 )
 
-type prompter struct {
-}
+type prompter struct{}
 
 // New creates a new prompter
 func New() Prompter {

@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/zeabur/cli/pkg/util"
 	"time"
+
+	"github.com/zeabur/cli/pkg/util"
 )
 
 type Domain struct {

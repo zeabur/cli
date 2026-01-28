@@ -35,7 +35,6 @@ func runGet(f *cmdutil.Factory, opts Options) error {
 		return runGetInteractive(f, opts)
 	}
 	return runGetNonInteractive(f, opts)
-
 }
 
 func runGetInteractive(f *cmdutil.Factory, opts Options) error {

@@ -35,7 +35,6 @@ func runDelete(f *cmdutil.Factory, opts Options) error {
 		return runDeleteInteractive(f, opts)
 	}
 	return runDeleteNonInteractive(f, opts)
-
 }
 
 func runDeleteInteractive(f *cmdutil.Factory, opts Options) error {

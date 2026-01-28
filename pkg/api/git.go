@@ -26,7 +26,7 @@ func (c *client) GetRepoBranches(ctx context.Context, repoOwner string, repoName
 }
 
 func (c *client) GetRepoID(repoOwner string, repoName string) (int, error) {
-	//TODO: Deal with GitHub Auth, reading token env and set HTTP client header
+	// TODO: Deal with GitHub Auth, reading token env and set HTTP client header
 	client := github.NewClient(nil)
 
 	repo, _, err := client.Repositories.Get(context.Background(), repoOwner, repoName)

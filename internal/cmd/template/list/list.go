@@ -7,8 +7,7 @@ import (
 	"github.com/zeabur/cli/internal/cmdutil"
 )
 
-type Options struct {
-}
+type Options struct{}
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 	opts := Options{}

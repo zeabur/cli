@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/zeabur/cli/pkg/util"
 	"time"
+
+	"github.com/zeabur/cli/pkg/util"
 )
 
 type Deployment struct {
@@ -19,7 +20,7 @@ type Deployment struct {
 	CommitMessage string `json:"commitMessage" graphql:"commitMessage"`
 
 	PlanType string `json:"planType" graphql:"planType"`
-	//PlanMeta string `json:"planMeta" graphql:"planMeta" scala:"true"`
+	// PlanMeta string `json:"planMeta" graphql:"planMeta" scala:"true"`
 
 	CreatedAt   time.Time `json:"createdAt" graphql:"createdAt"`
 	ScheduledAt time.Time `json:"scheduledAt" graphql:"scheduledAt"`
@@ -27,6 +28,15 @@ type Deployment struct {
 	FinishedAt  time.Time `json:"finishedAt" graphql:"finishedAt"`
 
 	Status string `json:"status" graphql:"status"`
+}
+
+type DeploymentConnection struct {
+	Edges []*DeploymentEdge `json:"edges" graphql:"edges"`
+}
+
+type DeploymentEdge struct {
+	Node   *Deployment `json:"node" graphql:"node"`
+	Cursor string      `json:"cursor" graphql:"cursor"`
 }
 
 type Deployments []*Deployment

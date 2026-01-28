@@ -22,12 +22,12 @@ type Project struct {
 	ID          string `graphql:"_id"`
 	Name        string `graphql:"name"`
 	Description string `graphql:"description"`
-	//Environments []Environment     `graphql:"environments"`
+	// Environments []Environment     `graphql:"environments"`
 	CreatedAt time.Time `graphql:"createdAt"`
-	//Owner         User      `graphql:"owner"`
-	//Collaborators []User    `graphql:"collaborators"`
+	// Owner         User      `graphql:"owner"`
+	// Collaborators []User    `graphql:"collaborators"`
 	IconURL string `graphql:"iconURL"`
-	//Services []Service `graphql:"services"`
+	// Services []Service `graphql:"services"`
 	Region Region `graphql:"region"`
 }
 

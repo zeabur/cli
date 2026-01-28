@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+
 	"github.com/zeabur/cli/pkg/model"
 )
 
@@ -16,7 +17,6 @@ func (c *client) ListVariables(ctx context.Context, serviceID string, environmen
 		"serviceID":     ObjectID(serviceID),
 		"environmentID": ObjectID(environmentID),
 	})
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -44,7 +44,6 @@ func (c *client) UpdateVariables(ctx context.Context, serviceID string, environm
 		"serviceID":     ObjectID(serviceID),
 		"data":          MapString(data),
 	})
-
 	if err != nil {
 		return false, err
 	}

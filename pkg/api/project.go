@@ -85,7 +85,6 @@ func (c *client) getProjectByID(ctx context.Context, id string) (*model.Project,
 	err := c.Query(ctx, &query, V{
 		"id": ObjectID(id),
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +93,8 @@ func (c *client) getProjectByID(ctx context.Context, id string) (*model.Project,
 }
 
 func (c *client) getProjectByOwnerUsernameAndProject(ctx context.Context,
-	ownerUsername string, projectName string) (*model.Project, error) {
+	ownerUsername string, projectName string,
+) (*model.Project, error) {
 	var query struct {
 		Project model.Project `graphql:"project(owner: $owner, name: $name)"`
 	}
@@ -103,7 +103,6 @@ func (c *client) getProjectByOwnerUsernameAndProject(ctx context.Context,
 		"owner": ownerUsername,
 		"name":  projectName,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +136,6 @@ func (c *client) DeleteProject(ctx context.Context, id string) error {
 	err := c.Mutate(ctx, &mutation, V{
 		"id": ObjectID(id),
 	})
-
 	if err != nil {
 		return err
 	}
