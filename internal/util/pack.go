@@ -38,28 +38,82 @@ func PackZipWithoutGitIgnoreFiles() ([]byte, error) {
 		return flate.NewWriter(out, flate.BestCompression)
 	})
 
-	ignoreObject, err := gitignore.CompileIgnoreFile("./.gitignore")
+	// .zeaburignore has higher priority than .gitignore
+	// Try to load .zeaburignore first, fallback to .gitignore if not exists
+	var ignoreObject *gitignore.GitIgnore
+	var err error
+	var ignoreFile string
+
+	ignoreObject, err = gitignore.CompileIgnoreFile("./.zeaburignore")
 	if err != nil {
-		if !errors.Is(err, fs.ErrNotExist) {
-			fmt.Println("Error compiling .gitignore file:", err)
+		if errors.Is(err, fs.ErrNotExist) {
+			// .zeaburignore not found, try .gitignore
+			ignoreObject, err = gitignore.CompileIgnoreFile("./.gitignore")
+			if err != nil {
+				if !errors.Is(err, fs.ErrNotExist) {
+					fmt.Println("Error compiling .gitignore file:", err)
+				}
+				ignoreObject = nil
+			} else {
+				ignoreFile = ".gitignore"
+			}
+		} else {
+			fmt.Println("Error compiling .zeaburignore file:", err)
+			ignoreObject = nil
 		}
+	} else {
+		ignoreFile = ".zeaburignore"
+	}
+
+	if ignoreFile != "" {
+		fmt.Printf("Using %s for file filtering\n", ignoreFile)
 	}
 
 	err = filepath.Walk(".", func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
-			fmt.Println("Error accessing path:", path, err)
-			return err
+			// Skip files/directories that cannot be accessed (e.g., symlinks to non-existent targets)
+			fmt.Printf("Skipping inaccessible path: %s (%v)\n", path, err)
+			if info != nil && info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
 		}
 
 		if path == "." {
 			return nil
 		}
 
-		if strings.HasPrefix(path, ".git") {
+		// Skip .git directory but not .gitignore or other .git* files
+		if path == ".git" || strings.HasPrefix(path, ".git"+string(filepath.Separator)) {
+			if info != nil && info.IsDir() {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 
-		if ignoreObject != nil && ignoreObject.MatchesPath(path) {
+		// Check ignore patterns before processing
+		if ignoreObject != nil {
+			// For directories, we need to check with trailing slash for proper gitignore matching
+			checkPath := path
+			if info.IsDir() {
+				checkPath = path + "/"
+			}
+
+			if ignoreObject.MatchesPath(checkPath) {
+				// Skip ignored files/directories entirely
+				if info.IsDir() {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+		}
+
+		// Skip symlinks to avoid "is a directory" errors
+		if info.Mode()&os.ModeSymlink != 0 {
+			fmt.Printf("Skipping symlink: %s\n", path)
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 
