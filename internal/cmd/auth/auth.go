@@ -22,7 +22,7 @@ func NewCmdAuth(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(authLoginCmd.NewCmdLogin(f))
 	cmd.AddCommand(authLogoutCmd.NewCmdLogout(f))
 	cmd.AddCommand(authStatusCmd.NewCmdStatus(f))
-	//cmd.AddCommand(authTokenCmd.NewCmdToken(f, nil))
+	// cmd.AddCommand(authTokenCmd.NewCmdToken(f, nil))
 
 	return cmd
 }

@@ -12,7 +12,7 @@ import (
 )
 
 type Options struct {
-	//todo: support service name
+	// todo: support service name
 	serviceID     string
 	serviceName   string
 	environmentID string

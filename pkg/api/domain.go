@@ -23,7 +23,6 @@ func (c *client) AddDomain(ctx context.Context, serviceID string, environmentID 
 			"domain":        domain,
 			"redirectTo":    options[0],
 		})
-
 		if err != nil {
 			return nil, err
 		}
@@ -43,7 +42,6 @@ func (c *client) AddDomain(ctx context.Context, serviceID string, environmentID 
 		"isGenerated":   isGenerated,
 		"domain":        domain,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +60,6 @@ func (c *client) ListDomains(ctx context.Context, serviceID string, environmentI
 		"environmentID": ObjectID(environmentID),
 		"id":            ObjectID(serviceID),
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +75,6 @@ func (c *client) RemoveDomain(ctx context.Context, domain string) (bool, error) 
 	err := c.Mutate(ctx, &mutation, V{
 		"domain": domain,
 	})
-
 	if err != nil {
 		return false, err
 	}
@@ -99,7 +95,6 @@ func (c *client) CheckDomainAvailable(ctx context.Context, domain string, isGene
 		"isGenerated": isGenerated,
 		"region":      region,
 	})
-
 	if err != nil {
 		return false, "", err
 	}

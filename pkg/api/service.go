@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -11,15 +12,12 @@ import (
 	"strconv"
 	"time"
 
-	"crypto/sha256"
-
 	"github.com/spf13/viper"
 	"github.com/zeabur/cli/pkg/constant"
 	"github.com/zeabur/cli/pkg/model"
 )
 
 func (c *client) ListServices(ctx context.Context, projectID string, skip, limit int) (*model.Connection[model.Service], error) {
-
 	var query struct {
 		Services *model.Connection[model.Service] `graphql:"services(projectID: $projectID, skip: $skip, limit: $limit)"`
 	}
@@ -29,7 +27,6 @@ func (c *client) ListServices(ctx context.Context, projectID string, skip, limit
 		"skip":      skip,
 		"limit":     limit,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +44,8 @@ func (c *client) ListAllServices(ctx context.Context, projectID string) (model.S
 }
 
 func (c *client) ListServicesDetailByEnvironment(ctx context.Context, projectID, environmentID string,
-	skip, limit int) (*model.Connection[model.ServiceDetail], error) {
+	skip, limit int,
+) (*model.Connection[model.ServiceDetail], error) {
 	skip, limit = normalizePagination(skip, limit)
 
 	var query struct {
@@ -60,7 +58,6 @@ func (c *client) ListServicesDetailByEnvironment(ctx context.Context, projectID,
 		"skip":          skip,
 		"limit":         limit,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +93,6 @@ func (c *client) getServiceByID(ctx context.Context, id string) (*model.Service,
 	err := c.Query(ctx, &query, V{
 		"id": ObjectID(id),
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +110,6 @@ func (c *client) getServiceByOwnerAndProjectAndName(ctx context.Context, ownerNa
 		"projectName": projectName,
 		"name":        name,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +138,6 @@ func (c *client) getServiceDetailByEnvironmentByID(ctx context.Context, id strin
 		"id":            ObjectID(id),
 		"environmentID": ObjectID(environmentID),
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +156,6 @@ func (c *client) getServiceDetailByEnvironmentByOwnerAndProjectAndName(ctx conte
 		"name":          name,
 		"environmentID": ObjectID(environmentID),
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +176,6 @@ func (c *client) ServiceMetric(ctx context.Context, id, projectID, environmentID
 		"startTime":     startTime,
 		"endTime":       endTime,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +192,6 @@ func (c *client) ServiceInstructions(ctx context.Context, id, environmentID stri
 		"serviceID":     ObjectID(id),
 		"environmentID": ObjectID(environmentID),
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -220,6 +211,7 @@ func (c *client) RestartService(ctx context.Context, id string, environmentID st
 
 	return err
 }
+
 func (c *client) RedeployService(ctx context.Context, id string, environmentID string) error {
 	var mutation struct {
 		RedeployService bool `graphql:"redeployService(serviceID: $serviceID, environmentID: $environmentID)"`
@@ -231,8 +223,8 @@ func (c *client) RedeployService(ctx context.Context, id string, environmentID s
 	})
 
 	return err
-
 }
+
 func (c *client) SuspendService(ctx context.Context, id string, environmentID string) error {
 	var mutation struct {
 		SuspendService bool `graphql:"suspendService(serviceID: $serviceID, environmentID: $environmentID)"`
@@ -257,7 +249,6 @@ func (c *client) ExposeService(ctx context.Context, id string, environmentID str
 		"projectID":     ObjectID(projectID),
 		"name":          name,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -271,7 +262,6 @@ func (c *client) GetPrebuiltItems(ctx context.Context) ([]model.PrebuiltItem, er
 	}
 
 	err := c.Query(ctx, &query, nil)
-
 	if err != nil {
 		return nil, err
 	}
@@ -288,7 +278,6 @@ func (c *client) CreatePrebuiltService(ctx context.Context, projectID string, ma
 		"projectID":       ObjectID(projectID),
 		"marketplaceCode": marketplaceCode,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -305,7 +294,6 @@ func (c *client) CreatePrebuiltServiceRaw(ctx context.Context, projectID string,
 		"projectID": ObjectID(projectID),
 		"schema":    rawSchema,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -322,7 +310,6 @@ func (c *client) CreatePrebuiltServiceCustom(ctx context.Context, projectID stri
 		"projectID": ObjectID(projectID),
 		"schema":    schema,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -338,7 +325,6 @@ func (c *client) SearchGitRepositories(ctx context.Context, keyword *string) ([]
 	err := c.Query(ctx, &query, V{
 		"keyword": keyword,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -359,7 +345,6 @@ func (c *client) CreateService(ctx context.Context, projectID string, name strin
 		"repoID":      repoID,
 		"branchName":  branchName,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -377,7 +362,6 @@ func (c *client) CreateEmptyService(ctx context.Context, projectID string, name 
 		"template":  ServiceTemplate("GIT"),
 		"name":      name,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -510,7 +494,6 @@ func (c *client) GetDNSName(ctx context.Context, serviceID string) (string, erro
 	err := c.Query(ctx, &query, V{
 		"serviceID": ObjectID(serviceID),
 	})
-
 	if err != nil {
 		return "", err
 	}
@@ -528,7 +511,6 @@ func (c *client) UpdateImageTag(ctx context.Context, serviceID, environmentID, t
 		"environmentID": ObjectID(environmentID),
 		"tag":           tag,
 	})
-
 	if err != nil {
 		return err
 	}

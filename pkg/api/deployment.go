@@ -2,23 +2,22 @@ package api
 
 import (
 	"context"
+
 	"github.com/zeabur/cli/pkg/model"
 )
 
-func (c *client) ListDeployments(ctx context.Context, serviceID string, environmentID string, skip, limit int) (*model.Connection[model.Deployment], error) {
-	skip, limit = normalizePagination(skip, limit)
+func (c *client) ListDeployments(ctx context.Context, serviceID string, environmentID string, perPage int) (*model.DeploymentConnection, error) {
+	_, perPage = normalizePagination(0, perPage)
 
 	var query struct {
-		Deployments model.Connection[model.Deployment] `graphql:"deployments(serviceID: $serviceID, environmentID: $environmentID, skip: $skip, limit: $limit)"`
+		Deployments model.DeploymentConnection `graphql:"deployments(serviceID: $serviceID, environmentID: $environmentID, perPage: $perPage)"`
 	}
 
 	err := c.Query(ctx, &query, V{
 		"serviceID":     ObjectID(serviceID),
 		"environmentID": ObjectID(environmentID),
-		"skip":          skip,
-		"limit":         limit,
+		"perPage":       perPage,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -27,11 +26,17 @@ func (c *client) ListDeployments(ctx context.Context, serviceID string, environm
 }
 
 func (c *client) ListAllDeployments(ctx context.Context, serviceID string, environmentID string) (model.Deployments, error) {
-	query := func(skip, limit int) (*model.Connection[model.Deployment], error) {
-		return c.ListDeployments(ctx, serviceID, environmentID, skip, limit)
+	conn, err := c.ListDeployments(ctx, serviceID, environmentID, 5)
+	if err != nil {
+		return nil, err
 	}
 
-	return listAll(query)
+	deployments := make(model.Deployments, 0, len(conn.Edges))
+	for _, edge := range conn.Edges {
+		deployments = append(deployments, edge.Node)
+	}
+
+	return deployments, nil
 }
 
 func (c *client) GetDeployment(ctx context.Context, id string) (*model.Deployment, error) {
@@ -48,7 +53,7 @@ func (c *client) GetDeployment(ctx context.Context, id string) (*model.Deploymen
 }
 
 func (c *client) GetLatestDeployment(ctx context.Context, serviceID string, environmentID string) (*model.Deployment, bool, error) {
-	deployments, err := c.ListDeployments(ctx, serviceID, environmentID, 0, 1)
+	deployments, err := c.ListDeployments(ctx, serviceID, environmentID, 1)
 	if err != nil {
 		return nil, false, err
 	}

@@ -41,7 +41,7 @@ func initViper(configPath string) {
 
 func createConfigFile(configPath string) {
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(configPath), 0o755); err != nil {
 			panic(fmt.Errorf("could not create config directory: %w", err))
 		}
 		if _, err := os.Create(configPath); err != nil {

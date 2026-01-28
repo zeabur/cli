@@ -19,8 +19,7 @@ import (
 	"github.com/zeabur/cli/pkg/constant"
 )
 
-type Options struct {
-}
+type Options struct{}
 
 func NewCmdUpload(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}

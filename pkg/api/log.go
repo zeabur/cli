@@ -47,7 +47,6 @@ func (c *client) getRuntimeLogsByServiceIDAndEnvironmentID(ctx context.Context, 
 		"serviceID":     ObjectID(serviceID),
 		"environmentID": ObjectID(environmentID),
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +62,6 @@ func (c *client) GetBuildLogs(ctx context.Context, deploymentID string) (model.L
 	err := c.Query(ctx, &query, V{
 		"deploymentID": ObjectID(deploymentID),
 	})
-
 	if err != nil {
 		return nil, err
 	}

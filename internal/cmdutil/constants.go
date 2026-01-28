@@ -1,9 +1,10 @@
 package cmdutil
 
 import (
+	"time"
+
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
-	"time"
 )
 
 var (
