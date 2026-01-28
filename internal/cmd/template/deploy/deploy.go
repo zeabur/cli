@@ -137,6 +137,34 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 	for _, v := range raw.Spec.Variables {
 		// Check if variable is provided via --var flag
 		if val, ok := opts.vars[v.Key]; ok {
+			// Validate DOMAIN type variables
+			if v.Type == "DOMAIN" {
+				// Skip domain validation for sha1 region
+				if project.Region.ID == "sha1" {
+					f.Log.Warnf("Selected region does not support generated domain, please bind a custom domain after template deployed.\n")
+					continue
+				}
+
+				s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+					spinner.WithColor(cmdutil.SpinnerColor),
+					spinner.WithSuffix(" Checking if domain "+val+".zeabur.app is available ..."),
+				)
+
+				s.Start()
+				available, _, err := f.ApiClient.CheckDomainAvailable(context.Background(), val, true, project.Region.ID)
+				s.Stop()
+
+				if err != nil {
+					return fmt.Errorf("check domain availability failed: %w", err)
+				}
+
+				if !available {
+					return fmt.Errorf("domain %s.zeabur.app is not available, please choose another one", val)
+				}
+
+				f.Log.Infof("Domain %s.zeabur.app is available!\n", val)
+			}
+
 			vars[v.Key] = val
 			continue
 		}
