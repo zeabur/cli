@@ -83,10 +83,11 @@ func PackZipWithoutGitIgnoreFiles() ([]byte, error) {
 
 		// Check ignore patterns before processing
 		if ignoreObject != nil {
+			// Normalize path separators to forward slashes for cross-platform gitignore matching
+			checkPath := filepath.ToSlash(path)
 			// For directories, we need to check with trailing slash for proper gitignore matching
-			checkPath := path
 			if info.IsDir() {
-				checkPath = path + "/"
+				checkPath = checkPath + "/"
 			}
 
 			if ignoreObject.MatchesPath(checkPath) {
