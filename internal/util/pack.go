@@ -42,7 +42,6 @@ func PackZipWithoutGitIgnoreFiles() ([]byte, error) {
 	// Try to load .zeaburignore first, fallback to .gitignore if not exists
 	var ignoreObject *gitignore.GitIgnore
 	var err error
-	var ignoreFile string
 
 	ignoreObject, err = gitignore.CompileIgnoreFile("./.zeaburignore")
 	if err != nil {
@@ -54,25 +53,16 @@ func PackZipWithoutGitIgnoreFiles() ([]byte, error) {
 					fmt.Println("Error compiling .gitignore file:", err)
 				}
 				ignoreObject = nil
-			} else {
-				ignoreFile = ".gitignore"
 			}
 		} else {
 			fmt.Println("Error compiling .zeaburignore file:", err)
 			ignoreObject = nil
 		}
-	} else {
-		ignoreFile = ".zeaburignore"
-	}
-
-	if ignoreFile != "" {
-		fmt.Printf("Using %s for file filtering\n", ignoreFile)
 	}
 
 	err = filepath.Walk(".", func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
 			// Skip files/directories that cannot be accessed (e.g., symlinks to non-existent targets)
-			fmt.Printf("Skipping inaccessible path: %s (%v)\n", path, err)
 			if info != nil && info.IsDir() {
 				return filepath.SkipDir
 			}
@@ -110,7 +100,6 @@ func PackZipWithoutGitIgnoreFiles() ([]byte, error) {
 
 		// Skip symlinks to avoid "is a directory" errors
 		if info.Mode()&os.ModeSymlink != 0 {
-			fmt.Printf("Skipping symlink: %s\n", path)
 			if info.IsDir() {
 				return filepath.SkipDir
 			}

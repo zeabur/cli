@@ -43,6 +43,7 @@ func TestPackZipWithZeaburIgnore(t *testing.T) {
 		"src/app.go":                 "package src",
 		".gitignore":                 "*.log\n",
 		"test.log":                   "log content",
+		".git/config":                "[core]\n",
 	}
 
 	for path, content := range testFiles {
@@ -85,7 +86,7 @@ func TestPackZipWithZeaburIgnore(t *testing.T) {
 	}
 
 	// Check that expected files are included
-	expectedFiles := []string{"main.go", "README.md", "src/app.go", ".zeaburignore"}
+	expectedFiles := []string{"main.go", "README.md", "src/app.go", ".zeaburignore", ".gitignore"}
 	for _, file := range expectedFiles {
 		if !filesInZip[file] {
 			t.Errorf("Expected file %s not found in zip", file)
@@ -103,7 +104,7 @@ func TestPackZipWithZeaburIgnore(t *testing.T) {
 	// When .zeaburignore exists, .gitignore patterns are NOT applied
 	// So test.log should be included in the zip
 	if !filesInZip["test.log"] {
-		t.Logf("test.log is not in zip, which is expected when .zeaburignore takes precedence")
+		t.Errorf("Expected test.log to be included in zip when .zeaburignore takes precedence over .gitignore")
 	}
 
 	// Check that .git directory is excluded
