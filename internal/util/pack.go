@@ -38,28 +38,72 @@ func PackZipWithoutGitIgnoreFiles() ([]byte, error) {
 		return flate.NewWriter(out, flate.BestCompression)
 	})
 
-	ignoreObject, err := gitignore.CompileIgnoreFile("./.gitignore")
+	// .zeaburignore has higher priority than .gitignore
+	// Try to load .zeaburignore first, fallback to .gitignore if not exists
+	var ignoreObject *gitignore.GitIgnore
+	var err error
+
+	ignoreObject, err = gitignore.CompileIgnoreFile("./.zeaburignore")
 	if err != nil {
-		if !errors.Is(err, fs.ErrNotExist) {
-			fmt.Println("Error compiling .gitignore file:", err)
+		if errors.Is(err, fs.ErrNotExist) {
+			// .zeaburignore not found, try .gitignore
+			ignoreObject, err = gitignore.CompileIgnoreFile("./.gitignore")
+			if err != nil {
+				if !errors.Is(err, fs.ErrNotExist) {
+					fmt.Println("Error compiling .gitignore file:", err)
+				}
+				ignoreObject = nil
+			}
+		} else {
+			fmt.Println("Error compiling .zeaburignore file:", err)
+			ignoreObject = nil
 		}
 	}
 
 	err = filepath.Walk(".", func(path string, info fs.FileInfo, err error) error {
 		if err != nil {
-			fmt.Println("Error accessing path:", path, err)
-			return err
+			// Skip files/directories that cannot be accessed (e.g., symlinks to non-existent targets)
+			if info != nil && info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
 		}
 
 		if path == "." {
 			return nil
 		}
 
-		if strings.HasPrefix(path, ".git") {
+		// Skip .git directory but not .gitignore or other .git* files
+		if path == ".git" || strings.HasPrefix(path, ".git"+string(filepath.Separator)) {
+			if info != nil && info.IsDir() {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 
-		if ignoreObject != nil && ignoreObject.MatchesPath(path) {
+		// Check ignore patterns before processing
+		if ignoreObject != nil {
+			// Normalize path separators to forward slashes for cross-platform gitignore matching
+			checkPath := filepath.ToSlash(path)
+			// For directories, we need to check with trailing slash for proper gitignore matching
+			if info.IsDir() {
+				checkPath = checkPath + "/"
+			}
+
+			if ignoreObject.MatchesPath(checkPath) {
+				// Skip ignored files/directories entirely
+				if info.IsDir() {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+		}
+
+		// Skip symlinks to avoid "is a directory" errors
+		if info.Mode()&os.ModeSymlink != 0 {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 
