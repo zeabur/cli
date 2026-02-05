@@ -1,0 +1,15 @@
+{
+  "name": "zeabur",
+  "version": "0.5.5",
+  "readme": "README.md",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "bin": {
+    "zeabur": "index.js"
+  },
+  "dependencies": {
+    "zeabur": "file:zeabur-0.5.5.tgz"
+  }
+}

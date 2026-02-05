@@ -37,3 +37,12 @@ Add Tests (using `internal/cmd/auth/login` as an example):
 1. `cd internal/cmd/auth/login`.
 2. Run `ginkgo bootstrap` to generate the suite file `login_suite_test.go`.
 3. Run `ginkgo generate login` to create the test file `login_test.go`.
+
+## Publishing
+
+1. Tag a new version in the `vx.x.x` format on GitHub.
+2. Run `goreleaser build --clean` to build the binaries for Windows, macOS, and Linux.
+3. Navigate to the `npm` directory and run `bash prepare.sh` to update the tag and copy the artifacts.
+4. Execute `node index.js` to verify that the CLI functions correctly.
+5. Use `npm pack` and `npm publish --dry-run` to confirm the package structure is accurate.
+6. Run `npm publish` with Zeabur credentials to publish it to NPM.
