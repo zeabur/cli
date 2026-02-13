@@ -95,6 +95,9 @@ func runDeleteNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		if !confirm {
 			return nil
 		}
+	} else if !f.Interactive && !opts.skipConfirm {
+		f.Log.Info("Please use --yes to confirm deletion without interactive prompt")
+		return nil
 	}
 
 	err := f.ApiClient.DeleteService(context.Background(), opts.id, opts.environmentID)
