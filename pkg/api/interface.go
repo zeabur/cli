@@ -68,6 +68,7 @@ type (
 		UploadZipToService(ctx context.Context, projectID string, serviceID string, environmentID string, zipBytes []byte) (*model.Service, error)
 		GetDNSName(ctx context.Context, serviceID string) (string, error)
 		UpdateImageTag(ctx context.Context, serviceID string, environmentID string, tag string) error
+		DeleteService(ctx context.Context, id string, environmentID string) error
 	}
 
 	VariableAPI interface {
