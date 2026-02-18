@@ -15,7 +15,6 @@ type Template struct {
 	PreviewURL    string    `graphql:"previewURL"`
 	Readme        string    `graphql:"readme"`
 	Tags          []string  `graphql:"tags"`
-	RawSpecYaml   string    `graphql:"rawSpecYaml"`
 }
 
 type TemplateConnection struct {
