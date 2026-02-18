@@ -20,6 +20,11 @@ However, when adding a **new subcommand**, you must:
 1. Create the command package under `internal/cmd/<parent>/<new>/`
 2. Register it in the parent command file (e.g., `internal/cmd/template/template.go`)
 
+## Release
+- Fully automated: push a `v*` tag → GitHub Actions runs GoReleaser → publishes GitHub Release + npm package
+- npm publish is handled in the same workflow (`.github/workflows/release.yml`), no manual steps needed
+- `npm/prepare.sh` supports `VERSION` env var (set by CI) or falls back to `gh api` for local use
+
 ## Conventions
 - Each subcommand lives in its own package: `internal/cmd/<parent>/<sub>/<sub>.go`
 - Commands support both interactive and non-interactive modes; if a flag is provided, skip the interactive prompt

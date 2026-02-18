@@ -40,9 +40,14 @@ Add Tests (using `internal/cmd/auth/login` as an example):
 
 ## Publishing
 
-1. Tag a new version in the `vx.x.x` format on GitHub.
-2. Run `goreleaser build --clean` to build the binaries for Windows, macOS, and Linux.
-3. Navigate to the `npm` directory and run `bash prepare.sh` to update the tag and copy the artifacts.
-4. Execute `node index.js` to verify that the CLI functions correctly.
-5. Use `npm pack` and `npm publish --dry-run` to confirm the package structure is accurate.
-6. Run `npm publish` with Zeabur credentials to publish it to NPM.
+Publishing is fully automated. Push a version tag and both GitHub Release and npm package will be published by CI:
+
+```shell
+git tag v0.x.x
+git push origin v0.x.x
+```
+
+The release workflow (`.github/workflows/release.yml`) will:
+1. Build binaries for all platforms via GoReleaser
+2. Create a GitHub Release with the binaries
+3. Publish the npm package `zeabur` with the matching version
