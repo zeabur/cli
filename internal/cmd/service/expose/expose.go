@@ -56,6 +56,15 @@ func runExpose(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runExposeNonInteractive(f *cmdutil.Factory, opts *Options) error {
+	if opts.environmentID == "" {
+		projectID := f.Config.GetContext().GetProject().GetID()
+		envID, err := util.ResolveEnvironmentID(f.ApiClient, projectID)
+		if err != nil {
+			return err
+		}
+		opts.environmentID = envID
+	}
+
 	err := paramCheck(opts)
 	if err != nil {
 		return err

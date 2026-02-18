@@ -8,37 +8,28 @@ import (
 	"github.com/zeabur/cli/pkg/model"
 )
 
-func (c *client) GetRuntimeLogs(ctx context.Context, deploymentID, serviceID, environmentID string) (model.Logs, error) {
+func (c *client) GetRuntimeLogs(ctx context.Context, serviceID, environmentID, deploymentID string) (model.Logs, error) {
+	if serviceID == "" {
+		return nil, fmt.Errorf("serviceID is required for runtime logs")
+	}
+
 	if deploymentID != "" {
-		return c.getRuntimeLogsByDeploymentID(ctx, deploymentID)
+		var query struct {
+			Logs model.Logs `graphql:"runtimeLogs(serviceID: $serviceID, environmentID: $environmentID, deploymentID: $deploymentID)"`
+		}
+
+		err := c.Query(ctx, &query, V{
+			"serviceID":     ObjectID(serviceID),
+			"environmentID": ObjectID(environmentID),
+			"deploymentID":  ObjectID(deploymentID),
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return query.Logs, nil
 	}
 
-	if serviceID != "" && environmentID != "" {
-		return c.getRuntimeLogsByServiceIDAndEnvironmentID(ctx, serviceID, environmentID)
-	}
-
-	return nil, fmt.Errorf("invalid arguments")
-}
-
-func (c *client) getRuntimeLogsByDeploymentID(ctx context.Context, deploymentID string) (model.Logs, error) {
-	var query struct {
-		Logs model.Logs `graphql:"runtimeLogs(deploymentID: $deploymentID)"`
-	}
-
-	err := c.Query(ctx, &query, V{
-		"deploymentID": ObjectID(deploymentID),
-	})
-
-	fmt.Println("query", query)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return query.Logs, nil
-}
-
-func (c *client) getRuntimeLogsByServiceIDAndEnvironmentID(ctx context.Context, serviceID, environmentID string) (model.Logs, error) {
 	var query struct {
 		Logs model.Logs `graphql:"runtimeLogs(serviceID: $serviceID, environmentID: $environmentID)"`
 	}
@@ -69,19 +60,27 @@ func (c *client) GetBuildLogs(ctx context.Context, deploymentID string) (model.L
 	return query.Logs, nil
 }
 
-func (c *client) WatchRuntimeLogs(ctx context.Context, deploymentID string) (<-chan model.Log, error) {
-	logs := make(chan model.Log, 100)
+func (c *client) WatchRuntimeLogs(ctx context.Context, projectID, serviceID, environmentID, deploymentID string) (<-chan model.Log, error) {
+	if deploymentID != "" {
+		return c.watchRuntimeLogsWithDeployment(projectID, serviceID, environmentID, deploymentID)
+	}
+	return c.watchRuntimeLogs(projectID, serviceID, environmentID)
+}
 
+func (c *client) watchRuntimeLogs(projectID, serviceID, environmentID string) (<-chan model.Log, error) {
+	logs := make(chan model.Log, 100)
 	subClient := c.sub
 
 	type subscription struct {
-		Log model.Log `graphql:"runtimeLogReceived(deploymentID: $deploymentID)"`
+		Log model.Log `graphql:"runtimeLogReceived(projectID: $projectID, serviceID: $serviceID, environmentID: $environmentID)"`
 	}
 
 	sub := subscription{}
 
 	_, err := subClient.Subscribe(&sub, V{
-		"deploymentID": ObjectID(deploymentID),
+		"projectID":     ObjectID(projectID),
+		"serviceID":     ObjectID(serviceID),
+		"environmentID": ObjectID(environmentID),
 	}, func(dataValue []byte, errValue error) error {
 		if errValue != nil {
 			fmt.Println(errValue)
@@ -93,7 +92,6 @@ func (c *client) WatchRuntimeLogs(ctx context.Context, deploymentID string) (<-c
 		}
 
 		data := subscription{}
-
 		err := jsonutil.UnmarshalGraphQL(dataValue, &data)
 		if err != nil {
 			fmt.Println(err)
@@ -101,7 +99,6 @@ func (c *client) WatchRuntimeLogs(ctx context.Context, deploymentID string) (<-c
 		}
 
 		logs <- data.Log
-
 		return nil
 	})
 	if err != nil {
@@ -109,27 +106,72 @@ func (c *client) WatchRuntimeLogs(ctx context.Context, deploymentID string) (<-c
 	}
 
 	go func() {
-		err := subClient.Run()
-		if err != nil {
-			return
-		}
+		defer close(logs)
+		_ = subClient.Run()
 	}()
 
 	return logs, nil
 }
 
-func (c *client) WatchBuildLogs(ctx context.Context, deploymentID string) (<-chan model.Log, error) {
+func (c *client) watchRuntimeLogsWithDeployment(projectID, serviceID, environmentID, deploymentID string) (<-chan model.Log, error) {
 	logs := make(chan model.Log, 100)
-
 	subClient := c.sub
 
 	type subscription struct {
-		Log model.Log `graphql:"buildLogReceived(deploymentID: $deploymentID)"`
+		Log model.Log `graphql:"runtimeLogReceived(projectID: $projectID, serviceID: $serviceID, environmentID: $environmentID, deploymentID: $deploymentID)"`
 	}
 
 	sub := subscription{}
 
 	_, err := subClient.Subscribe(&sub, V{
+		"projectID":     ObjectID(projectID),
+		"serviceID":     ObjectID(serviceID),
+		"environmentID": ObjectID(environmentID),
+		"deploymentID":  ObjectID(deploymentID),
+	}, func(dataValue []byte, errValue error) error {
+		if errValue != nil {
+			fmt.Println(errValue)
+			return nil
+		}
+
+		if dataValue == nil {
+			return nil
+		}
+
+		data := subscription{}
+		err := jsonutil.UnmarshalGraphQL(dataValue, &data)
+		if err != nil {
+			fmt.Println(err)
+			return nil
+		}
+
+		logs <- data.Log
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		defer close(logs)
+		_ = subClient.Run()
+	}()
+
+	return logs, nil
+}
+
+func (c *client) WatchBuildLogs(ctx context.Context, projectID, deploymentID string) (<-chan model.Log, error) {
+	logs := make(chan model.Log, 100)
+	subClient := c.sub
+
+	type subscription struct {
+		Log model.Log `graphql:"buildLogReceived(projectID: $projectID, deploymentID: $deploymentID)"`
+	}
+
+	sub := subscription{}
+
+	_, err := subClient.Subscribe(&sub, V{
+		"projectID":    ObjectID(projectID),
 		"deploymentID": ObjectID(deploymentID),
 	}, func(dataValue []byte, errValue error) error {
 		if errValue != nil {
@@ -142,7 +184,6 @@ func (c *client) WatchBuildLogs(ctx context.Context, deploymentID string) (<-cha
 		}
 
 		data := subscription{}
-
 		err := jsonutil.UnmarshalGraphQL(dataValue, &data)
 		if err != nil {
 			fmt.Println(err)
@@ -150,7 +191,6 @@ func (c *client) WatchBuildLogs(ctx context.Context, deploymentID string) (<-cha
 		}
 
 		logs <- data.Log
-
 		return nil
 	})
 	if err != nil {
@@ -158,10 +198,8 @@ func (c *client) WatchBuildLogs(ctx context.Context, deploymentID string) (<-cha
 	}
 
 	go func() {
-		err := subClient.Run()
-		if err != nil {
-			return
-		}
+		defer close(logs)
+		_ = subClient.Run()
 	}()
 
 	return logs, nil

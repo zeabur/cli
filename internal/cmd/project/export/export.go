@@ -49,16 +49,11 @@ func runExport(f *cmdutil.Factory, opts Options) error {
 	}
 
 	if opts.EnvironmentID == "" {
-		environments, err := f.ApiClient.ListEnvironments(context.Background(), opts.ProjectID)
+		envID, err := util.ResolveEnvironmentID(f.ApiClient, opts.ProjectID)
 		if err != nil {
-			return fmt.Errorf("list environments for project<%s> failed: %w", opts.ProjectID, err)
+			return err
 		}
-
-		if len(environments) == 0 {
-			return fmt.Errorf("no environment found in project %s", opts.ProjectID)
-		}
-
-		opts.EnvironmentID = environments[0].ID
+		opts.EnvironmentID = envID
 	}
 
 	exportedTemplate, err := f.ApiClient.ExportProject(context.Background(), opts.ProjectID, opts.EnvironmentID)

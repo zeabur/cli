@@ -91,14 +91,11 @@ type (
 	}
 
 	LogAPI interface {
-		// GetRuntimeLogs returns the logs of a service, two cases of parameters:
-		// 1. only deploymentID
-		// 2. deploymentID and serviceID
-		GetRuntimeLogs(ctx context.Context, deploymentID, serviceID, environmentID string) (model.Logs, error)
+		GetRuntimeLogs(ctx context.Context, serviceID, environmentID, deploymentID string) (model.Logs, error)
 		GetBuildLogs(ctx context.Context, deploymentID string) (model.Logs, error)
 
-		WatchRuntimeLogs(ctx context.Context, deploymentID string) (<-chan model.Log, error)
-		WatchBuildLogs(ctx context.Context, deploymentID string) (<-chan model.Log, error)
+		WatchRuntimeLogs(ctx context.Context, projectID, serviceID, environmentID, deploymentID string) (<-chan model.Log, error)
+		WatchBuildLogs(ctx context.Context, projectID, deploymentID string) (<-chan model.Log, error)
 	}
 
 	GitAPI interface {
