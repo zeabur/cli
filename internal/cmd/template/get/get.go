@@ -12,6 +12,7 @@ import (
 
 type Options struct {
 	code string
+	raw  bool
 }
 
 func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
@@ -26,6 +27,7 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&opts.code, "code", "c", "", "Template code")
+	cmd.Flags().BoolVar(&opts.raw, "raw", false, "Output raw YAML spec")
 
 	return cmd
 }
@@ -81,6 +83,8 @@ func getTemplate(f *cmdutil.Factory, opts Options) error {
 
 	if template == nil || template.Code == "" {
 		fmt.Println("Template not found")
+	} else if opts.raw {
+		fmt.Print(template.RawSpecYaml)
 	} else {
 		f.Printer.Table([]string{"Code", "Name", "Description"}, [][]string{{template.Code, template.Name, template.Description}})
 	}
