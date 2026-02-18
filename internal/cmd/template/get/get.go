@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
+	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
@@ -94,7 +96,14 @@ func getTemplate(f *cmdutil.Factory, opts Options) error {
 }
 
 func getTemplateRaw(code string) error {
-	resp, err := http.Get("https://zeabur.com/templates/" + code + ".yaml")
+	u := "https://zeabur.com/templates/" + url.PathEscape(code) + ".yaml"
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+	if err != nil {
+		return fmt.Errorf("failed to build request: %w", err)
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to fetch template YAML: %w", err)
 	}
