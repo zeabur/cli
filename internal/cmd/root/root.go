@@ -10,6 +10,7 @@ import (
 
 	authCmd "github.com/zeabur/cli/internal/cmd/auth"
 	completionCmd "github.com/zeabur/cli/internal/cmd/completion"
+	helpCmd "github.com/zeabur/cli/internal/cmd/help"
 	contextCmd "github.com/zeabur/cli/internal/cmd/context"
 	deployCmd "github.com/zeabur/cli/internal/cmd/deploy"
 	deploymentCmd "github.com/zeabur/cli/internal/cmd/deployment"
@@ -128,6 +129,9 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 	cmd.AddCommand(contextCmd.NewCmdContext(f))
 	cmd.AddCommand(completionCmd.NewCmdCompletion(f))
 	cmd.AddCommand(variableCmd.NewCmdVariable(f))
+
+	// replace default help command with our custom one that supports --all
+	cmd.SetHelpCommand(helpCmd.NewCmdHelp(cmd))
 
 	return cmd, nil
 }
