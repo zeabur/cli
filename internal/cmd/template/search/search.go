@@ -33,8 +33,6 @@ func NewCmdSearch(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.keyword, "keyword", "k", "", "Keyword to search in template name and description")
-
 	return cmd
 }
 

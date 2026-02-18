@@ -70,7 +70,6 @@ func printFlags(cmd *cobra.Command, fullName string) {
 
 	if len(flags) > 0 {
 		fmt.Println(strings.Join(flags, "\n"))
+		fmt.Println()
 	}
-
-	fmt.Println()
 }

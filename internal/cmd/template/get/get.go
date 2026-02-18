@@ -53,6 +53,9 @@ func runGetInteractive(f *cmdutil.Factory, opts Options) error {
 		opts.code = code
 	}
 
+	if err := paramCheck(opts); err != nil {
+		return err
+	}
 	return getTemplate(f, opts)
 }
 
