@@ -69,6 +69,15 @@ func runGetInteractive(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runGetNonInteractive(f *cmdutil.Factory, opts *Options) (err error) {
+	if opts.deploymentID == "" && opts.environmentID == "" {
+		projectID := f.Config.GetContext().GetProject().GetID()
+		envID, resolveErr := util.ResolveEnvironmentID(f.ApiClient, projectID)
+		if resolveErr != nil {
+			return resolveErr
+		}
+		opts.environmentID = envID
+	}
+
 	if err = paramCheck(opts); err != nil {
 		return err
 	}

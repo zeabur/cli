@@ -41,6 +41,7 @@ func NewGraphQLClientWithToken(token string) *graphql.Client {
 
 func NewSubscriptionClient(token string) *graphql.SubscriptionClient {
 	return graphql.NewSubscriptionClient(WSSZeaburGraphQLAPIEndpoint).
+		WithProtocol(graphql.GraphQLWS).
 		WithConnectionParams(map[string]any{
 			"authToken": token,
 		})

@@ -1,6 +1,8 @@
 package api
 
 import (
+	"strings"
+
 	"github.com/zeabur/cli/pkg/model"
 )
 
@@ -13,12 +15,24 @@ func (id MapString) GetGraphQLType() string {
 	return `Map`
 }
 
-// ObjectID is the alias ofskip, limit = normalizePagination(skip, limit) string, it's used to represent the ObjectID defined in GraphQL schema.
-type ObjectID string
+// objectID represents the ObjectID defined in GraphQL schema.
+type objectID string
 
-// GetGraphQLType returns the GraphQL type name of ObjectID.
-func (id ObjectID) GetGraphQLType() string {
+// GetGraphQLType returns the GraphQL type name of objectID.
+func (id objectID) GetGraphQLType() string {
 	return `ObjectID`
+}
+
+// ObjectID creates an objectID from a string, automatically stripping
+// any known prefix (e.g. "service-", "project-", "environment-", "deployment-").
+func ObjectID(id string) objectID {
+	if idx := strings.LastIndex(id, "-"); idx != -1 {
+		hex := id[idx+1:]
+		if len(hex) == 24 {
+			return objectID(hex)
+		}
+	}
+	return objectID(id)
 }
 
 type ServiceTemplate string

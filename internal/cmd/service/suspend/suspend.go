@@ -68,6 +68,15 @@ func runSuspendInteractive(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runSuspendNonInteractive(f *cmdutil.Factory, opts *Options) error {
+	if opts.environmentID == "" {
+		projectID := f.Config.GetContext().GetProject().GetID()
+		envID, err := util.ResolveEnvironmentID(f.ApiClient, projectID)
+		if err != nil {
+			return err
+		}
+		opts.environmentID = envID
+	}
+
 	if err := checkParams(opts); err != nil {
 		return err
 	}
