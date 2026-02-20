@@ -8,7 +8,6 @@ import (
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
-	"github.com/zeabur/cli/internal/util"
 	"github.com/zeabur/cli/pkg/constant"
 )
 
@@ -25,20 +24,15 @@ type Options struct {
 func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}
 
-	zctx := f.Config.GetContext()
-
 	cmd := &cobra.Command{
 		Use:   "deploy",
 		Short: "Deploy a service",
-		PreRunE: util.RunEChain(
-			util.NeedProjectContextWhenNonInteractive(f),
-			util.DefaultIDNameByContext(zctx.GetProject(), &opts.projectID, new(string)),
-		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDeploy(f, opts)
 		},
 	}
 
+	cmd.Flags().StringVar(&opts.projectID, "project-id", "", "Project ID")
 	cmd.Flags().StringVar(&opts.name, "name", "", "Service Name")
 	cmd.Flags().StringVar(&opts.template, "template", "", "Service template")
 	cmd.Flags().StringVar(&opts.marketplaceCode, "marketplace-code", "", "Marketplace item code")
@@ -58,6 +52,10 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runDeployNonInteractive(f *cmdutil.Factory, opts *Options) error {
+	if opts.projectID == "" {
+		return fmt.Errorf("--project-id is required")
+	}
+
 	err := paramCheck(opts)
 	if err != nil {
 		return err
@@ -77,7 +75,7 @@ func runDeployNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		f.Log.Infof("Service %s created", service.Name)
 		return nil
 	case "GIT":
-		_, err = f.ApiClient.CreateService(context.Background(), f.Config.GetContext().GetProject().GetID(), opts.name, opts.repoID, opts.branchName)
+		_, err = f.ApiClient.CreateService(context.Background(), opts.projectID, opts.name, opts.repoID, opts.branchName)
 		if err != nil {
 			return fmt.Errorf("create service failed: %w", err)
 		}
@@ -91,8 +89,10 @@ func runDeployNonInteractive(f *cmdutil.Factory, opts *Options) error {
 
 func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 	// fill project id if not set by asking user
-	if _, err := f.ParamFiller.Project(&opts.projectID); err != nil {
-		return err
+	if opts.projectID == "" {
+		if _, err := f.ParamFiller.Project(&opts.projectID); err != nil {
+			return err
+		}
 	}
 
 	if opts.template == "" {
@@ -210,7 +210,7 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 		)
 		s.Start()
 
-		_, err = f.ApiClient.CreateService(context.Background(), f.Config.GetContext().GetProject().GetID(), opts.name, opts.repoID, opts.branchName)
+		_, err = f.ApiClient.CreateService(context.Background(), opts.projectID, opts.name, opts.repoID, opts.branchName)
 		if err != nil {
 			return err
 		}

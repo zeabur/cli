@@ -24,16 +24,10 @@ type Options struct {
 
 func NewCmdTag(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}
-	zctx := f.Config.GetContext()
 
 	cmd := &cobra.Command{
 		Use:   "tag",
 		Short: "Update image tag of a prebuilt service",
-		PreRunE: util.RunEChain(
-			util.NeedProjectContextWhenNonInteractive(f),
-			util.DefaultIDNameByContext(zctx.GetService(), &opts.id, &opts.name),
-			util.DefaultIDByContext(zctx.GetEnvironment(), &opts.environmentID),
-		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runUpdate(f, opts)
 		},
@@ -83,26 +77,28 @@ func runInteractive(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runNonInteractive(f *cmdutil.Factory, opts *Options) error {
-	if opts.environmentID == "" {
-		projectID := f.Config.GetContext().GetProject().GetID()
-		envID, err := util.ResolveEnvironmentID(f.ApiClient, projectID)
-		if err != nil {
-			return err
-		}
-		opts.environmentID = envID
-	}
-
-	if err := checkParams(opts); err != nil {
-		return err
-	}
-
-	// if name is set, get service id by name
 	if opts.id == "" && opts.name != "" {
 		service, err := util.GetServiceByName(f.Config, f.ApiClient, opts.name)
 		if err != nil {
 			return err
 		}
 		opts.id = service.ID
+	}
+
+	if opts.id == "" {
+		return fmt.Errorf("--id or --name is required")
+	}
+
+	if opts.environmentID == "" {
+		envID, err := util.ResolveEnvironmentIDByServiceID(f.ApiClient, opts.id)
+		if err != nil {
+			return err
+		}
+		opts.environmentID = envID
+	}
+
+	if opts.tag == "" {
+		return fmt.Errorf("--tag is required")
 	}
 
 	idOrName := opts.name
@@ -124,22 +120,6 @@ func runNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	err := f.ApiClient.UpdateImageTag(context.Background(), opts.id, opts.environmentID, opts.tag)
 	if err != nil {
 		return err
-	}
-
-	return nil
-}
-
-func checkParams(opts *Options) error {
-	if opts.id == "" && opts.name == "" {
-		return fmt.Errorf("--id or --name is required")
-	}
-
-	if opts.environmentID == "" {
-		return fmt.Errorf("--env-id is required")
-	}
-
-	if opts.tag == "" {
-		return fmt.Errorf("--tag is required")
 	}
 
 	return nil

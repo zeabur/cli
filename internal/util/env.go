@@ -22,7 +22,7 @@ func AddEnvOfServiceParam(cmd *cobra.Command, id *string) {
 // Every project has exactly one environment since environments are deprecated.
 func ResolveEnvironmentID(client api.Client, projectID string) (string, error) {
 	if projectID == "" {
-		return "", fmt.Errorf("project ID is required to resolve environment ID; please set project context with `zeabur context set project`")
+		return "", fmt.Errorf("project ID is required to resolve environment ID")
 	}
 
 	environments, err := client.ListEnvironments(context.Background(), projectID)
@@ -35,4 +35,17 @@ func ResolveEnvironmentID(client api.Client, projectID string) (string, error) {
 	}
 
 	return environments[0].ID, nil
+}
+
+// ResolveEnvironmentIDByServiceID fetches the service, finds its project,
+// and resolves the environment ID from that project.
+func ResolveEnvironmentIDByServiceID(client api.Client, serviceID string) (string, error) {
+	service, err := client.GetService(context.Background(), serviceID, "", "", "")
+	if err != nil {
+		return "", fmt.Errorf("get service failed: %w", err)
+	}
+	if service.Project == nil || service.Project.ID == "" {
+		return "", fmt.Errorf("service has no associated project")
+	}
+	return ResolveEnvironmentID(client, service.Project.ID)
 }

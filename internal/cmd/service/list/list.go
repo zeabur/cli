@@ -15,10 +15,7 @@ type Options struct {
 }
 
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
-	opts := &Options{
-		projectID: f.Config.GetContext().GetProject().GetID(),
-	}
-	ctx := f.Config.GetContext()
+	opts := &Options{}
 
 	cmd := &cobra.Command{
 		Use:     "list",
@@ -26,16 +23,12 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		Long:    `List services, if env-id is provided, list services in the environment in detail`,
 		Args:    cobra.NoArgs,
 		Aliases: []string{"ls"},
-		PreRunE: util.RunEChain(
-			util.NeedProjectContextWhenNonInteractive(f, &opts.projectID),
-			util.DefaultIDByContext(ctx.GetEnvironment(), &opts.environmentID),
-		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runList(f, opts)
 		},
 	}
 
-	cmd.Flags().StringVar(&opts.projectID, "project-id", opts.projectID, "Project ID")
+	cmd.Flags().StringVar(&opts.projectID, "project-id", "", "Project ID")
 	util.AddEnvOfServiceParam(cmd, &opts.environmentID)
 
 	return cmd
@@ -50,30 +43,24 @@ func runList(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runListInteractive(f *cmdutil.Factory, opts *Options) error {
-	// if project id is not set by flag, fetch from context
 	if opts.projectID == "" {
-		opts.projectID = f.Config.GetContext().GetProject().GetID()
-	}
-
-	// if project id is still not set, prompt to select one
-	if _, err := f.ParamFiller.Project(&opts.projectID); err != nil {
-		return err
+		if _, err := f.ParamFiller.Project(&opts.projectID); err != nil {
+			return err
+		}
 	}
 
 	return runListNonInteractive(f, opts)
 }
 
 func runListNonInteractive(f *cmdutil.Factory, opts *Options) error {
-	err := paramCheck(opts)
-	if err != nil {
-		return err
+	if opts.projectID == "" {
+		return fmt.Errorf("--project-id is required")
 	}
 
 	if opts.environmentID == "" {
 		return listServicesBrief(f, opts.projectID)
-	} else {
-		return listServicesDetailByEnvironment(f, opts.projectID, opts.environmentID)
 	}
+	return listServicesDetailByEnvironment(f, opts.projectID, opts.environmentID)
 }
 
 func listServicesBrief(f *cmdutil.Factory, projectID string) error {
@@ -104,14 +91,6 @@ func listServicesDetailByEnvironment(f *cmdutil.Factory, projectID, environmentI
 	}
 
 	f.Printer.Table(services.Header(), services.Rows())
-
-	return nil
-}
-
-func paramCheck(opts *Options) error {
-	if opts.projectID == "" {
-		return fmt.Errorf("project-id is required")
-	}
 
 	return nil
 }

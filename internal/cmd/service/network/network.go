@@ -20,20 +20,13 @@ type Options struct {
 func NewCmdPrivateNetwork(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}
 
-	zctx := f.Config.GetContext()
-
 	cmd := &cobra.Command{
 		Use:     "network",
 		Short:   "Network information for service",
 		Long:    `Network information for service`,
 		Aliases: []string{"net"},
-		PreRunE: util.RunEChain(
-			util.NeedProjectContextWhenNonInteractive(f),
-			util.DefaultIDNameByContext(zctx.GetService(), &opts.id, &opts.name),
-			util.DefaultIDByContext(zctx.GetEnvironment(), &opts.environmentID),
-		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runInstruction(f, opts)
+			return runNetwork(f, opts)
 		},
 	}
 
@@ -43,20 +36,18 @@ func NewCmdPrivateNetwork(f *cmdutil.Factory) *cobra.Command {
 	return cmd
 }
 
-func runInstruction(f *cmdutil.Factory, opts *Options) error {
-	zctx := f.Config.GetContext()
-	if _, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
-		ProjectCtx:    zctx,
-		ServiceID:     &opts.id,
-		ServiceName:   &opts.name,
-		EnvironmentID: &opts.environmentID,
-		CreateNew:     false,
-	}); err != nil {
-		return err
-	}
-
-	if err := paramCheck(opts); err != nil {
-		return err
+func runNetwork(f *cmdutil.Factory, opts *Options) error {
+	if f.Interactive && opts.id == "" && opts.name == "" {
+		zctx := f.Config.GetContext()
+		if _, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
+			ProjectCtx:    zctx,
+			ServiceID:     &opts.id,
+			ServiceName:   &opts.name,
+			EnvironmentID: &opts.environmentID,
+			CreateNew:     false,
+		}); err != nil {
+			return err
+		}
 	}
 
 	if opts.id == "" && opts.name != "" {
@@ -65,6 +56,10 @@ func runInstruction(f *cmdutil.Factory, opts *Options) error {
 			return err
 		}
 		opts.id = service.ID
+	}
+
+	if opts.id == "" {
+		return fmt.Errorf("service id or name is required")
 	}
 
 	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
@@ -82,14 +77,6 @@ func runInstruction(f *cmdutil.Factory, opts *Options) error {
 	s.Stop()
 
 	f.Log.Infof("Private DNS name for %s: %s", opts.name, dnsName+".zeabur.internal")
-
-	return nil
-}
-
-func paramCheck(opts *Options) error {
-	if opts.id == "" && opts.name == "" {
-		return fmt.Errorf("service id or name is required")
-	}
 
 	return nil
 }

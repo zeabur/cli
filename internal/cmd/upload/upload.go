@@ -27,7 +27,6 @@ func NewCmdUpload(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "upload",
 		Short:   "Upload local project to Zeabur",
-		PreRunE: util.NeedProjectContextWhenNonInteractive(f),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runUpload(f, opts)
 		},
