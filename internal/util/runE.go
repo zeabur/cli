@@ -8,9 +8,13 @@ import (
 	"github.com/zeabur/cli/pkg/zcontext"
 )
 
-// NeedProjectContextWhenNonInteractive checks if the project context is set in the non-interactive mode
-func NeedProjectContextWhenNonInteractive(f *cmdutil.Factory) CobraRunE {
+// NeedProjectContextWhenNonInteractive checks if the project context is set in the non-interactive mode.
+// If overrideID is provided and non-empty, the check is skipped (the caller already has a project ID from a flag).
+func NeedProjectContextWhenNonInteractive(f *cmdutil.Factory, overrideID ...*string) CobraRunE {
 	return func(cmd *cobra.Command, args []string) error {
+		if len(overrideID) > 0 && overrideID[0] != nil && *overrideID[0] != "" {
+			return nil
+		}
 		if !f.Interactive && f.Config.GetContext().GetProject().Empty() {
 			return errors.New("please run <zeabur context set project> first")
 		}

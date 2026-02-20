@@ -6,15 +6,21 @@ import (
 	"github.com/zeabur/cli/pkg/util"
 )
 
+// TemplateServiceRef is a minimal reference to a service in a template, used for GraphQL queries.
+type TemplateServiceRef struct {
+	Name string `graphql:"name"`
+}
+
 type Template struct {
-	CreatedAt     time.Time `graphql:"createdAt"`
-	DeploymentCnt int       `graphql:"deploymentCnt"`
-	Code          string    `graphql:"code"`
-	Description   string    `graphql:"description"`
-	Name          string    `graphql:"name"`
-	PreviewURL    string    `graphql:"previewURL"`
-	Readme        string    `graphql:"readme"`
-	Tags          []string  `graphql:"tags"`
+	CreatedAt     time.Time            `graphql:"createdAt"`
+	DeploymentCnt int                  `graphql:"deploymentCnt"`
+	Code          string               `graphql:"code"`
+	Description   string               `graphql:"description"`
+	Name          string               `graphql:"name"`
+	PreviewURL    string               `graphql:"previewURL"`
+	Readme        string               `graphql:"readme"`
+	Tags          []string             `graphql:"tags"`
+	Services      []TemplateServiceRef `graphql:"services"`
 }
 
 type TemplateConnection struct {

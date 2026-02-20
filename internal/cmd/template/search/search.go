@@ -62,17 +62,41 @@ func runSearch(f *cmdutil.Factory, opts Options) error {
 	s.Stop()
 
 	keyword := strings.ToLower(opts.keyword)
-	var matched model.Templates
+
+	type scoredTemplate struct {
+		template *model.Template
+		score    int // higher = more relevant
+	}
+
+	var matched []scoredTemplate
 	for _, t := range allTemplates {
 		name := strings.ToLower(t.Name)
 		desc := strings.ToLower(t.Description)
-		if strings.Contains(name, keyword) || strings.Contains(desc, keyword) {
-			matched = append(matched, t)
+
+		score := 0
+		if strings.Contains(name, keyword) {
+			score = 3
+		} else if strings.Contains(desc, keyword) {
+			score = 2
+		} else {
+			for _, svc := range t.Services {
+				if strings.Contains(strings.ToLower(svc.Name), keyword) {
+					score = 1
+					break
+				}
+			}
+		}
+
+		if score > 0 {
+			matched = append(matched, scoredTemplate{template: t, score: score})
 		}
 	}
 
 	sort.Slice(matched, func(i, j int) bool {
-		return matched[i].DeploymentCnt > matched[j].DeploymentCnt
+		if matched[i].score != matched[j].score {
+			return matched[i].score > matched[j].score
+		}
+		return matched[i].template.DeploymentCnt > matched[j].template.DeploymentCnt
 	})
 
 	if len(matched) == 0 {
@@ -82,7 +106,8 @@ func runSearch(f *cmdutil.Factory, opts Options) error {
 
 	header := []string{"Code", "Name", "Description", "Deployments"}
 	rows := make([][]string, 0, len(matched))
-	for _, t := range matched {
+	for _, m := range matched {
+		t := m.template
 		rows = append(rows, []string{t.Code, t.Name, t.Description, strconv.Itoa(t.DeploymentCnt)})
 	}
 	f.Printer.Table(header, rows)

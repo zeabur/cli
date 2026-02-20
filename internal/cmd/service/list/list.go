@@ -27,7 +27,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		Args:    cobra.NoArgs,
 		Aliases: []string{"ls"},
 		PreRunE: util.RunEChain(
-			util.NeedProjectContextWhenNonInteractive(f),
+			util.NeedProjectContextWhenNonInteractive(f, &opts.projectID),
 			util.DefaultIDByContext(ctx.GetEnvironment(), &opts.environmentID),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -35,6 +35,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
+	cmd.Flags().StringVar(&opts.projectID, "project-id", opts.projectID, "Project ID")
 	util.AddEnvOfServiceParam(cmd, &opts.environmentID)
 
 	return cmd
@@ -49,10 +50,12 @@ func runList(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runListInteractive(f *cmdutil.Factory, opts *Options) error {
-	// fetch project id from context
-	opts.projectID = f.Config.GetContext().GetProject().GetID()
+	// if project id is not set by flag, fetch from context
+	if opts.projectID == "" {
+		opts.projectID = f.Config.GetContext().GetProject().GetID()
+	}
 
-	// if project id is not set, prompt to select one
+	// if project id is still not set, prompt to select one
 	if _, err := f.ParamFiller.Project(&opts.projectID); err != nil {
 		return err
 	}
