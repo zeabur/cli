@@ -20,22 +20,16 @@ type Options struct {
 
 func NewCmdExpose(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}
-	zctx := f.Config.GetContext()
 
 	cmd := &cobra.Command{
 		Use:   "expose",
 		Short: "Expose a service temporarily",
 		Long: `Expose a service temporarily, default 3600 seconds.
 example:
-      zeabur service expose # cli will try to get service from context or prompt to select one
+      zeabur service expose # cli will prompt to select a service
 	  zeabur service expose --id xxxxx --env-id xxxx # use id and env-id to expose service
-      zeabur service expose --name xxxxx --env-id xxxx # if project context is set, use name, env-id to expose service
+      zeabur service expose --name xxxxx --env-id xxxx # use name, env-id to expose service
 `,
-		PreRunE: util.RunEChain(
-			util.NeedProjectContextWhenNonInteractive(f),
-			util.DefaultIDNameByContext(zctx.GetService(), &opts.id, &opts.name),
-			util.DefaultIDByContext(zctx.GetEnvironment(), &opts.environmentID),
-		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runExpose(f, opts)
 		},
@@ -56,23 +50,41 @@ func runExpose(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runExposeNonInteractive(f *cmdutil.Factory, opts *Options) error {
+	if opts.id == "" && opts.name != "" {
+		service, err := util.GetServiceByName(f.Config, f.ApiClient, opts.name)
+		if err != nil {
+			return err
+		}
+		opts.id = service.ID
+	}
+
+	if opts.id == "" {
+		return fmt.Errorf("please specify --id or --name")
+	}
+
+	// Resolve environment and project from the service
+	service, err := f.ApiClient.GetService(context.Background(), opts.id, "", "", "")
+	if err != nil {
+		return fmt.Errorf("get service failed: %w", err)
+	}
+
 	if opts.environmentID == "" {
-		projectID := f.Config.GetContext().GetProject().GetID()
-		envID, err := util.ResolveEnvironmentID(f.ApiClient, projectID)
+		if service.Project == nil || service.Project.ID == "" {
+			return fmt.Errorf("service has no associated project")
+		}
+		envID, err := util.ResolveEnvironmentID(f.ApiClient, service.Project.ID)
 		if err != nil {
 			return err
 		}
 		opts.environmentID = envID
 	}
 
-	err := paramCheck(opts)
-	if err != nil {
-		return err
+	projectID := ""
+	if service.Project != nil {
+		projectID = service.Project.ID
 	}
 
 	ctx := context.Background()
-	projectID := f.Config.GetContext().GetProject().GetID()
-
 	tempTCPPort, err := f.ApiClient.ExposeService(ctx, opts.id, opts.environmentID, projectID, opts.name)
 	if err != nil {
 		return fmt.Errorf("failed to expose service: %w", err)
@@ -96,16 +108,4 @@ func runExposeInteractive(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	return runExposeNonInteractive(f, opts)
-}
-
-func paramCheck(opts *Options) error {
-	if opts.id == "" && opts.name == "" {
-		return fmt.Errorf("please specify --id or --name")
-	}
-
-	if opts.environmentID == "" {
-		return fmt.Errorf("please specify --env-id")
-	}
-
-	return nil
 }

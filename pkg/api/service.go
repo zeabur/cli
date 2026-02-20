@@ -530,3 +530,20 @@ func (c *client) DeleteService(ctx context.Context, id string, environmentID str
 
 	return err
 }
+
+func (c *client) ExecuteCommand(ctx context.Context, serviceID string, environmentID string, command []string) (*model.CommandResult, error) {
+	var mutation struct {
+		ExecuteCommand model.CommandResult `graphql:"executeCommand(serviceID: $serviceID, environmentID: $environmentID, command: $command)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{
+		"serviceID":     ObjectID(serviceID),
+		"environmentID": ObjectID(environmentID),
+		"command":       command,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &mutation.ExecuteCommand, nil
+}

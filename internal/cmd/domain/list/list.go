@@ -20,7 +20,6 @@ type Options struct {
 
 func NewCmdListDomains(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}
-	zctx := f.Config.GetContext()
 
 	cmd := &cobra.Command{
 		Use:     "list",
@@ -28,11 +27,6 @@ func NewCmdListDomains(f *cmdutil.Factory) *cobra.Command {
 		Long:    `List domains of a service`,
 		Args:    cobra.NoArgs,
 		Aliases: []string{"ls"},
-		PreRunE: util.RunEChain(
-			util.NeedProjectContextWhenNonInteractive(f),
-			util.DefaultIDNameByContext(zctx.GetService(), &opts.id, &opts.name),
-			util.DefaultIDByContext(zctx.GetEnvironment(), &opts.environmentID),
-		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runListDomains(f, opts)
 		},
@@ -69,16 +63,24 @@ func runListDomainsInteractive(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runListDomainsNonInteractive(f *cmdutil.Factory, opts *Options) error {
-	zctx := f.Config.GetContext()
+	if opts.id == "" && opts.name != "" {
+		service, err := util.GetServiceByName(f.Config, f.ApiClient, opts.name)
+		if err != nil {
+			return err
+		}
+		opts.id = service.ID
+	}
 
-	if _, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
-		ProjectCtx:    zctx,
-		ServiceID:     &opts.id,
-		ServiceName:   &opts.name,
-		EnvironmentID: &opts.environmentID,
-		CreateNew:     false,
-	}); err != nil {
-		return err
+	if opts.id == "" {
+		return fmt.Errorf("--id or --name is required")
+	}
+
+	if opts.environmentID == "" {
+		envID, err := util.ResolveEnvironmentIDByServiceID(f.ApiClient, opts.id)
+		if err != nil {
+			return err
+		}
+		opts.environmentID = envID
 	}
 
 	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,

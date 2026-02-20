@@ -24,8 +24,6 @@ type Options struct {
 func NewCmdMetric(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}
 
-	zctx := f.Config.GetContext()
-
 	cmd := &cobra.Command{
 		Use:   "metric [CPU|MEMORY|NETWORK]",
 		Short: "Show metric of a service",
@@ -36,11 +34,6 @@ func NewCmdMetric(f *cmdutil.Factory) *cobra.Command {
 			string(model.MetricTypeMemory),
 			string(model.MetricTypeNetwork),
 		},
-		PreRunE: util.RunEChain(
-			util.NeedProjectContextWhenNonInteractive(f),
-			util.DefaultIDNameByContext(zctx.GetService(), &opts.id, &opts.name),
-			util.DefaultIDByContext(zctx.GetEnvironment(), &opts.environmentID),
-		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.metricType = args[0]
 			return runMetric(f, opts)
@@ -79,20 +72,6 @@ func runMetricInteractive(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runMetricNonInteractive(f *cmdutil.Factory, opts *Options) error {
-	if opts.environmentID == "" {
-		projectID := f.Config.GetContext().GetProject().GetID()
-		envID, err := util.ResolveEnvironmentID(f.ApiClient, projectID)
-		if err != nil {
-			return err
-		}
-		opts.environmentID = envID
-	}
-
-	if err := paramCheck(opts); err != nil {
-		return err
-	}
-
-	// if name is set, get service id by name
 	if opts.id == "" && opts.name != "" {
 		service, err := util.GetServiceByName(f.Config, f.ApiClient, opts.name)
 		if err != nil {
@@ -101,14 +80,40 @@ func runMetricNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		opts.id = service.ID
 	}
 
-	upperCaseMetricType := strings.ToUpper(opts.metricType)
+	if opts.id == "" {
+		return fmt.Errorf("--id or --name is required")
+	}
 
+	// Resolve environment and project from the service
+	service, err := f.ApiClient.GetService(context.Background(), opts.id, "", "", "")
+	if err != nil {
+		return fmt.Errorf("get service failed: %w", err)
+	}
+
+	projectID := ""
+	if service.Project != nil {
+		projectID = service.Project.ID
+	}
+
+	if opts.environmentID == "" {
+		envID, err := util.ResolveEnvironmentID(f.ApiClient, projectID)
+		if err != nil {
+			return err
+		}
+		opts.environmentID = envID
+	}
+
+	if opts.metricType == "" {
+		return fmt.Errorf("metric type is required")
+	}
+
+	upperCaseMetricType := strings.ToUpper(opts.metricType)
 	mt := model.MetricType(opts.metricType)
 
 	startTime := time.Now().Add(-time.Duration(opts.hour) * time.Hour)
 	endTime := time.Now()
 
-	metrics, err := f.ApiClient.ServiceMetric(context.Background(), opts.id, f.Config.GetContext().GetProject().GetID(), opts.environmentID, upperCaseMetricType, startTime, endTime)
+	metrics, err := f.ApiClient.ServiceMetric(context.Background(), opts.id, projectID, opts.environmentID, upperCaseMetricType, startTime, endTime)
 	if err != nil {
 		return fmt.Errorf("get service metric failed: %w", err)
 	}
@@ -144,22 +149,6 @@ func runMetricNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	data := [][]string{{mt.WithMeasureUnit(sum), mt.WithMeasureUnit(avg), mt.WithMeasureUnit(max), mt.WithMeasureUnit(min)}}
 
 	f.Printer.Table(header, data)
-
-	return nil
-}
-
-func paramCheck(opts *Options) error {
-	if opts.id == "" && opts.name == "" {
-		return fmt.Errorf("--id or --name is required")
-	}
-
-	if opts.environmentID == "" {
-		return fmt.Errorf("--env-id is required")
-	}
-
-	if opts.metricType == "" {
-		return fmt.Errorf("metric type is required")
-	}
 
 	return nil
 }

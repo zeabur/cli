@@ -33,21 +33,18 @@ func NewCmdLog(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}
 
 	cmd := &cobra.Command{
-		Use:     "log",
-		Short:   "Get deployment logs, if deployment-id is not specified, use serviceID/serviceName and environmentID to get the deployment",
-		PreRunE: util.NeedProjectContextWhenNonInteractive(f),
+		Use:   "log",
+		Short: "Get deployment logs, if deployment-id is not specified, use serviceID/serviceName and environmentID to get the deployment",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runLog(f, opts)
 		},
 	}
 
-	zctx := f.Config.GetContext()
-
-	cmd.Flags().StringVar(&opts.projectID, "project-id", zctx.GetProject().GetID(), "Project ID")
+	cmd.Flags().StringVar(&opts.projectID, "project-id", "", "Project ID")
 	cmd.Flags().StringVar(&opts.deploymentID, "deployment-id", "", "Deployment ID")
-	cmd.Flags().StringVar(&opts.serviceID, "service-id", zctx.GetService().GetID(), "Service ID")
-	cmd.Flags().StringVar(&opts.serviceName, "service-name", zctx.GetService().GetName(), "Service Name")
-	cmd.Flags().StringVar(&opts.environmentID, "env-id", zctx.GetEnvironment().GetID(), "Environment ID")
+	cmd.Flags().StringVar(&opts.serviceID, "service-id", "", "Service ID")
+	cmd.Flags().StringVar(&opts.serviceName, "service-name", "", "Service Name")
+	cmd.Flags().StringVar(&opts.environmentID, "env-id", "", "Environment ID")
 	cmd.Flags().StringVarP(&opts.logType, "type", "t", logTypeRuntime, "Log type, runtime or build")
 	cmd.Flags().BoolVarP(&opts.watch, "watch", "w", false, "Watch logs")
 
@@ -63,13 +60,8 @@ func runLog(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runLogInteractive(f *cmdutil.Factory, opts *Options) error {
-	zctx := f.Config.GetContext()
-
-	if opts.projectID == "" {
-		opts.projectID = zctx.GetProject().GetID()
-	}
-
 	if opts.deploymentID == "" {
+		zctx := f.Config.GetContext()
 		_, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
 			ProjectCtx:    zctx,
 			ServiceID:     &opts.serviceID,
@@ -95,8 +87,7 @@ func runLogNonInteractive(f *cmdutil.Factory, opts *Options) (err error) {
 		opts.serviceID = service.ID
 	}
 
-	// When serviceID is available, always resolve projectID and environmentID from the service
-	// instead of relying on context (which may point to a different project).
+	// When serviceID is available, resolve projectID and environmentID from the service
 	if opts.serviceID != "" {
 		service, err := f.ApiClient.GetService(context.Background(), opts.serviceID, "", "", "")
 		if err != nil {
@@ -105,24 +96,13 @@ func runLogNonInteractive(f *cmdutil.Factory, opts *Options) (err error) {
 		if service.Project != nil {
 			opts.projectID = service.Project.ID
 		}
-		envID, resolveErr := util.ResolveEnvironmentID(f.ApiClient, opts.projectID)
-		if resolveErr != nil {
-			return resolveErr
+		if opts.environmentID == "" {
+			envID, resolveErr := util.ResolveEnvironmentID(f.ApiClient, opts.projectID)
+			if resolveErr != nil {
+				return resolveErr
+			}
+			opts.environmentID = envID
 		}
-		opts.environmentID = envID
-	}
-
-	// Fallback: resolve environmentID from context project if still empty
-	if opts.deploymentID == "" && opts.environmentID == "" {
-		projectID := opts.projectID
-		if projectID == "" {
-			projectID = f.Config.GetContext().GetProject().GetID()
-		}
-		envID, resolveErr := util.ResolveEnvironmentID(f.ApiClient, projectID)
-		if resolveErr != nil {
-			return resolveErr
-		}
-		opts.environmentID = envID
 	}
 
 	if err = paramCheck(opts); err != nil {

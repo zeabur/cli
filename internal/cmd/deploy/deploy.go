@@ -33,7 +33,6 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "deploy",
 		Short:   "Deploy local project to Zeabur with one command",
-		PreRunE: util.NeedProjectContextWhenNonInteractive(f),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDeploy(f, opts)
 		},

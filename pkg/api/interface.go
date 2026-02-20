@@ -69,6 +69,7 @@ type (
 		GetDNSName(ctx context.Context, serviceID string) (string, error)
 		UpdateImageTag(ctx context.Context, serviceID string, environmentID string, tag string) error
 		DeleteService(ctx context.Context, id string, environmentID string) error
+		ExecuteCommand(ctx context.Context, serviceID string, environmentID string, command []string) (*model.CommandResult, error)
 	}
 
 	VariableAPI interface {

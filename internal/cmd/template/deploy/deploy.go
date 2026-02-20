@@ -23,6 +23,7 @@ import (
 type Options struct {
 	file           string
 	projectID      string
+	region         string
 	skipValidation bool
 	vars           map[string]string
 }
@@ -40,6 +41,7 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.Flags().StringVarP(&opts.file, "file", "f", "", "Template file")
 	cmd.Flags().StringVar(&opts.projectID, "project-id", "", "Project ID to deploy on")
+	cmd.Flags().StringVarP(&opts.region, "region", "r", "", "Region to create a new project in (e.g. tpe0, sfo0)")
 	cmd.Flags().BoolVar(&opts.skipValidation, "skip-validation", false, "Skip template validation")
 	cmd.Flags().StringToStringVar(&opts.vars, "var", nil, "Template variables (e.g. --var KEY=value)")
 
@@ -88,7 +90,14 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 		}
 	}
 
-	if _, err := f.ParamFiller.ProjectCreatePreferred(&opts.projectID); err != nil {
+	if opts.region != "" && opts.projectID == "" {
+		project, err := f.ApiClient.CreateProject(context.Background(), opts.region, nil)
+		if err != nil {
+			return fmt.Errorf("create project in region %s: %w", opts.region, err)
+		}
+		opts.projectID = project.ID
+		f.Log.Infof("Created project %q in region %s.", project.ID, opts.region)
+	} else if _, err := f.ParamFiller.ProjectCreatePreferred(&opts.projectID); err != nil {
 		return err
 	}
 

@@ -24,20 +24,17 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}
 
 	cmd := &cobra.Command{
-		Use:     "get",
-		Short:   "Get deployment, if deployment-id is not specified, use serviceID/serviceName and environmentID to get the deployment",
-		PreRunE: util.NeedProjectContextWhenNonInteractive(f),
+		Use:   "get",
+		Short: "Get deployment, if deployment-id is not specified, use serviceID/serviceName and environmentID to get the deployment",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGet(f, opts)
 		},
 	}
 
-	zctx := f.Config.GetContext()
-
 	cmd.Flags().StringVar(&opts.deploymentID, "deployment-id", "", "Deployment ID")
-	cmd.Flags().StringVar(&opts.serviceID, "service-id", zctx.GetService().GetID(), "Service ID")
-	cmd.Flags().StringVar(&opts.serviceName, "service-name", zctx.GetService().GetName(), "Service Name")
-	cmd.Flags().StringVar(&opts.environmentID, "env-id", zctx.GetEnvironment().GetID(), "Environment ID")
+	cmd.Flags().StringVar(&opts.serviceID, "service-id", "", "Service ID")
+	cmd.Flags().StringVar(&opts.serviceName, "service-name", "", "Service Name")
+	cmd.Flags().StringVar(&opts.environmentID, "env-id", "", "Environment ID")
 
 	return cmd
 }
@@ -69,39 +66,39 @@ func runGetInteractive(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runGetNonInteractive(f *cmdutil.Factory, opts *Options) (err error) {
-	if opts.deploymentID == "" && opts.environmentID == "" {
-		projectID := f.Config.GetContext().GetProject().GetID()
-		envID, resolveErr := util.ResolveEnvironmentID(f.ApiClient, projectID)
-		if resolveErr != nil {
-			return resolveErr
+	// If deployment ID is provided, just use it directly
+	if opts.deploymentID != "" {
+		deployment, err := getDeploymentByID(f, opts.deploymentID)
+		if err != nil {
+			return err
+		}
+		f.Printer.Table(deployment.Header(), deployment.Rows())
+		return nil
+	}
+
+	// Resolve service ID from name
+	if opts.serviceID == "" && opts.serviceName != "" {
+		service, err := util.GetServiceByName(f.Config, f.ApiClient, opts.serviceName)
+		if err != nil {
+			return fmt.Errorf("failed to get service: %w", err)
+		}
+		opts.serviceID = service.ID
+	}
+
+	if opts.serviceID == "" {
+		return errors.New("--deployment-id or --service-id/--service-name is required")
+	}
+
+	// Resolve environment from service's project
+	if opts.environmentID == "" {
+		envID, err := util.ResolveEnvironmentIDByServiceID(f.ApiClient, opts.serviceID)
+		if err != nil {
+			return err
 		}
 		opts.environmentID = envID
 	}
 
-	if err = paramCheck(opts); err != nil {
-		return err
-	}
-
-	var deployment *model.Deployment
-
-	// If deployment id is provided, get deployment by deployment id
-	if opts.deploymentID != "" {
-		deployment, err = getDeploymentByID(f, opts.deploymentID)
-	} else {
-		// or, get deployment by service id and environment id
-
-		// If service id is not provided, get service id by service name
-		if opts.serviceID == "" {
-			var service *model.Service
-			if service, err = util.GetServiceByName(f.Config, f.ApiClient, opts.serviceName); err != nil {
-				return fmt.Errorf("failed to get service: %w", err)
-			} else {
-				opts.serviceID = service.ID
-			}
-		}
-		deployment, err = getDeploymentByServiceAndEnvironment(f, opts.serviceID, opts.environmentID)
-	}
-
+	deployment, err := getDeploymentByServiceAndEnvironment(f, opts.serviceID, opts.environmentID)
 	if err != nil {
 		return err
 	}
@@ -131,20 +128,4 @@ func getDeploymentByServiceAndEnvironment(f *cmdutil.Factory, serviceID, environ
 	}
 
 	return deployment, nil
-}
-
-func paramCheck(opts *Options) error {
-	if opts.deploymentID != "" {
-		return nil
-	}
-
-	if opts.serviceID == "" && opts.serviceName == "" {
-		return errors.New("when deployment-id is not specified, service-id or service-name is required")
-	}
-
-	if opts.environmentID == "" {
-		return errors.New("when deployment-id is not specified, env-id is required")
-	}
-
-	return nil
 }

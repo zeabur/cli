@@ -20,17 +20,10 @@ type Options struct {
 func NewCmdInstruction(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}
 
-	zctx := f.Config.GetContext()
-
 	cmd := &cobra.Command{
 		Use:   "instruction",
 		Short: "Instruction for prebuiltservice",
 		Long:  `Instruction for prebuilt service`,
-		PreRunE: util.RunEChain(
-			util.NeedProjectContextWhenNonInteractive(f),
-			util.DefaultIDNameByContext(zctx.GetService(), &opts.id, &opts.name),
-			util.DefaultIDByContext(zctx.GetEnvironment(), &opts.environmentID),
-		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runInstruction(f, opts)
 		},
@@ -43,22 +36,20 @@ func NewCmdInstruction(f *cmdutil.Factory) *cobra.Command {
 }
 
 func runInstruction(f *cmdutil.Factory, opts *Options) error {
-	zctx := f.Config.GetContext()
-	if _, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
-		ProjectCtx:    zctx,
-		ServiceID:     &opts.id,
-		ServiceName:   &opts.name,
-		EnvironmentID: &opts.environmentID,
-		CreateNew:     false,
-		FilterFunc: func(service *model.Service) bool {
-			return service.Template == "PREBUILT"
-		},
-	}); err != nil {
-		return err
-	}
-
-	if err := paramCheck(opts); err != nil {
-		return err
+	if f.Interactive && opts.id == "" && opts.name == "" {
+		zctx := f.Config.GetContext()
+		if _, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
+			ProjectCtx:    zctx,
+			ServiceID:     &opts.id,
+			ServiceName:   &opts.name,
+			EnvironmentID: &opts.environmentID,
+			CreateNew:     false,
+			FilterFunc: func(service *model.Service) bool {
+				return service.Template == "PREBUILT"
+			},
+		}); err != nil {
+			return err
+		}
 	}
 
 	if opts.id == "" && opts.name != "" {
@@ -69,6 +60,18 @@ func runInstruction(f *cmdutil.Factory, opts *Options) error {
 		opts.id = service.ID
 	}
 
+	if opts.id == "" {
+		return fmt.Errorf("service id or name is required")
+	}
+
+	if opts.environmentID == "" {
+		envID, err := util.ResolveEnvironmentIDByServiceID(f.ApiClient, opts.id)
+		if err != nil {
+			return err
+		}
+		opts.environmentID = envID
+	}
+
 	instructions, err := f.ApiClient.ServiceInstructions(context.Background(), opts.id, opts.environmentID)
 	if err != nil {
 		return err
@@ -76,14 +79,6 @@ func runInstruction(f *cmdutil.Factory, opts *Options) error {
 
 	for _, instruction := range instructions {
 		fmt.Printf("%s: %s\n", instruction.Title, instruction.Content)
-	}
-
-	return nil
-}
-
-func paramCheck(opts *Options) error {
-	if opts.id == "" && opts.name == "" {
-		return fmt.Errorf("service id or name is required")
 	}
 
 	return nil

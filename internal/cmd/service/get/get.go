@@ -22,16 +22,10 @@ type Options struct {
 
 func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}
-	zctx := f.Config.GetContext()
 
 	cmd := &cobra.Command{
 		Use:   "get",
 		Short: "Get a service, if environment is specified, get the service details in the environment",
-		PreRunE: util.RunEChain(
-			util.NeedProjectContextWhenNonInteractive(f),
-			util.DefaultIDNameByContext(zctx.GetService(), &opts.id, &opts.name),
-			util.DefaultIDByContext(zctx.GetEnvironment(), &opts.environmentID),
-		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGet(f, opts)
 		},
@@ -64,8 +58,17 @@ func runGetInteractive(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runGetNonInteractive(f *cmdutil.Factory, opts *Options) error {
-	projectName := f.Config.GetContext().GetProject().GetName()
-	username := f.Config.GetUsername()
+	if opts.id == "" && opts.name != "" {
+		service, err := util.GetServiceByName(f.Config, f.ApiClient, opts.name)
+		if err != nil {
+			return err
+		}
+		opts.id = service.ID
+	}
+
+	if opts.id == "" {
+		return fmt.Errorf("--id or --name is required")
+	}
 
 	var (
 		t   model.Tabler
@@ -73,9 +76,9 @@ func runGetNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	)
 
 	if opts.environmentID == "" {
-		t, err = getServiceBrief(f.ApiClient, opts.id, username, projectName, opts.name)
+		t, err = getServiceBrief(f.ApiClient, opts.id)
 	} else {
-		t, err = getServiceDetails(f.ApiClient, opts.id, username, projectName, opts.name, opts.environmentID)
+		t, err = getServiceDetails(f.ApiClient, opts.id, opts.environmentID)
 	}
 
 	if err != nil {
@@ -87,9 +90,9 @@ func runGetNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	return nil
 }
 
-func getServiceBrief(client api.ServiceAPI, id, username, projectName, name string) (t model.Tabler, err error) {
+func getServiceBrief(client api.ServiceAPI, id string) (t model.Tabler, err error) {
 	ctx := context.Background()
-	service, err := client.GetService(ctx, id, username, projectName, name)
+	service, err := client.GetService(ctx, id, "", "", "")
 	if err != nil {
 		return nil, fmt.Errorf("get service failed: %w", err)
 	}
@@ -97,9 +100,9 @@ func getServiceBrief(client api.ServiceAPI, id, username, projectName, name stri
 	return service, nil
 }
 
-func getServiceDetails(client api.ServiceAPI, id, username, projectID, name, environmentID string) (t model.Tabler, err error) {
+func getServiceDetails(client api.ServiceAPI, id, environmentID string) (t model.Tabler, err error) {
 	ctx := context.Background()
-	serviceDetail, err := client.GetServiceDetailByEnvironment(ctx, id, username, projectID, name, environmentID)
+	serviceDetail, err := client.GetServiceDetailByEnvironment(ctx, id, "", "", "", environmentID)
 	if err != nil {
 		return nil, fmt.Errorf("get service failed: %w", err)
 	}

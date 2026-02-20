@@ -23,17 +23,11 @@ type Options struct {
 
 func NewCmdCreateDomain(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}
-	zctx := f.Config.GetContext()
 
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "create a domain",
 		Long:  `Create a domain for a service`,
-		PreRunE: util.RunEChain(
-			util.NeedProjectContextWhenNonInteractive(f),
-			util.DefaultIDNameByContext(zctx.GetService(), &opts.id, &opts.name),
-			util.DefaultIDByContext(zctx.GetEnvironment(), &opts.environmentID),
-		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runCreateDomain(f, opts)
 		},
@@ -93,7 +87,17 @@ func runCreateDomainInteractive(f *cmdutil.Factory, opts *Options) error {
 		opts.domainName = domainInput
 	}
 
-	project, err := f.ApiClient.GetProject(context.Background(), zctx.GetProject().GetID(), "", "")
+	// Get project from the service to check domain availability
+	service, err := f.ApiClient.GetService(context.Background(), opts.id, "", "", "")
+	if err != nil {
+		return fmt.Errorf("get service failed: %w", err)
+	}
+	projectID := ""
+	if service.Project != nil {
+		projectID = service.Project.ID
+	}
+
+	project, err := f.ApiClient.GetProject(context.Background(), projectID, "", "")
 	if err != nil {
 		return err
 	}
@@ -146,16 +150,24 @@ func runCreateDomainInteractive(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runCreateDomainNonInteractive(f *cmdutil.Factory, opts *Options) error {
-	zctx := f.Config.GetContext()
+	if opts.id == "" && opts.name != "" {
+		service, err := util.GetServiceByName(f.Config, f.ApiClient, opts.name)
+		if err != nil {
+			return err
+		}
+		opts.id = service.ID
+	}
 
-	if _, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
-		ProjectCtx:    zctx,
-		ServiceID:     &opts.id,
-		ServiceName:   &opts.name,
-		EnvironmentID: &opts.environmentID,
-		CreateNew:     false,
-	}); err != nil {
-		return err
+	if opts.id == "" {
+		return fmt.Errorf("--id or --name is required")
+	}
+
+	if opts.environmentID == "" {
+		envID, err := util.ResolveEnvironmentIDByServiceID(f.ApiClient, opts.id)
+		if err != nil {
+			return err
+		}
+		opts.environmentID = envID
 	}
 
 	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
