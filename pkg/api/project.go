@@ -189,3 +189,38 @@ func (c *client) GetGenericRegions(ctx context.Context) ([]model.GenericRegion, 
 
 	return genericRegions, nil
 }
+
+// CloneProject clones a project to a target region.
+func (c *client) CloneProject(ctx context.Context, projectID, environmentID, targetRegion string, suspendOldProject bool) (*model.CloneProjectResult, error) {
+	var mutation struct {
+		CloneProject model.CloneProjectResult `graphql:"cloneProject(projectId: $projectId, environmentId: $environmentId, targetRegion: $targetRegion, suspendOldProject: $suspendOldProject, preserveGroupsOrder: true)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{
+		"projectId":         ObjectID(projectID),
+		"environmentId":     ObjectID(environmentID),
+		"targetRegion":      targetRegion,
+		"suspendOldProject": suspendOldProject,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &mutation.CloneProject, nil
+}
+
+// CloneProjectStatus queries the status of a project clone operation.
+func (c *client) CloneProjectStatus(ctx context.Context, newProjectID string) (*model.CloneProjectStatusResult, error) {
+	var query struct {
+		CloneProjectStatus model.CloneProjectStatusResult `graphql:"cloneProjectStatus(newProjectId: $newProjectId)"`
+	}
+
+	err := c.Query(ctx, &query, V{
+		"newProjectId": ObjectID(newProjectID),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &query.CloneProjectStatus, nil
+}

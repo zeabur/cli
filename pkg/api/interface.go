@@ -37,6 +37,9 @@ type (
 		GetRegions(ctx context.Context) ([]model.Region, error)
 		GetServers(ctx context.Context) ([]model.Server, error)
 		GetGenericRegions(ctx context.Context) ([]model.GenericRegion, error)
+
+		CloneProject(ctx context.Context, projectID, environmentID, targetRegion string, suspendOldProject bool) (*model.CloneProjectResult, error)
+		CloneProjectStatus(ctx context.Context, newProjectID string) (*model.CloneProjectStatusResult, error)
 	}
 
 	EnvironmentAPI interface {
