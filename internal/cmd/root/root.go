@@ -17,6 +17,7 @@ import (
 	domainCmd "github.com/zeabur/cli/internal/cmd/domain"
 	profileCmd "github.com/zeabur/cli/internal/cmd/profile"
 	projectCmd "github.com/zeabur/cli/internal/cmd/project"
+	serverCmd "github.com/zeabur/cli/internal/cmd/server"
 	serviceCmd "github.com/zeabur/cli/internal/cmd/service"
 	templateCmd "github.com/zeabur/cli/internal/cmd/template"
 	uploadCmd "github.com/zeabur/cli/internal/cmd/upload"
@@ -121,6 +122,7 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 	cmd.AddCommand(versionCmd.NewCmdVersion(f, version, commit, date))
 	cmd.AddCommand(authCmd.NewCmdAuth(f))
 	cmd.AddCommand(projectCmd.NewCmdProject(f))
+	cmd.AddCommand(serverCmd.NewCmdServer(f))
 	cmd.AddCommand(serviceCmd.NewCmdService(f))
 	cmd.AddCommand(deploymentCmd.NewCmdDeployment(f))
 	cmd.AddCommand(templateCmd.NewCmdTemplate(f))
