@@ -110,6 +110,10 @@ func runCloneInteractive(f *cmdutil.Factory, opts *Options) error {
 			}
 		}
 
+		if len(availableRegions) == 0 {
+			return fmt.Errorf("no available regions to clone to")
+		}
+
 		regionIndex, err := f.Prompter.Select("Select target region", "", regionOptions)
 		if err != nil {
 			return err
@@ -169,12 +173,22 @@ func doClone(f *cmdutil.Factory, opts *Options) error {
 	s.Stop()
 	f.Log.Infof("Clone started, new project ID: %s", result.NewProjectID)
 
-	// Poll for status
+	// Poll for status with 10-minute timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
+
+	ticker := time.NewTicker(3 * time.Second)
+	defer ticker.Stop()
+
 	seenEvents := 0
 	for {
-		time.Sleep(3 * time.Second)
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("clone timed out after 10 minutes (new project ID: %s)", result.NewProjectID)
+		case <-ticker.C:
+		}
 
-		status, err := f.ApiClient.CloneProjectStatus(context.Background(), result.NewProjectID)
+		status, err := f.ApiClient.CloneProjectStatus(ctx, result.NewProjectID)
 		if err != nil {
 			return fmt.Errorf("query clone status failed: %w", err)
 		}
