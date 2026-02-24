@@ -32,3 +32,24 @@ func (s Server) String() string {
 func (s Server) IsAvailable() bool {
 	return true
 }
+
+type Servers []Server
+
+func (s Servers) Header() []string {
+	return []string{"ID", "Name", "Location", "IP"}
+}
+
+func (s Servers) Rows() [][]string {
+	rows := make([][]string, len(s))
+	for i, server := range s {
+		location := server.IP
+		if server.Country != nil {
+			location = *server.Country
+			if server.City != nil {
+				location = fmt.Sprintf("%s, %s", *server.City, *server.Country)
+			}
+		}
+		rows[i] = []string{server.GetID(), server.Name, location, server.IP}
+	}
+	return rows
+}
