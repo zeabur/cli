@@ -51,6 +51,7 @@ type (
 		ListDedicatedServerRegions(ctx context.Context, provider string) ([]model.DedicatedServerRegion, error)
 		ListDedicatedServerPlans(ctx context.Context, provider, region string) (model.DedicatedServerPlans, error)
 		RentServer(ctx context.Context, provider, region, plan string) (string, error)
+		RevealServerPassword(ctx context.Context, serverID string) (string, error)
 	}
 
 	EnvironmentAPI interface {

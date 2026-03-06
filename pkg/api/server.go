@@ -114,3 +114,18 @@ func (c *client) RentServer(ctx context.Context, provider, region, plan string) 
 
 	return mutation.RentServer.ID, nil
 }
+
+func (c *client) RevealServerPassword(ctx context.Context, serverID string) (string, error) {
+	var mutation struct {
+		Password string `graphql:"revealManagedServerInitialPassword(serverID: $serverID)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{
+		"serverID": ObjectID(serverID),
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return mutation.Password, nil
+}
