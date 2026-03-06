@@ -19,6 +19,7 @@ type Client interface {
 	TemplateAPI
 	DomainAPI
 	VariableAPI
+	ServerAPI
 }
 
 type (
@@ -40,6 +41,16 @@ type (
 
 		CloneProject(ctx context.Context, projectID, environmentID, targetRegion string, suspendOldProject bool) (*model.CloneProjectResult, error)
 		CloneProjectStatus(ctx context.Context, newProjectID string) (*model.CloneProjectStatusResult, error)
+	}
+
+	ServerAPI interface {
+		ListServers(ctx context.Context) (model.ServerListItems, error)
+		GetServer(ctx context.Context, id string) (*model.ServerDetail, error)
+		RebootServer(ctx context.Context, id string) error
+		ListDedicatedServerProviders(ctx context.Context) ([]model.CloudProvider, error)
+		ListDedicatedServerRegions(ctx context.Context, provider string) ([]model.DedicatedServerRegion, error)
+		ListDedicatedServerPlans(ctx context.Context, provider, region string) (model.DedicatedServerPlans, error)
+		RentServer(ctx context.Context, provider, region, plan string) (string, error)
 	}
 
 	EnvironmentAPI interface {
