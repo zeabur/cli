@@ -21,7 +21,10 @@ func NewCmdReboot(f *cmdutil.Factory) *cobra.Command {
 		Short: "Reboot a dedicated server",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 0 && opts.id == "" {
+			if len(args) > 0 {
+				if opts.id != "" && opts.id != args[0] {
+					return fmt.Errorf("conflicting server IDs: arg=%q, --id=%q", args[0], opts.id)
+				}
 				opts.id = args[0]
 			}
 			return runReboot(f, opts)

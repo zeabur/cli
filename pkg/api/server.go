@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/zeabur/cli/pkg/model"
 )
@@ -42,8 +43,13 @@ func (c *client) RebootServer(ctx context.Context, id string) error {
 	err := c.Mutate(ctx, &mutation, V{
 		"id": ObjectID(id),
 	})
-
-	return err
+	if err != nil {
+		return err
+	}
+	if !mutation.RebootServer {
+		return fmt.Errorf("reboot server was not accepted")
+	}
+	return nil
 }
 
 func (c *client) ListDedicatedServerProviders(ctx context.Context) ([]model.CloudProvider, error) {

@@ -80,13 +80,14 @@ func runCatalog(f *cmdutil.Factory, opts *Options) error {
 		providers = filtered
 	}
 
-	if len(providers) == 0 {
-		fmt.Println("{}")
-		return nil
-	}
-
 	output := catalogOutput{
 		Providers: make([]providerOutput, len(providers)),
+	}
+
+	if len(providers) == 0 {
+		data, _ := json.MarshalIndent(output, "", "  ")
+		fmt.Println(string(data))
+		return nil
 	}
 
 	var wg sync.WaitGroup
@@ -188,7 +189,7 @@ func runCatalog(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	// remove providers with no matching regions
-	var nonEmpty []providerOutput
+	nonEmpty := make([]providerOutput, 0, len(output.Providers))
 	for _, p := range output.Providers {
 		if len(p.Regions) > 0 {
 			nonEmpty = append(nonEmpty, p)

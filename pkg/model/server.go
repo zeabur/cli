@@ -95,11 +95,13 @@ func (s *ServerDetail) Header() []string {
 }
 
 func (s *ServerDetail) Rows() [][]string {
-	location := ""
+	location := s.IP
 	if s.City != nil && s.Country != nil {
 		location = fmt.Sprintf("%s, %s", *s.City, *s.Country)
 	} else if s.Country != nil {
 		location = *s.Country
+	} else if s.City != nil {
+		location = *s.City
 	}
 
 	provider := ""
@@ -219,11 +221,13 @@ func (s ServerListItems) Header() []string {
 func (s ServerListItems) Rows() [][]string {
 	rows := make([][]string, len(s))
 	for i, item := range s {
-		location := ""
+		location := item.IP
 		if item.City != nil && item.Country != nil {
 			location = fmt.Sprintf("%s, %s", *item.City, *item.Country)
 		} else if item.Country != nil {
 			location = *item.Country
+		} else if item.City != nil {
+			location = *item.City
 		}
 
 		provider := ""
