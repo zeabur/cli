@@ -83,11 +83,18 @@ type ServerDetail struct {
 	CreatedAt          time.Time           `graphql:"createdAt"`
 	Status             ServerStatus        `graphql:"status"`
 	ProviderInfo       *ServerProviderInfo `graphql:"providerInfo"`
+	Events             []ServerEvent       `graphql:"events"`
 }
 
 type ServerProviderInfo struct {
 	Code string `graphql:"code"`
 	Name string `graphql:"name"`
+}
+
+type ServerEvent struct {
+	Message  string    `graphql:"message"`
+	Time     time.Time `graphql:"time"`
+	Severity string    `graphql:"severity"`
 }
 
 func (s *ServerDetail) Header() []string {
@@ -190,11 +197,11 @@ func (p DedicatedServerPlans) Rows() [][]string {
 		rows[i] = []string{
 			plan.Name,
 			fmt.Sprintf("%d cores", plan.CPU),
-			fmt.Sprintf("%d MB", plan.Memory),
+			fmt.Sprintf("%d GB", plan.Memory),
 			fmt.Sprintf("%d GB", plan.Disk),
 			fmt.Sprintf("%d GB", plan.Egress),
 			gpu,
-			fmt.Sprintf("$%.2f", float64(plan.Price)/100),
+			fmt.Sprintf("$%d", plan.Price),
 			available,
 		}
 	}
