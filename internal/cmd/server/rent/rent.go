@@ -151,9 +151,9 @@ func runRentNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	serverID, err := f.ApiClient.RentServer(context.Background(), opts.provider, opts.region, opts.plan)
 	if err != nil {
 		errMsg := err.Error()
-		if strings.Contains(errMsg, "balance") || strings.Contains(errMsg, "payment") || strings.Contains(errMsg, "credit") || strings.Contains(errMsg, "insufficient") {
+		if strings.Contains(errMsg, "bind a credit card or recharge credits") || strings.Contains(errMsg, "insufficient balance") {
 			f.Log.Errorf("Rent server failed: %s", errMsg)
-			f.Log.Infof("Please add a payment method or top up your balance at: https://zeabur.com/account/billing")
+			f.Log.Infof("Please bind a credit card or top up your balance at: https://zeabur.com/account/billing")
 			return fmt.Errorf("payment required")
 		}
 		return fmt.Errorf("rent server failed: %w", err)
