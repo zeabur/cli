@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
 )
@@ -78,7 +80,13 @@ func runRentInteractive(f *cmdutil.Factory, opts *Options) error {
 
 		options := make([]string, len(regions))
 		for i, r := range regions {
-			options[i] = fmt.Sprintf("%s (%s, %s)", r.Name, r.City, r.Country)
+			if r.City != "" && r.Country != "" {
+				options[i] = fmt.Sprintf("%s (%s, %s)", r.Name, r.City, r.Country)
+			} else if r.Country != "" {
+				options[i] = fmt.Sprintf("%s (%s)", r.Name, r.Country)
+			} else {
+				options[i] = r.Name
+			}
 		}
 
 		idx, err := f.Prompter.Select("Select a region", "", options)
@@ -107,8 +115,8 @@ func runRentInteractive(f *cmdutil.Factory, opts *Options) error {
 			if p.GPU != nil {
 				gpu = fmt.Sprintf(", GPU: %s", *p.GPU)
 			}
-			options[i] = fmt.Sprintf("%s - %d CPU, %d MB RAM, %d GB Disk%s - $%.2f/mo%s",
-				p.Name, p.CPU, p.Memory, p.Disk, gpu, float64(p.Price)/100, available)
+			options[i] = fmt.Sprintf("%s - %d CPU, %d GB RAM, %d GB Disk%s - $%d/mo%s",
+				p.Name, p.CPU, p.Memory, p.Disk, gpu, p.Price, available)
 		}
 
 		idx, err := f.Prompter.Select("Select a plan", "", options)
@@ -160,7 +168,59 @@ func runRentNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	f.Log.Infof("Server rented successfully, ID: %s", serverID)
-	f.Log.Infof("The server is being provisioned. Use `zeabur server get %s` to check its status.", serverID)
+	f.Log.Infof("Waiting for server provisioning...")
 
-	return nil
+	return waitForServerInit(f, serverID)
+}
+
+func waitForServerInit(f *cmdutil.Factory, serverID string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
+
+	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+		spinner.WithColor(cmdutil.SpinnerColor),
+		spinner.WithSuffix(" Initializing server..."),
+	)
+	s.Start()
+	defer s.Stop()
+
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+
+	seenEvents := 0
+	for {
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("server provisioning timed out after 10 minutes, use `zeabur server get %s` to check status", serverID)
+		case <-ticker.C:
+		}
+
+		server, err := f.ApiClient.GetServer(ctx, serverID)
+		if err != nil {
+			continue
+		}
+
+		for i := seenEvents; i < len(server.Events); i++ {
+			ev := server.Events[i]
+			s.Stop()
+			f.Log.Infof("[%s] %s", ev.Severity, ev.Message)
+			s.Start()
+
+			if ev.Message == "Server initialized" {
+				s.Stop()
+				f.Log.Infof("Server is ready!")
+				return nil
+			}
+
+			if strings.HasPrefix(ev.Message, "Failed to rent server") {
+				s.Stop()
+				f.Log.Errorf("Server provisioning failed: %s", ev.Message)
+				f.Log.Infof("The charge has been refunded to your balance.")
+				return fmt.Errorf("server provisioning failed")
+			}
+		}
+		seenEvents = len(server.Events)
+
+		s.Suffix = fmt.Sprintf(" Initializing server... (%d events)", seenEvents)
+	}
 }
