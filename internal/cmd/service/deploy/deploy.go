@@ -39,7 +39,6 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 	cmd.Flags().IntVar(&opts.repoID, "repo-id", 0, "Git repository ID")
 	cmd.Flags().StringVar(&opts.branchName, "branch-name", "", "Git branch name")
 	cmd.Flags().StringVar(&opts.keyword, "keyword", "", "Git repository keyword")
-
 	return cmd
 }
 
@@ -197,10 +196,11 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 		if len(branches) == 1 {
 			opts.branchName = branches[0]
 		} else {
-			_, err = f.Prompter.Select("Select branch", opts.branchName, branches)
+			branchIndex, err := f.Prompter.Select("Select branch", opts.branchName, branches)
 			if err != nil {
 				return err
 			}
+			opts.branchName = branches[branchIndex]
 		}
 
 		s = spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
