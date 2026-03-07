@@ -334,7 +334,7 @@ func (c *client) SearchGitRepositories(ctx context.Context, keyword *string) ([]
 
 func (c *client) CreateService(ctx context.Context, projectID string, name string, repoID int, branchName string) (*model.Service, error) {
 	var mutation struct {
-		CreateService model.Service `graphql:"createService(projectID: $projectID, template: $template, name: $name, gitProvider: $gitProvider repoID: $repoID, branchName: $branchName)"`
+		CreateService model.Service `graphql:"createService(projectID: $projectID, template: $template, name: $name, gitProvider: $gitProvider, repoID: $repoID, branchName: $branchName)"`
 	}
 
 	err := c.Mutate(ctx, &mutation, V{
