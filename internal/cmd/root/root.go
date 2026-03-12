@@ -3,6 +3,7 @@ package root
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"strings"
 
@@ -56,18 +57,27 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 
 			// normalize ID flags: strip prefix from prefixed ObjectIDs
 			// e.g. "service-662e24fca7d5..." → "662e24fca7d5..."
+			var normalizeErr error
 			cmd.Flags().VisitAll(func(flag *pflag.Flag) {
-				if !flag.Changed {
+				if !flag.Changed || normalizeErr != nil {
 					return
 				}
 				name := flag.Name
 				if name == "id" || strings.HasSuffix(name, "-id") {
-					normalizeIDFlag(flag)
+					normalizeErr = normalizeIDFlag(flag)
 				}
 			})
+			if normalizeErr != nil {
+				return normalizeErr
+			}
 
 			// require that the user is authenticated before running most commands
 			if cmdutil.IsAuthCheckEnabled(cmd) {
+				// in JSON mode, fail fast if not authenticated instead of opening a browser
+				if f.JSON && !f.LoggedIn() {
+					return fmt.Errorf("not authenticated: run `zeabur auth login` before using --json")
+				}
+
 				// do not return error, guide user to login instead
 				if !f.LoggedIn() {
 					f.Log.Info("A browser window will be opened for you to login, please confirm")
@@ -157,12 +167,19 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 
 // normalizeIDFlag strips a known prefix from a prefixed MongoDB ObjectID flag value.
 // e.g. "service-662e24fca7d5abcdef123456" → "662e24fca7d5abcdef123456"
-func normalizeIDFlag(flag *pflag.Flag) {
+func normalizeIDFlag(flag *pflag.Flag) error {
 	val := flag.Value.String()
 	if idx := strings.LastIndex(val, "-"); idx != -1 {
-		hex := val[idx+1:]
-		if len(hex) == 24 {
-			_ = flag.Value.Set(hex)
+		suffix := val[idx+1:]
+		if len(suffix) != 24 {
+			return nil
+		}
+		if _, err := hex.DecodeString(suffix); err != nil {
+			return nil
+		}
+		if err := flag.Value.Set(suffix); err != nil {
+			return fmt.Errorf("normalize %s: %w", flag.Name, err)
 		}
 	}
+	return nil
 }

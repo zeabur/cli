@@ -104,7 +104,7 @@ func runCreate(f *cmdutil.Factory, opts Options) error {
 	}
 
 	if f.JSON {
-		return f.Printer.JSON(map[string]string{"status": "success", "name": t.Name, "code": t.Code, "message": "Template created"})
+		return f.Printer.JSON(map[string]string{"status": "success", "id": t.Code, "name": t.Name, "code": t.Code, "message": "Template created"})
 	}
 	f.Log.Infof("Template %q (%s/templates/%s) created", t.Name, constant.ZeaburDashURL, t.Code)
 	return nil

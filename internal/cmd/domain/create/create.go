@@ -189,7 +189,7 @@ func runCreateDomainNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	s.Stop()
 
 	if f.JSON {
-		return f.Printer.JSON(map[string]string{"status": "success", "domain": *domain, "message": "Domain added"})
+		return f.Printer.JSON(map[string]string{"status": "success", "id": *domain, "domain": *domain, "message": "Domain added"})
 	}
 	f.Log.Infof("Domain %s added", *domain)
 
