@@ -104,6 +104,9 @@ func runRestartNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return fmt.Errorf("restart service failed: %w", err)
 	}
 
+	if f.JSON {
+		return f.Printer.JSON(map[string]string{"status": "success", "id": opts.id, "message": "Service restarted successfully"})
+	}
 	f.Log.Infof("Service <%s> restarted successfully", idOrName)
 
 	return nil

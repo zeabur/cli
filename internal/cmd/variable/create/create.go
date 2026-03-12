@@ -136,6 +136,14 @@ func runCreateVariableNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	}
 	s.Stop()
 
+	if f.JSON {
+		out := make([]map[string]string, 0, len(varMap))
+		for k, v := range varMap {
+			out = append(out, map[string]string{"Key": k, "Value": v})
+		}
+		return f.Printer.JSON(out)
+	}
+
 	f.Log.Infof("Successfully created variables of service: %s\n", opts.name)
 
 	table := make([][]string, 0, len(varMap))

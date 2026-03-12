@@ -64,6 +64,10 @@ func runGetNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return fmt.Errorf("failed to get project: %w", err)
 	}
 
+	if f.JSON {
+		return f.Printer.JSON(project)
+	}
+
 	f.Printer.Table(project.Header(), project.Rows())
 
 	return nil

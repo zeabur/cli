@@ -1,6 +1,8 @@
 package printer
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/olekukonko/tablewriter"
@@ -48,6 +50,15 @@ func (p *defaultPrinter) Table(header []string, rows [][]string) {
 	table.AppendBulk(rows)
 
 	table.Render()
+}
+
+func (p *defaultPrinter) JSON(v any) error {
+	data, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(data))
+	return nil
 }
 
 var _ Printer = &defaultPrinter{}

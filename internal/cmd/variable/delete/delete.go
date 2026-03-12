@@ -151,6 +151,15 @@ func runDeleteVariableNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	}
 	s.Stop()
 
+	if f.JSON {
+		return f.Printer.JSON(map[string]any{
+			"status":      "success",
+			"id":          opts.id,
+			"message":     "Variables deleted successfully",
+			"deletedKeys": opts.deleteKeys,
+		})
+	}
+
 	f.Log.Infof("Successfully deleted variables of service: %s\n", opts.name)
 
 	table := make([][]string, 0, len(opts.keys))

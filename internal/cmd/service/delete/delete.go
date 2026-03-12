@@ -106,6 +106,9 @@ func runDeleteNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return fmt.Errorf("delete service failed: %w", err)
 	}
 
+	if f.JSON {
+		return f.Printer.JSON(map[string]string{"status": "success", "id": opts.id, "message": "Service deleted successfully"})
+	}
 	f.Log.Infof("Service <%s> deleted successfully", idOrName)
 
 	return nil

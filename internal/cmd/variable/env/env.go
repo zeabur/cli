@@ -115,6 +115,14 @@ func runUpdateVariableNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	}
 	s.Stop()
 
+	if f.JSON {
+		out := make([]map[string]string, 0, len(envMap))
+		for k, v := range envMap {
+			out = append(out, map[string]string{"Key": k, "Value": v})
+		}
+		return f.Printer.JSON(out)
+	}
+
 	f.Log.Infof("Successfully updated variables of service: %s\n\tRestart your service manually to apply the changes.\n", opts.name)
 
 	table := make([][]string, 0, len(envMap))

@@ -251,6 +251,14 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
+	if f.JSON {
+		result := map[string]string{"status": "success", "project_id": res.ID, "project_name": res.Name, "message": "Template deployed"}
+		if d, ok := vars["PUBLIC_DOMAIN"]; ok && project.Region.ID != "sha1" {
+			result["domain"] = d + ".zeabur.app"
+		}
+		return f.Printer.JSON(result)
+	}
+
 	f.Log.Infof("Template successfully deployed into project %q (%s/projects/%s).", res.Name, constant.ZeaburDashURL, res.ID)
 
 	if d, ok := vars["PUBLIC_DOMAIN"]; ok && project.Region.ID != "sha1" {

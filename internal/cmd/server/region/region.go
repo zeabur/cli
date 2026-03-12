@@ -60,8 +60,15 @@ func runRegion(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	if len(regions) == 0 {
+		if f.JSON {
+			return f.Printer.JSON([]any{})
+		}
 		f.Log.Infof("No regions available for provider %s", opts.provider)
 		return nil
+	}
+
+	if f.JSON {
+		return f.Printer.JSON(regions)
 	}
 
 	header := []string{"ID", "Name", "City", "Country", "Continent"}

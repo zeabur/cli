@@ -89,8 +89,15 @@ func runListNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	if len(deployments) == 0 {
+		if f.JSON {
+			return f.Printer.JSON([]any{})
+		}
 		f.Log.Info("No deployments found")
 		return nil
+	}
+
+	if f.JSON {
+		return f.Printer.JSON(deployments)
 	}
 
 	f.Printer.Table(deployments.Header(), deployments.Rows())

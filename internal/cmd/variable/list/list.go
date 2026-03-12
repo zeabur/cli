@@ -94,8 +94,15 @@ func runListVariablesNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	s.Stop()
 
 	if len(variableList) == 0 && len(readonlyVariableList) == 0 {
+		if f.JSON {
+			return f.Printer.JSON([]any{})
+		}
 		f.Log.Infof("No variables found")
 		return nil
+	}
+
+	if f.JSON {
+		return f.Printer.JSON(map[string]any{"variables": variableList, "readonlyVariables": readonlyVariableList})
 	}
 
 	f.Log.Infof("Variables of service: %s\n", opts.name)

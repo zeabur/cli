@@ -104,6 +104,9 @@ func runRedeployNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return fmt.Errorf("redeploy service failed: %w", err)
 	}
 
+	if f.JSON {
+		return f.Printer.JSON(map[string]string{"status": "success", "id": opts.id, "message": "Service redeployed successfully"})
+	}
 	f.Log.Infof("Service <%s> redeployed successfully", idOrName)
 
 	return nil

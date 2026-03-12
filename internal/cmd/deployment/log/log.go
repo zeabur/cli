@@ -146,6 +146,10 @@ func queryLogs(f *cmdutil.Factory, opts *Options) error {
 		return fmt.Errorf("unknown log type: %s", opts.logType)
 	}
 
+	if f.JSON {
+		return f.Printer.JSON(logs)
+	}
+
 	f.Printer.Table(logs.Header(), logs.Rows())
 	return nil
 }
@@ -183,6 +187,12 @@ func watchLogs(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	for log := range logChan {
+		if f.JSON {
+			if err := f.Printer.JSON(log); err != nil {
+				return err
+			}
+			continue
+		}
 		f.Printer.Table(log.Header(), log.Rows())
 	}
 

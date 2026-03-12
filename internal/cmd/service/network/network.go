@@ -76,6 +76,10 @@ func runNetwork(f *cmdutil.Factory, opts *Options) error {
 
 	s.Stop()
 
+	if f.JSON {
+		return f.Printer.JSON(map[string]string{"dnsName": dnsName + ".zeabur.internal"})
+	}
+
 	f.Log.Infof("Private DNS name for %s: %s", opts.name, dnsName+".zeabur.internal")
 
 	return nil

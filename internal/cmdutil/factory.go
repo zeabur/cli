@@ -33,6 +33,7 @@ type (
 		Interactive      bool // interactive mode, default true
 		AutoRefreshToken bool // auto refresh token, default true, only when token is from browser(OAuth2)
 		AutoCheckUpdate  bool // auto check update, default true
+		JSON             bool // output in JSON format, default false
 	}
 )
 

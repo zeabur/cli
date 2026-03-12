@@ -19,6 +19,11 @@ func NewInfoLevel() *zap.SugaredLogger {
 	return New(zapcore.InfoLevel)
 }
 
+// NewSilent returns a no-op logger that discards all output
+func NewSilent() *zap.SugaredLogger {
+	return zap.NewNop().Sugar()
+}
+
 // New returns a logger with the given level
 func New(level zapcore.Level) *zap.SugaredLogger {
 	conf := zap.NewDevelopmentConfig()

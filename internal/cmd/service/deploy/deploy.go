@@ -71,14 +71,20 @@ func runDeployNonInteractive(f *cmdutil.Factory, opts *Options) error {
 			return fmt.Errorf("create prebuilt service failed: %w", err)
 		}
 
+		if f.JSON {
+			return f.Printer.JSON(map[string]string{"status": "success", "id": service.ID, "name": service.Name, "message": "Service created"})
+		}
 		f.Log.Infof("Service %s created", service.Name)
 		return nil
 	case "GIT":
-		_, err = f.ApiClient.CreateService(context.Background(), opts.projectID, opts.name, opts.repoID, opts.branchName)
+		service, err := f.ApiClient.CreateService(context.Background(), opts.projectID, opts.name, opts.repoID, opts.branchName)
 		if err != nil {
 			return fmt.Errorf("create service failed: %w", err)
 		}
 
+		if f.JSON {
+			return f.Printer.JSON(map[string]string{"status": "success", "id": service.ID, "name": service.Name, "message": "Service created"})
+		}
 		f.Log.Infof("Service %s created", opts.name)
 		return nil
 	default:

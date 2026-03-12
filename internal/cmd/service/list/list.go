@@ -70,8 +70,15 @@ func listServicesBrief(f *cmdutil.Factory, projectID string) error {
 	}
 
 	if len(services) == 0 {
+		if f.JSON {
+			return f.Printer.JSON([]any{})
+		}
 		f.Log.Infof("No services found")
 		return nil
+	}
+
+	if f.JSON {
+		return f.Printer.JSON(services)
 	}
 
 	f.Printer.Table(services.Header(), services.Rows())
@@ -86,8 +93,15 @@ func listServicesDetailByEnvironment(f *cmdutil.Factory, projectID, environmentI
 	}
 
 	if len(services) == 0 {
+		if f.JSON {
+			return f.Printer.JSON([]any{})
+		}
 		f.Log.Infof("No services found")
 		return nil
+	}
+
+	if f.JSON {
+		return f.Printer.JSON(services)
 	}
 
 	f.Printer.Table(services.Header(), services.Rows())

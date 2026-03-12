@@ -106,6 +106,9 @@ func deleteProject(f *cmdutil.Factory, project *model.Project) error {
 		return err
 	}
 
+	if f.JSON {
+		return f.Printer.JSON(map[string]string{"status": "success", "id": project.ID, "name": project.Name, "message": "Project deleted successfully"})
+	}
 	f.Log.Infof("Delete project %s (%s) successfully", project.Name, project.ID)
 	return nil
 }
