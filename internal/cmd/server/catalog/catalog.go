@@ -2,7 +2,6 @@ package catalog
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -85,9 +84,7 @@ func runCatalog(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	if len(providers) == 0 {
-		data, _ := json.MarshalIndent(output, "", "  ")
-		fmt.Println(string(data))
-		return nil
+		return f.Printer.JSON(output)
 	}
 
 	var wg sync.WaitGroup
@@ -197,12 +194,5 @@ func runCatalog(f *cmdutil.Factory, opts *Options) error {
 	}
 	output.Providers = nonEmpty
 
-	data, err := json.MarshalIndent(output, "", "  ")
-	if err != nil {
-		return fmt.Errorf("marshal output failed: %w", err)
-	}
-
-	fmt.Println(string(data))
-
-	return nil
+	return f.Printer.JSON(output)
 }

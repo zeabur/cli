@@ -36,6 +36,9 @@ func NewCmdStatus(f *cmdutil.Factory) *cobra.Command {
 
 func runStatus(f *cmdutil.Factory, opts *statusOptions) error {
 	if !f.LoggedIn() {
+		if f.JSON {
+			return f.Printer.JSON(map[string]string{"status": "not logged in"})
+		}
 		f.Log.Infof("Not logged in.")
 		return nil
 	}
@@ -45,6 +48,10 @@ func runStatus(f *cmdutil.Factory, opts *statusOptions) error {
 	user, err := f.ApiClient.GetUserInfo(context.Background())
 	if err != nil {
 		return fmt.Errorf("failed to get user info: %w", err)
+	}
+
+	if f.JSON {
+		return f.Printer.JSON(user)
 	}
 
 	f.Log.Infof("Logged in as %s, email: %s", user.Name, user.Email)

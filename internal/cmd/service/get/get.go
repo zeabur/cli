@@ -85,6 +85,10 @@ func runGetNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
+	if f.JSON {
+		return f.Printer.JSON(t)
+	}
+
 	f.Printer.Table(t.Header(), t.Rows())
 
 	return nil

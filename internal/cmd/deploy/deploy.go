@@ -104,6 +104,15 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 	domainName := opts.domainName
 
 	if domainName == "" {
+		if f.JSON {
+			return f.Printer.JSON(map[string]string{
+				"status":         "success",
+				"service_id":     service.ID,
+				"project_id":     service.Project.ID,
+				"environment_id": environment.ID,
+				"message":        "Service deployed successfully",
+			})
+		}
 		fmt.Println("Service deployed successfully, you can access it via:")
 		fmt.Println(constant.ZeaburDashURL + "/projects/" + service.Project.ID + "/services/" + service.ID + "?envID=" + environment.ID)
 		return nil
@@ -120,9 +129,19 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
-	fmt.Println("Domain created: ", "https://"+*domain)
-
 	s.Stop()
+
+	if f.JSON {
+		return f.Printer.JSON(map[string]string{
+			"status":         "success",
+			"service_id":     service.ID,
+			"project_id":     service.Project.ID,
+			"environment_id": environment.ID,
+			"domain":         *domain,
+			"message":        "Service deployed successfully",
+		})
+	}
+	fmt.Println("Domain created: ", "https://"+*domain)
 
 	return nil
 }

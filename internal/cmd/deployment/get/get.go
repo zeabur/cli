@@ -72,6 +72,9 @@ func runGetNonInteractive(f *cmdutil.Factory, opts *Options) (err error) {
 		if err != nil {
 			return err
 		}
+		if f.JSON {
+			return f.Printer.JSON(deployment)
+		}
 		f.Printer.Table(deployment.Header(), deployment.Rows())
 		return nil
 	}
@@ -101,6 +104,10 @@ func runGetNonInteractive(f *cmdutil.Factory, opts *Options) (err error) {
 	deployment, err := getDeploymentByServiceAndEnvironment(f, opts.serviceID, opts.environmentID)
 	if err != nil {
 		return err
+	}
+
+	if f.JSON {
+		return f.Printer.JSON(deployment)
 	}
 
 	f.Printer.Table(deployment.Header(), deployment.Rows())

@@ -90,8 +90,14 @@ func getTemplate(f *cmdutil.Factory, opts Options) error {
 	s.Stop()
 
 	if template == nil || template.Code == "" {
+		if f.JSON {
+			return f.Printer.JSON([]any{})
+		}
 		fmt.Println("Template not found")
 	} else {
+		if f.JSON {
+			return f.Printer.JSON(template)
+		}
 		f.Printer.Table([]string{"Code", "Name", "Description"}, [][]string{{template.Code, template.Name, template.Description}})
 	}
 

@@ -21,8 +21,15 @@ func NewCmdProvider(f *cmdutil.Factory) *cobra.Command {
 			}
 
 			if len(providers) == 0 {
+				if f.JSON {
+					return f.Printer.JSON([]any{})
+				}
 				f.Log.Infof("No providers available")
 				return nil
+			}
+
+			if f.JSON {
+				return f.Printer.JSON(providers)
 			}
 
 			header := []string{"Code", "Name"}

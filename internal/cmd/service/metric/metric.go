@@ -119,6 +119,9 @@ func runMetricNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	if len(metrics.Metrics) == 0 {
+		if f.JSON {
+			return f.Printer.JSON([]any{})
+		}
 		f.Log.Infof("no metric history found")
 		return nil
 	}
@@ -147,6 +150,15 @@ func runMetricNonInteractive(f *cmdutil.Factory, opts *Options) error {
 
 	header := []string{"Sum", "Avg", "Max", "Min"}
 	data := [][]string{{mt.WithMeasureUnit(sum), mt.WithMeasureUnit(avg), mt.WithMeasureUnit(max), mt.WithMeasureUnit(min)}}
+
+	if f.JSON {
+		return f.Printer.JSON(map[string]string{
+			"Sum": mt.WithMeasureUnit(sum),
+			"Avg": mt.WithMeasureUnit(avg),
+			"Max": mt.WithMeasureUnit(max),
+			"Min": mt.WithMeasureUnit(min),
+		})
+	}
 
 	f.Printer.Table(header, data)
 

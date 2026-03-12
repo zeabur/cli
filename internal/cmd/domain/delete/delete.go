@@ -137,6 +137,9 @@ func runDeleteDomainNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return nil
 	}
 
+	if f.JSON {
+		return f.Printer.JSON(map[string]string{"status": "success", "domain": opts.domainName, "message": "Domain deleted successfully"})
+	}
 	f.Log.Infof("Delete domain %s success", opts.domainName)
 
 	return nil

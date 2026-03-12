@@ -110,6 +110,9 @@ func createProject(f *cmdutil.Factory, projectRegion string, projectName *string
 		return err
 	}
 
+	if f.JSON {
+		return f.Printer.JSON(map[string]string{"status": "success", "id": project.ID, "name": project.Name, "message": "Project created"})
+	}
 	f.Log.Infof("Project %s created", project.Name)
 	err = setProject(f, project.ID, project.Name)
 	if err != nil {

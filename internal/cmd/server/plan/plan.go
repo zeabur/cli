@@ -87,8 +87,15 @@ func runPlan(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	if len(plans) == 0 {
+		if f.JSON {
+			return f.Printer.JSON([]any{})
+		}
 		f.Log.Infof("No plans available for provider %s in region %s", opts.provider, opts.region)
 		return nil
+	}
+
+	if f.JSON {
+		return f.Printer.JSON(plans)
 	}
 
 	f.Printer.Table(plans.Header(), plans.Rows())

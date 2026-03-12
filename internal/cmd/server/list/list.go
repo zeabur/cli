@@ -29,8 +29,15 @@ func runList(f *cmdutil.Factory) error {
 	}
 
 	if len(servers) == 0 {
+		if f.JSON {
+			return f.Printer.JSON([]any{})
+		}
 		f.Log.Infof("No servers found")
 		return nil
+	}
+
+	if f.JSON {
+		return f.Printer.JSON(servers)
 	}
 
 	f.Printer.Table(servers.Header(), servers.Rows())

@@ -43,6 +43,17 @@ func runGet(f *cmdutil.Factory, opts *Options) error {
 		}
 	}
 
+	if f.JSON {
+		out := make([]map[string]string, len(data))
+		for i, row := range data {
+			out[i] = map[string]string{}
+			for j, h := range header {
+				out[i][h] = row[j]
+			}
+		}
+		return f.Printer.JSON(out)
+	}
+
 	f.Printer.Table(header, data)
 
 	return nil

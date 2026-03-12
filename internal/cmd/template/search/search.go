@@ -100,8 +100,19 @@ func runSearch(f *cmdutil.Factory, opts Options) error {
 	})
 
 	if len(matched) == 0 {
+		if f.JSON {
+			return f.Printer.JSON([]any{})
+		}
 		fmt.Println("No templates found")
 		return nil
+	}
+
+	if f.JSON {
+		templates := make([]*model.Template, 0, len(matched))
+		for _, m := range matched {
+			templates = append(templates, m.template)
+		}
+		return f.Printer.JSON(templates)
 	}
 
 	header := []string{"Code", "Name", "Description", "Deployments"}

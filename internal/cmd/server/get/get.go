@@ -83,6 +83,10 @@ func runGetNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return fmt.Errorf("get server failed: %w", err)
 	}
 
+	if f.JSON {
+		return f.Printer.JSON(server)
+	}
+
 	f.Printer.Table(server.Header(), server.Rows())
 
 	return nil

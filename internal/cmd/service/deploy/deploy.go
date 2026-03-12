@@ -71,6 +71,9 @@ func runDeployNonInteractive(f *cmdutil.Factory, opts *Options) error {
 			return fmt.Errorf("create prebuilt service failed: %w", err)
 		}
 
+		if f.JSON {
+			return f.Printer.JSON(map[string]string{"status": "success", "name": service.Name, "message": "Service created"})
+		}
 		f.Log.Infof("Service %s created", service.Name)
 		return nil
 	case "GIT":
@@ -79,6 +82,9 @@ func runDeployNonInteractive(f *cmdutil.Factory, opts *Options) error {
 			return fmt.Errorf("create service failed: %w", err)
 		}
 
+		if f.JSON {
+			return f.Printer.JSON(map[string]string{"status": "success", "name": opts.name, "message": "Service created"})
+		}
 		f.Log.Infof("Service %s created", opts.name)
 		return nil
 	default:

@@ -36,6 +36,10 @@ func runStatus(f *cmdutil.Factory, opts *profileOptions) error {
 		return fmt.Errorf("failed to get user info: %w", err)
 	}
 
+	if f.JSON {
+		return f.Printer.JSON(user)
+	}
+
 	f.Printer.Table(user.Header(), user.Rows())
 
 	return nil

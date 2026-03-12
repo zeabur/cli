@@ -4,9 +4,11 @@ package root
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	authCmd "github.com/zeabur/cli/internal/cmd/auth"
 	completionCmd "github.com/zeabur/cli/internal/cmd/completion"
@@ -44,11 +46,25 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 		`),
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// set up logging
-			if f.Debug {
+			if f.JSON {
+				f.Log = log.NewSilent()
+			} else if f.Debug {
 				f.Log = log.NewDebugLevel()
 			} else {
 				f.Log = log.NewInfoLevel()
 			}
+
+			// normalize ID flags: strip prefix from prefixed ObjectIDs
+			// e.g. "service-662e24fca7d5..." → "662e24fca7d5..."
+			cmd.Flags().VisitAll(func(flag *pflag.Flag) {
+				if !flag.Changed {
+					return
+				}
+				name := flag.Name
+				if name == "id" || strings.HasSuffix(name, "-id") {
+					normalizeIDFlag(flag)
+				}
+			})
 
 			// require that the user is authenticated before running most commands
 			if cmdutil.IsAuthCheckEnabled(cmd) {
@@ -115,6 +131,7 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 	cmd.PersistentFlags().BoolVar(&f.Debug, "debug", false, "Enable debug logging")
 	cmd.PersistentFlags().BoolVarP(&f.Interactive, config.KeyInteractive, "i", true, "use interactive mode")
 	cmd.PersistentFlags().BoolVar(&f.AutoCheckUpdate, config.KeyAutoCheckUpdate, true, "automatically check update")
+	cmd.PersistentFlags().BoolVar(&f.JSON, "json", false, "output in JSON format")
 
 	// Child commands
 	cmd.AddCommand(deployCmd.NewCmdDeploy(f))
@@ -136,4 +153,16 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 	cmd.SetHelpCommand(helpCmd.NewCmdHelp(cmd))
 
 	return cmd, nil
+}
+
+// normalizeIDFlag strips a known prefix from a prefixed MongoDB ObjectID flag value.
+// e.g. "service-662e24fca7d5abcdef123456" → "662e24fca7d5abcdef123456"
+func normalizeIDFlag(flag *pflag.Flag) {
+	val := flag.Value.String()
+	if idx := strings.LastIndex(val, "-"); idx != -1 {
+		hex := val[idx+1:]
+		if len(hex) == 24 {
+			flag.Value.Set(hex)
+		}
+	}
 }

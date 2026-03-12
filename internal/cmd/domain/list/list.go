@@ -95,8 +95,15 @@ func runListDomainsNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	s.Stop()
 
 	if len(domainList) == 0 {
+		if f.JSON {
+			return f.Printer.JSON([]any{})
+		}
 		f.Log.Infof("No domains found")
 		return nil
+	}
+
+	if f.JSON {
+		return f.Printer.JSON(domainList)
 	}
 
 	f.Printer.Table(domainList.Header(), domainList.Rows())

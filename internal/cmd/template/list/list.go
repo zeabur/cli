@@ -30,6 +30,10 @@ func runList(f *cmdutil.Factory, opts Options) error {
 		return err
 	}
 
+	if f.JSON {
+		return f.Printer.JSON(templates)
+	}
+
 	f.Printer.Table(templates.Header(), templates.Rows())
 
 	return nil
