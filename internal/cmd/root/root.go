@@ -162,7 +162,7 @@ func normalizeIDFlag(flag *pflag.Flag) {
 	if idx := strings.LastIndex(val, "-"); idx != -1 {
 		hex := val[idx+1:]
 		if len(hex) == 24 {
-			flag.Value.Set(hex)
+			_ = flag.Value.Set(hex)
 		}
 	}
 }

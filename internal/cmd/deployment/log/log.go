@@ -188,7 +188,9 @@ func watchLogs(f *cmdutil.Factory, opts *Options) error {
 
 	for log := range logChan {
 		if f.JSON {
-			f.Printer.JSON(log)
+			if err := f.Printer.JSON(log); err != nil {
+				return err
+			}
 			continue
 		}
 		f.Printer.Table(log.Header(), log.Rows())
