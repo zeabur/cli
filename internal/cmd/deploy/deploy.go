@@ -21,8 +21,8 @@ type Options struct {
 	// create will create a new service instead of selecting one if true
 	create bool
 
-	// specify a service ID and environment ID to deploy on
-
+	// specify IDs to deploy on
+	projectID     string
 	serviceID     string
 	environmentID string
 }
@@ -38,6 +38,7 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
+	cmd.Flags().StringVar(&opts.projectID, "project-id", "", "Project ID to deploy on")
 	cmd.Flags().StringVar(&opts.serviceID, "service-id", "", "Service ID to redeploy on")
 	cmd.Flags().StringVar(&opts.environmentID, "environment-id", "", "Environment ID to redeploy on")
 	cmd.Flags().StringVar(&opts.name, "name", "", "Service name")
@@ -50,23 +51,33 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 func runDeploy(f *cmdutil.Factory, opts *Options) error {
 	var environment *model.Environment
 	var service *model.Service
+	var projectID string
 	var err error
 
 	bytes, fileName, err := util.PackZip()
 	if err != nil {
 		return fmt.Errorf("packing zip: %w", err)
 	}
-	opts.name = fileName
+	if opts.name == "" {
+		opts.name = fileName
+	}
 
-	if opts.serviceID == "" {
-		service, environment, err = selectInteractively(f, opts)
-		if err != nil {
-			return err
-		}
-	} else {
-		service, err = f.ApiClient.GetService(context.Background(), opts.serviceID, "", "", "")
-		if err != nil {
-			return err
+	if opts.projectID != "" {
+		// non-interactive mode: --project-id is provided
+		projectID = opts.projectID
+
+		if opts.serviceID != "" {
+			// redeploy to existing service
+			service, err = f.ApiClient.GetService(context.Background(), opts.serviceID, "", "", "")
+			if err != nil {
+				return err
+			}
+		} else {
+			// create a new service
+			service, err = f.ApiClient.CreateEmptyService(context.Background(), projectID, opts.name)
+			if err != nil {
+				return err
+			}
 		}
 
 		if opts.environmentID != "" {
@@ -75,18 +86,47 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 				return err
 			}
 		} else {
-			// get the default environment
-			environments, err := f.ApiClient.ListEnvironments(context.Background(), service.Project.ID)
+			environments, err := f.ApiClient.ListEnvironments(context.Background(), projectID)
 			if err != nil {
 				return err
 			}
-
 			if len(environments) == 0 {
 				return fmt.Errorf("no environment found")
 			}
-
 			environment = environments[0]
 		}
+	} else if opts.serviceID != "" {
+		// legacy non-interactive: --service-id without --project-id
+		service, err = f.ApiClient.GetService(context.Background(), opts.serviceID, "", "", "")
+		if err != nil {
+			return err
+		}
+		projectID = service.Project.ID
+
+		if opts.environmentID != "" {
+			environment, err = f.ApiClient.GetEnvironment(context.Background(), opts.environmentID)
+			if err != nil {
+				return err
+			}
+		} else {
+			environments, err := f.ApiClient.ListEnvironments(context.Background(), projectID)
+			if err != nil {
+				return err
+			}
+			if len(environments) == 0 {
+				return fmt.Errorf("no environment found")
+			}
+			environment = environments[0]
+		}
+	} else {
+		if f.JSON {
+			return fmt.Errorf("--project-id is required in non-interactive (--json) mode")
+		}
+		service, environment, err = selectInteractively(f, opts)
+		if err != nil {
+			return err
+		}
+		projectID = service.Project.ID
 	}
 
 	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
@@ -95,7 +135,7 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 	)
 	s.Start()
 
-	_, err = f.ApiClient.UploadZipToService(context.Background(), service.Project.ID, service.ID, environment.ID, bytes)
+	_, err = f.ApiClient.UploadZipToService(context.Background(), projectID, service.ID, environment.ID, bytes)
 	if err != nil {
 		return err
 	}
@@ -108,13 +148,13 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 			return f.Printer.JSON(map[string]string{
 				"status":         "success",
 				"service_id":     service.ID,
-				"project_id":     service.Project.ID,
+				"project_id":     projectID,
 				"environment_id": environment.ID,
 				"message":        "Service deployed successfully",
 			})
 		}
 		fmt.Println("Service deployed successfully, you can access it via:")
-		fmt.Println(constant.ZeaburDashURL + "/projects/" + service.Project.ID + "/services/" + service.ID + "?envID=" + environment.ID)
+		fmt.Println(constant.ZeaburDashURL + "/projects/" + projectID + "/services/" + service.ID + "?envID=" + environment.ID)
 		return nil
 	}
 
@@ -135,7 +175,7 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 		return f.Printer.JSON(map[string]string{
 			"status":         "success",
 			"service_id":     service.ID,
-			"project_id":     service.Project.ID,
+			"project_id":     projectID,
 			"environment_id": environment.ID,
 			"domain":         *domain,
 			"message":        "Service deployed successfully",
