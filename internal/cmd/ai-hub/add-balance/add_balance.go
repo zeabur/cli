@@ -6,14 +6,14 @@ import (
 	"strconv"
 
 	"github.com/briandowns/spinner"
+	"github.com/cli/browser"
 	"github.com/spf13/cobra"
 
 	"github.com/zeabur/cli/internal/cmdutil"
 )
 
 type Options struct {
-	amount   int
-	provider string
+	amount int
 }
 
 func NewCmdAddBalance(f *cmdutil.Factory) *cobra.Command {
@@ -28,7 +28,6 @@ func NewCmdAddBalance(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().IntVar(&opts.amount, "amount", 0, "Amount to add in dollars")
-	cmd.Flags().StringVar(&opts.provider, "provider", "litellm", "Payment provider")
 
 	return cmd
 }
@@ -51,21 +50,23 @@ func runAddBalance(f *cmdutil.Factory, opts Options) error {
 	}
 
 	amountMillicents := opts.amount * 100000
-
-	var providerPtr *string
-	if opts.provider != "" {
-		providerPtr = &opts.provider
-	}
+	provider := "litellm"
 
 	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 		spinner.WithColor(cmdutil.SpinnerColor),
 		spinner.WithSuffix(" Adding balance..."),
 	)
 	s.Start()
-	result, err := f.ApiClient.AddAIHubBalance(context.Background(), amountMillicents, providerPtr)
+	result, err := f.ApiClient.AddAIHubBalance(context.Background(), amountMillicents, &provider)
 	s.Stop()
 	if err != nil {
-		return err
+		checkoutURL := fmt.Sprintf("https://dash.zeabur.com/checkout?type=ai-hub&amount=%d", opts.amount)
+		f.Log.Infof("Failed to add balance: %s", err)
+		f.Log.Infof("Opening checkout page in browser...")
+		if openErr := browser.OpenURL(checkoutURL); openErr != nil {
+			f.Log.Infof("Please visit: %s", checkoutURL)
+		}
+		return nil
 	}
 
 	if f.JSON {
