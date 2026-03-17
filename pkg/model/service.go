@@ -180,6 +180,28 @@ func formatFloat64(v float64) string {
 	return strconv.FormatFloat(v, 'f', 6, 64)
 }
 
+// PortForwardingMode is the mode of port forwarding.
+type PortForwardingMode string
+
+// valid port forwarding modes
+const (
+	PortForwardingModeEnabled  PortForwardingMode = "ENABLED"
+	PortForwardingModeDisabled PortForwardingMode = "DISABLED"
+	PortForwardingModeUnknown  PortForwardingMode = "UNKNOWN"
+)
+
+func (m PortForwardingMode) GetGraphQLType() string {
+	return "PortForwardingMode"
+}
+
+// ServicePort represents a port of a service.
+type ServicePort struct {
+	ID            string `graphql:"id" json:"id"`
+	Port          int    `graphql:"port" json:"port"`
+	Type          string `graphql:"type" json:"type"`
+	ForwardedPort *int   `graphql:"forwardedPort" json:"forwardedPort"`
+}
+
 type ServiceTemplate string
 
 const (
