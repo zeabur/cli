@@ -63,6 +63,14 @@ func runNetwork(f *cmdutil.Factory, opts *Options) error {
 		return fmt.Errorf("service id or name is required")
 	}
 
+	// Auto-resolve environmentID if not provided
+	if opts.environmentID == "" {
+		envID, err := util.ResolveEnvironmentIDByServiceID(f.ApiClient, opts.id)
+		if err == nil {
+			opts.environmentID = envID
+		}
+	}
+
 	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 		spinner.WithColor(cmdutil.SpinnerColor),
 		spinner.WithSuffix(fmt.Sprintf(" Fetching network information of service %s ...", opts.name)),
