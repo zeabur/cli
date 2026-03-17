@@ -2,6 +2,8 @@ package usage
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
@@ -33,6 +35,9 @@ func NewCmdUsage(f *cmdutil.Factory) *cobra.Command {
 func runUsage(f *cmdutil.Factory, opts Options) error {
 	var monthPtr *string
 	if opts.month != "" {
+		if _, err := time.Parse("2006-01", opts.month); err != nil {
+			return fmt.Errorf("--month must be in YYYY-MM format: %w", err)
+		}
 		monthPtr = &opts.month
 	}
 

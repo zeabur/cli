@@ -63,6 +63,10 @@ func runCreateInteractive(f *cmdutil.Factory, opts Options) error {
 		opts.permission = permissionChoices[idx]
 	}
 
+	if err := paramCheck(opts); err != nil {
+		return err
+	}
+
 	return createKey(f, opts)
 }
 
@@ -105,8 +109,12 @@ func paramCheck(opts Options) error {
 	if opts.name == "" {
 		return fmt.Errorf("name is required")
 	}
-	if opts.permission == "" {
+	switch opts.permission {
+	case "":
 		return fmt.Errorf("permission is required")
+	case "all", "send_only", "read_only":
+		return nil
+	default:
+		return fmt.Errorf("permission must be one of: all, send_only, read_only")
 	}
-	return nil
 }

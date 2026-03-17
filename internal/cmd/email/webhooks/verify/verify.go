@@ -72,13 +72,15 @@ func verifyWebhook(f *cmdutil.Factory, opts Options) error {
 	}
 
 	if f.JSON {
-		return f.Printer.JSON(reply)
+		if err := f.Printer.JSON(reply); err != nil {
+			return err
+		}
+	} else if reply.Success {
+		f.Log.Infof("Webhook verification successful: %s", reply.Message)
 	}
 
-	if reply.Success {
-		f.Log.Infof("Webhook verification successful: %s", reply.Message)
-	} else {
-		f.Log.Infof("Webhook verification failed: %s", reply.Message)
+	if !reply.Success {
+		return fmt.Errorf("webhook verification failed: %s", reply.Message)
 	}
 
 	return nil

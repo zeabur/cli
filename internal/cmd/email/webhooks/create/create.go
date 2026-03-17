@@ -12,16 +12,6 @@ import (
 	"github.com/zeabur/cli/pkg/model"
 )
 
-var eventChoices = []string{
-	"send",
-	"delivery",
-	"bounce",
-	"complaint",
-	"reject",
-	"open",
-	"click",
-}
-
 type Options struct {
 	name     string
 	endpoint string
@@ -76,6 +66,10 @@ func runCreateInteractive(f *cmdutil.Factory, opts Options) error {
 			return err
 		}
 		opts.events = events
+	}
+
+	if err := paramCheck(opts); err != nil {
+		return err
 	}
 
 	return createWebhook(f, opts)

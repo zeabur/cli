@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/zeabur/cli/pkg/model"
@@ -65,6 +66,9 @@ func (c *client) DeleteAIHubKey(ctx context.Context, keyID string) error {
 	})
 	if err != nil {
 		return err
+	}
+	if !mutation.DeleteAIHubKey {
+		return fmt.Errorf("failed to delete AI Hub key %q", keyID)
 	}
 
 	return nil

@@ -2,6 +2,7 @@ package create
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
@@ -63,7 +64,7 @@ func runCreate(f *cmdutil.Factory, opts Options) error {
 	if result.Key.Alias != "" {
 		f.Log.Infof("Alias: %s", result.Key.Alias)
 	}
-	f.Log.Infof("API Key: %s", result.APIKey)
+	fmt.Printf("API Key: %s\n", result.APIKey)
 	f.Log.Infof("WARNING: This API key will only be shown once. Please save it now.")
 
 	return nil

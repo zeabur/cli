@@ -65,6 +65,10 @@ func runAddInteractive(f *cmdutil.Factory, opts Options) error {
 		opts.region = regionChoices[idx]
 	}
 
+	if err := paramCheck(opts); err != nil {
+		return err
+	}
+
 	return addDomain(f, opts)
 }
 

@@ -100,10 +100,12 @@ func getDomain(f *cmdutil.Factory, opts Options) error {
 				r.Type,
 				r.Name,
 				r.Content,
+				r.TTL,
+				r.Priority,
 				r.Status,
 			})
 		}
-		f.Printer.Table([]string{"Category", "Type", "Name", "Content", "Status"}, rows)
+		f.Printer.Table([]string{"Category", "Type", "Name", "Content", "TTL", "Priority", "Status"}, rows)
 	}
 
 	return nil

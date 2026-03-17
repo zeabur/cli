@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/zeabur/cli/pkg/model"
 )
@@ -123,6 +124,9 @@ func (c *client) DeleteZSendDomain(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
+	if !mutation.DeleteZSendDomain {
+		return fmt.Errorf("failed to delete ZSend domain %q", id)
+	}
 
 	return nil
 }
@@ -188,6 +192,9 @@ func (c *client) DeleteZSendAPIKey(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
+	if !mutation.DeleteZSendAPIKey {
+		return fmt.Errorf("failed to delete ZSend API key %q", id)
+	}
 
 	return nil
 }
@@ -252,6 +259,9 @@ func (c *client) DeleteZSendWebhook(ctx context.Context, id string) error {
 	})
 	if err != nil {
 		return err
+	}
+	if !mutation.DeleteZSendWebhook {
+		return fmt.Errorf("failed to delete ZSend webhook %q", id)
 	}
 
 	return nil
