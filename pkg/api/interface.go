@@ -20,6 +20,8 @@ type Client interface {
 	DomainAPI
 	VariableAPI
 	ServerAPI
+	AIHubAPI
+	ZSendAPI
 }
 
 type (
@@ -121,6 +123,16 @@ type (
 		GetRepoBranchesByRepoID(repoID int) ([]string, error)
 	}
 
+	AIHubAPI interface {
+		GetAIHubTenant(ctx context.Context) (*model.AIHubTenant, error)
+		AddAIHubBalance(ctx context.Context, amount int, provider *string) (*model.AddAIHubBalanceResult, error)
+		CreateAIHubKey(ctx context.Context, alias *string) (*model.CreateAIHubKeyResult, error)
+		DeleteAIHubKey(ctx context.Context, keyID string) error
+		UpdateAIHubAutoRechargeSettings(ctx context.Context, threshold, amount int) (*model.UpdateAIHubAutoRechargeSettingsResult, error)
+		GetAIHubSpendLogs(ctx context.Context, startDate, endDate *time.Time) ([]model.AIHubSpendLog, error)
+		GetAIHubMonthlyUsage(ctx context.Context, month *string) (*model.AIHubMonthlyUsage, error)
+	}
+
 	TemplateAPI interface {
 		ListTemplates(ctx context.Context, skip, limit int) (*model.TemplateConnection, error)
 		ListAllTemplates(ctx context.Context) (model.Templates, error)
@@ -137,5 +149,31 @@ type (
 
 		CreateTemplateFromFile(ctx context.Context, rawSpecYaml string) (*model.Template, error)
 		UpdateTemplateFromFile(ctx context.Context, code, rawSpecYaml string) (bool, error)
+	}
+
+	ZSendAPI interface {
+		GetZSendOnboardingStatus(ctx context.Context) (*model.ZSendOnboardingStatus, error)
+		GetZSendUserStatus(ctx context.Context) (*model.ZSendUserStatus, error)
+		OnboardZSend(ctx context.Context) (*model.ZSendOnboardingStatus, error)
+
+		ListZSendDomains(ctx context.Context, page, pageSize *int) (*model.ListZSendDomainsReply, error)
+		GetZSendDomain(ctx context.Context, id string) (*model.ZSendDomain, error)
+		CreateZSendDomain(ctx context.Context, domain, region string) (*model.ZSendDomain, error)
+		VerifyZSendDomain(ctx context.Context, id string) (*model.ZSendDomain, error)
+		DeleteZSendDomain(ctx context.Context, id string) error
+
+		ListZSendAPIKeys(ctx context.Context, page, pageSize *int) (*model.ListZSendAPIKeysReply, error)
+		GetZSendAPIKey(ctx context.Context, id string) (*model.ZSendAPIKey, error)
+		CreateZSendAPIKey(ctx context.Context, input model.CreateZSendAPIKeyInput) (*model.CreateZSendAPIKeyReply, error)
+		DeleteZSendAPIKey(ctx context.Context, id string) error
+
+		ListZSendWebhooks(ctx context.Context, page, pageSize *int) (*model.ListZSendWebhooksReply, error)
+		GetZSendWebhook(ctx context.Context, id string) (*model.ZSendWebhook, error)
+		CreateZSendWebhook(ctx context.Context, input model.CreateZSendWebhookInput) (*model.CreateZSendWebhookReply, error)
+		DeleteZSendWebhook(ctx context.Context, id string) error
+		VerifyZSendWebhook(ctx context.Context, id string) (*model.VerifyZSendWebhookReply, error)
+
+		ListZSendEmails(ctx context.Context, page, pageSize *int, status, jobType, jobID *string) (*model.ListZSendEmailsReply, error)
+		GetZSendEmail(ctx context.Context, id string) (*model.ZSendEmail, error)
 	}
 )
