@@ -98,8 +98,8 @@ func createKey(f *cmdutil.Factory, opts Options) error {
 
 	f.Log.Infof("API key %q created successfully (ID: %s)", reply.APIKey.Name, reply.APIKey.ID)
 	if reply.APIKey.Token != nil {
-		f.Log.Infof("Token: %s", *reply.APIKey.Token)
-		f.Log.Infof("WARNING: This token will only be shown once. Please save it now.")
+		fmt.Printf("Token: %s\n", *reply.APIKey.Token)
+		fmt.Println("WARNING: This token will only be shown once. Please save it now.")
 	}
 
 	return nil

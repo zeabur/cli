@@ -3,6 +3,7 @@ package add
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
@@ -106,6 +107,9 @@ func paramCheck(opts Options) error {
 	}
 	if opts.region == "" {
 		return fmt.Errorf("region is required")
+	}
+	if !slices.Contains(regionChoices, opts.region) {
+		return fmt.Errorf("unsupported region %q", opts.region)
 	}
 	return nil
 }
