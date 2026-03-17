@@ -501,6 +501,64 @@ func (c *client) GetDNSName(ctx context.Context, serviceID string) (string, erro
 	return query.Service.DnsName, nil
 }
 
+func (c *client) GetPortForwardingMode(ctx context.Context, serviceID string, environmentID string) (model.PortForwardingMode, error) {
+	var query struct {
+		Service struct {
+			PortForwardingMode model.PortForwardingMode `graphql:"portForwardingMode(environmentID: $environmentID)"`
+		} `graphql:"service(_id: $serviceID)"`
+	}
+	err := c.Query(ctx, &query, V{
+		"serviceID":     ObjectID(serviceID),
+		"environmentID": ObjectID(environmentID),
+	})
+	if err != nil {
+		return "", err
+	}
+	return query.Service.PortForwardingMode, nil
+}
+
+func (c *client) UpdatePortForwardingMode(ctx context.Context, serviceID string, environmentID string, mode model.PortForwardingMode) error {
+	var mutation struct {
+		UpdatePortForwardingMode bool `graphql:"updatePortForwardingMode(serviceID: $serviceID, environmentID: $environmentID, mode: $mode)"`
+	}
+	return c.Mutate(ctx, &mutation, V{
+		"serviceID":     ObjectID(serviceID),
+		"environmentID": ObjectID(environmentID),
+		"mode":          mode,
+	})
+}
+
+func (c *client) GetServicePorts(ctx context.Context, serviceID string, environmentID string) ([]model.ServicePort, error) {
+	var query struct {
+		Service struct {
+			Ports []model.ServicePort `graphql:"ports(environmentID: $environmentID)"`
+		} `graphql:"service(_id: $serviceID)"`
+	}
+	err := c.Query(ctx, &query, V{
+		"serviceID":     ObjectID(serviceID),
+		"environmentID": ObjectID(environmentID),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return query.Service.Ports, nil
+}
+
+func (c *client) GetPortForwardedHost(ctx context.Context, serviceID string) (string, error) {
+	var query struct {
+		Service struct {
+			PortForwardedHost string `graphql:"portForwardedHost"`
+		} `graphql:"service(_id: $serviceID)"`
+	}
+	err := c.Query(ctx, &query, V{
+		"serviceID": ObjectID(serviceID),
+	})
+	if err != nil {
+		return "", err
+	}
+	return query.Service.PortForwardedHost, nil
+}
+
 func (c *client) UpdateImageTag(ctx context.Context, serviceID, environmentID, tag string) error {
 	var mutation struct {
 		UpdateImageTag bool `graphql:"updateServiceImage(serviceID: $serviceID, environmentID: $environmentID, tag: $tag)"`

@@ -84,6 +84,10 @@ type (
 		CreateEmptyService(ctx context.Context, projectID string, name string) (*model.Service, error)
 		UploadZipToService(ctx context.Context, projectID string, serviceID string, environmentID string, zipBytes []byte) (*model.Service, error)
 		GetDNSName(ctx context.Context, serviceID string) (string, error)
+		GetPortForwardingMode(ctx context.Context, serviceID string, environmentID string) (model.PortForwardingMode, error)
+		UpdatePortForwardingMode(ctx context.Context, serviceID string, environmentID string, mode model.PortForwardingMode) error
+		GetServicePorts(ctx context.Context, serviceID string, environmentID string) ([]model.ServicePort, error)
+		GetPortForwardedHost(ctx context.Context, serviceID string) (string, error)
 		UpdateImageTag(ctx context.Context, serviceID string, environmentID string, tag string) error
 		DeleteService(ctx context.Context, id string, environmentID string) error
 		ExecuteCommand(ctx context.Context, serviceID string, environmentID string, command []string) (*model.CommandResult, error)
