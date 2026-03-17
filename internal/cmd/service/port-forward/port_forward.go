@@ -89,8 +89,13 @@ func runPortForwardNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return fmt.Errorf("service id or name is required")
 	}
 
+	// Auto-resolve environmentID if not provided
 	if opts.environmentID == "" {
-		return fmt.Errorf("environment id is required (use --env-id or select interactively)")
+		envID, err := util.ResolveEnvironmentIDByServiceID(f.ApiClient, opts.id)
+		if err != nil {
+			return fmt.Errorf("environment id is required (use --env-id or select interactively)")
+		}
+		opts.environmentID = envID
 	}
 
 	ctx := context.Background()
