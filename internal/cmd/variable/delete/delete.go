@@ -37,7 +37,7 @@ func NewCmdDeleteVariable(f *cmdutil.Factory) *cobra.Command {
 	util.AddServiceParam(cmd, &opts.id, &opts.name)
 	util.AddEnvOfServiceParam(cmd, &opts.environmentID)
 	cmd.Flags().BoolVarP(&opts.skipConfirm, "yes", "y", false, "Skip confirmation")
-	cmd.Flags().StringArray("delete-keys", opts.deleteKeys, "Key value pair of the variable")
+	cmd.Flags().StringArrayVar(&opts.deleteKeys, "delete-keys", opts.deleteKeys, "Key value pair of the variable")
 
 	return cmd
 }
