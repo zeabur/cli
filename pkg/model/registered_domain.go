@@ -39,7 +39,7 @@ func (ds RegisteredDomains) Header() []string {
 }
 
 func (ds RegisteredDomains) Rows() [][]string {
-	var rows [][]string
+	rows := make([][]string, 0, len(ds))
 	for _, d := range ds {
 		rows = append(rows, d.Rows()[0])
 	}
@@ -60,7 +60,7 @@ func (ds DomainSearchResults) Header() []string {
 }
 
 func (ds DomainSearchResults) Rows() [][]string {
-	var rows [][]string
+	rows := make([][]string, 0, len(ds))
 	for _, d := range ds {
 		avail := "✗"
 		price := "-"

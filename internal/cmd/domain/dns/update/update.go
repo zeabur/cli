@@ -25,12 +25,17 @@ type Options struct {
 func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}
 
+	var ttlSet, prioritySet, proxiedSet bool
+
 	cmd := &cobra.Command{
 		Use:   "update",
 		Short: "Update a DNS record",
 		Long:  "Update a DNS record. Identify the record by --type and --name, or by --record-id.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runUpdate(f, opts)
+			ttlSet = cmd.Flags().Changed("ttl")
+			prioritySet = cmd.Flags().Changed("priority")
+			proxiedSet = cmd.Flags().Changed("proxied")
+			return runUpdate(f, opts, ttlSet, prioritySet, proxiedSet)
 		},
 	}
 
@@ -47,7 +52,7 @@ func NewCmdUpdate(f *cmdutil.Factory) *cobra.Command {
 	return cmd
 }
 
-func runUpdate(f *cmdutil.Factory, opts *Options) error {
+func runUpdate(f *cmdutil.Factory, opts *Options, ttlSet, prioritySet, proxiedSet bool) error {
 	ctx := context.Background()
 
 	if err := resolveDomainID(ctx, f, opts); err != nil {
@@ -70,13 +75,13 @@ func runUpdate(f *cmdutil.Factory, opts *Options) error {
 	if opts.content != "" {
 		input.Content = &opts.content
 	}
-	if opts.ttl != 0 {
+	if ttlSet {
 		input.TTL = &opts.ttl
 	}
-	if opts.priority != 0 {
+	if prioritySet {
 		input.Priority = &opts.priority
 	}
-	if opts.proxied {
+	if proxiedSet {
 		input.Proxied = &opts.proxied
 	}
 

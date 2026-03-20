@@ -35,6 +35,10 @@ func NewCmdAutoRenew(f *cmdutil.Factory) *cobra.Command {
 func runAutoRenew(f *cmdutil.Factory, opts *Options) error {
 	ctx := context.Background()
 
+	if opts.enable && opts.disable {
+		return fmt.Errorf("cannot use both --enable and --disable")
+	}
+
 	if opts.id == "" {
 		if !f.Interactive {
 			return fmt.Errorf("--id is required")
@@ -75,10 +79,6 @@ func runAutoRenew(f *cmdutil.Factory, opts *Options) error {
 		} else {
 			opts.disable = true
 		}
-	}
-
-	if opts.enable && opts.disable {
-		return fmt.Errorf("cannot use both --enable and --disable")
 	}
 
 	autoRenew := opts.enable

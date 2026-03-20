@@ -16,7 +16,7 @@ func NewCmdGetRegistered(f *cmdutil.Factory) *cobra.Command {
 	opts := &Options{}
 
 	cmd := &cobra.Command{
-		Use:   "get",
+		Use:   "get-registered",
 		Short: "Get registered domain details",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGet(f, opts)
