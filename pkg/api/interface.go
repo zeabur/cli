@@ -22,6 +22,7 @@ type Client interface {
 	ServerAPI
 	AIHubAPI
 	ZSendAPI
+	RegisteredDomainAPI
 }
 
 type (
@@ -153,6 +154,25 @@ type (
 
 		CreateTemplateFromFile(ctx context.Context, rawSpecYaml string) (*model.Template, error)
 		UpdateTemplateFromFile(ctx context.Context, code, rawSpecYaml string) (bool, error)
+	}
+
+	RegisteredDomainAPI interface {
+		CheckDomainRegistrationAvailability(ctx context.Context, domain string) (*model.DomainSearchResult, error)
+		PurchaseDomain(ctx context.Context, domain, registrantProfileID string) (*model.PurchaseDomainResult, error)
+		ListRegisteredDomains(ctx context.Context) (model.RegisteredDomains, error)
+		GetRegisteredDomain(ctx context.Context, id string) (*model.RegisteredDomain, error)
+		RenewDomain(ctx context.Context, id string) (*model.RegisteredDomain, error)
+		SetDomainAutoRenew(ctx context.Context, id string, autoRenew bool) (*model.RegisteredDomain, error)
+
+		ListDNSRecords(ctx context.Context, registeredDomainID string) (model.DNSRecords, error)
+		CreateDNSRecord(ctx context.Context, registeredDomainID string, input model.CreateDNSRecordInput) (*model.DNSRecord, error)
+		UpdateDNSRecord(ctx context.Context, registeredDomainID, recordID string, input model.UpdateDNSRecordInput) (*model.DNSRecord, error)
+		DeleteDNSRecord(ctx context.Context, registeredDomainID, recordID string) error
+
+		ListRegistrantProfiles(ctx context.Context) (model.RegistrantProfiles, error)
+		CreateRegistrantProfile(ctx context.Context, input model.CreateRegistrantProfileInput) (*model.RegistrantProfile, error)
+		UpdateRegistrantProfile(ctx context.Context, id string, input model.UpdateRegistrantProfileInput) (*model.RegistrantProfile, error)
+		DeleteRegistrantProfile(ctx context.Context, id string) error
 	}
 
 	ZSendAPI interface {
