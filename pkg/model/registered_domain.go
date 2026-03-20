@@ -204,11 +204,19 @@ type CreateDNSRecordInput struct {
 	Proxied  *bool         `json:"proxied,omitempty" graphql:"proxied"`
 }
 
+func (CreateDNSRecordInput) GetGraphQLType() string {
+	return "CreateRegisteredDomainDNSRecordInput"
+}
+
 type UpdateDNSRecordInput struct {
 	Content  *string `json:"content,omitempty" graphql:"content"`
 	TTL      *int    `json:"ttl,omitempty" graphql:"ttl"`
 	Priority *int    `json:"priority,omitempty" graphql:"priority"`
 	Proxied  *bool   `json:"proxied,omitempty" graphql:"proxied"`
+}
+
+func (UpdateDNSRecordInput) GetGraphQLType() string {
+	return "UpdateRegisteredDomainDNSRecordInput"
 }
 
 type RegisteredDomainDNSRecordType string
