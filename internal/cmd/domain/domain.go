@@ -14,6 +14,7 @@ import (
 	registrantCmd "github.com/zeabur/cli/internal/cmd/domain/registrant"
 	renewCmd "github.com/zeabur/cli/internal/cmd/domain/renew"
 	searchCmd "github.com/zeabur/cli/internal/cmd/domain/search"
+	verificationCmd "github.com/zeabur/cli/internal/cmd/domain/verification"
 	"github.com/zeabur/cli/internal/cmdutil"
 )
 
@@ -39,6 +40,7 @@ func NewCmdDomain(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(autoRenewCmd.NewCmdAutoRenew(f))
 	cmd.AddCommand(dnsCmd.NewCmdDNS(f))
 	cmd.AddCommand(registrantCmd.NewCmdRegistrant(f))
+	cmd.AddCommand(verificationCmd.NewCmdVerification(f))
 
 	return cmd
 }
