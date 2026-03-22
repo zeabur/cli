@@ -125,19 +125,22 @@ func runDeleteVariableNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		opts.environmentID = envID
 	}
 
-	for _, v := range opts.deleteKeys {
-		opts.keys[v] = ""
-	}
-
 	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 		spinner.WithColor(cmdutil.SpinnerColor),
 		spinner.WithSuffix(fmt.Sprintf(" Deleting variables of service: %s...", opts.name)),
 	)
 
-	for k, v := range opts.keys {
-		if v == "" {
-			delete(opts.keys, k)
+	// In non-interactive mode, opts.keys may be empty — fetch existing variables first
+	if len(opts.keys) == 0 {
+		varList, _, err := f.ApiClient.ListVariables(context.Background(), opts.id, opts.environmentID)
+		if err != nil {
+			return err
 		}
+		opts.keys = varList.ToMap()
+	}
+
+	for _, k := range opts.deleteKeys {
+		delete(opts.keys, k)
 	}
 
 	createVarResult, err := f.ApiClient.UpdateVariables(context.Background(), opts.id, opts.environmentID, opts.keys)
