@@ -204,6 +204,31 @@ func (c *client) UpdateRegistrantProfile(ctx context.Context, id string, input m
 	return &mutation.UpdateRegistrantProfile, nil
 }
 
+func (c *client) ResendRegistrantVerificationEmail(ctx context.Context, registeredDomainID string) error {
+	var mutation struct {
+		ResendRegistrantVerificationEmail bool `graphql:"resendRegistrantVerificationEmail(registeredDomainID: $registeredDomainID)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{
+		"registeredDomainID": ObjectID(registeredDomainID),
+	})
+
+	return err
+}
+
+func (c *client) UpdateRegistrantContact(ctx context.Context, registeredDomainID string, input model.UpdateRegistrantContactInput) error {
+	var mutation struct {
+		UpdateRegistrantContact bool `graphql:"updateRegistrantContact(registeredDomainID: $registeredDomainID, input: $input)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{
+		"registeredDomainID": ObjectID(registeredDomainID),
+		"input":              input,
+	})
+
+	return err
+}
+
 func (c *client) DeleteRegistrantProfile(ctx context.Context, id string) error {
 	var mutation struct {
 		DeleteRegistrantProfile bool `graphql:"deleteRegistrantProfile(id: $id)"`

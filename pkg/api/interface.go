@@ -173,6 +173,9 @@ type (
 		CreateRegistrantProfile(ctx context.Context, input model.CreateRegistrantProfileInput) (*model.RegistrantProfile, error)
 		UpdateRegistrantProfile(ctx context.Context, id string, input model.UpdateRegistrantProfileInput) (*model.RegistrantProfile, error)
 		DeleteRegistrantProfile(ctx context.Context, id string) error
+
+		ResendRegistrantVerificationEmail(ctx context.Context, registeredDomainID string) error
+		UpdateRegistrantContact(ctx context.Context, registeredDomainID string, input model.UpdateRegistrantContactInput) error
 	}
 
 	ZSendAPI interface {

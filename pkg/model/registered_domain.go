@@ -6,15 +6,16 @@ import (
 )
 
 type RegisteredDomain struct {
-	ID            string    `json:"_id" graphql:"_id"`
-	Domain        string    `json:"domain" graphql:"domain"`
-	TLD           string    `json:"tld" graphql:"tld"`
-	Status        string    `json:"status" graphql:"status"`
-	AutoRenew     bool      `json:"autoRenew" graphql:"autoRenew"`
-	ExpiresAt     time.Time `json:"expiresAt" graphql:"expiresAt"`
-	RegisteredAt  time.Time `json:"registeredAt" graphql:"registeredAt"`
-	PurchasePrice int       `json:"purchasePrice" graphql:"purchasePrice"`
-	RenewalPrice  int       `json:"renewalPrice" graphql:"renewalPrice"`
+	ID                           string    `json:"_id" graphql:"_id"`
+	Domain                       string    `json:"domain" graphql:"domain"`
+	TLD                          string    `json:"tld" graphql:"tld"`
+	Status                       string    `json:"status" graphql:"status"`
+	AutoRenew                    bool      `json:"autoRenew" graphql:"autoRenew"`
+	ExpiresAt                    time.Time `json:"expiresAt" graphql:"expiresAt"`
+	RegisteredAt                 time.Time `json:"registeredAt" graphql:"registeredAt"`
+	PurchasePrice                int       `json:"purchasePrice" graphql:"purchasePrice"`
+	RenewalPrice                 int       `json:"renewalPrice" graphql:"renewalPrice"`
+	RegistrantVerificationStatus *string   `json:"registrantVerificationStatus" graphql:"registrantVerificationStatus"`
 }
 
 func (d RegisteredDomain) Header() []string {
@@ -192,6 +193,20 @@ type UpdateRegistrantProfileInput struct {
 	State        *string `json:"state,omitempty" graphql:"state"`
 	Country      *string `json:"country,omitempty" graphql:"country"`
 	PostalCode   *string `json:"postalCode,omitempty" graphql:"postalCode"`
+	Organization *string `json:"organization,omitempty" graphql:"organization"`
+}
+
+type UpdateRegistrantContactInput struct {
+	FirstName    string  `json:"firstName" graphql:"firstName"`
+	LastName     string  `json:"lastName" graphql:"lastName"`
+	Email        string  `json:"email" graphql:"email"`
+	Phone        string  `json:"phone" graphql:"phone"`
+	Address1     string  `json:"address1" graphql:"address1"`
+	Address2     *string `json:"address2,omitempty" graphql:"address2"`
+	City         string  `json:"city" graphql:"city"`
+	State        string  `json:"state" graphql:"state"`
+	Country      string  `json:"country" graphql:"country"`
+	PostalCode   string  `json:"postalCode" graphql:"postalCode"`
 	Organization *string `json:"organization,omitempty" graphql:"organization"`
 }
 
