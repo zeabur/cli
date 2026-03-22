@@ -62,5 +62,16 @@ func runGet(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	f.Printer.Table(domain.Header(), domain.Rows())
+
+	if domain.RegistrantProfile != nil {
+		p := domain.RegistrantProfile
+		f.Log.Infof("")
+		f.Log.Infof("Registrant Profile:")
+		f.Printer.Table(
+			[]string{"Name", "Email", "Phone", "Country"},
+			[][]string{{p.FirstName + " " + p.LastName, p.Email, p.Phone, p.Country}},
+		)
+	}
+
 	return nil
 }

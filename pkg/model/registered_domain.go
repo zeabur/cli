@@ -6,16 +6,17 @@ import (
 )
 
 type RegisteredDomain struct {
-	ID                           string    `json:"_id" graphql:"_id"`
-	Domain                       string    `json:"domain" graphql:"domain"`
-	TLD                          string    `json:"tld" graphql:"tld"`
-	Status                       string    `json:"status" graphql:"status"`
-	AutoRenew                    bool      `json:"autoRenew" graphql:"autoRenew"`
-	ExpiresAt                    time.Time `json:"expiresAt" graphql:"expiresAt"`
-	RegisteredAt                 time.Time `json:"registeredAt" graphql:"registeredAt"`
-	PurchasePrice                int       `json:"purchasePrice" graphql:"purchasePrice"`
-	RenewalPrice                 int       `json:"renewalPrice" graphql:"renewalPrice"`
-	RegistrantVerificationStatus *string   `json:"registrantVerificationStatus" graphql:"registrantVerificationStatus"`
+	ID                           string              `json:"_id" graphql:"_id"`
+	Domain                       string              `json:"domain" graphql:"domain"`
+	TLD                          string              `json:"tld" graphql:"tld"`
+	Status                       string              `json:"status" graphql:"status"`
+	AutoRenew                    bool                `json:"autoRenew" graphql:"autoRenew"`
+	ExpiresAt                    time.Time           `json:"expiresAt" graphql:"expiresAt"`
+	RegisteredAt                 time.Time           `json:"registeredAt" graphql:"registeredAt"`
+	PurchasePrice                int                 `json:"purchasePrice" graphql:"purchasePrice"`
+	RenewalPrice                 int                 `json:"renewalPrice" graphql:"renewalPrice"`
+	RegistrantVerificationStatus *string             `json:"registrantVerificationStatus" graphql:"registrantVerificationStatus"`
+	RegistrantProfile            *RegistrantProfile  `json:"registrantProfile" graphql:"registrantProfile"`
 }
 
 func (d RegisteredDomain) Header() []string {
