@@ -92,7 +92,7 @@ func runDeleteVariableInteractive(f *cmdutil.Factory, opts *Options) error {
 			return err
 		}
 
-		opts.keys[keyTable[updateVarSelect]] = ""
+		opts.deleteKeys = append(opts.deleteKeys, keyTable[updateVarSelect])
 
 		doneConfirm, err := f.Prompter.Confirm("Are you done selecting variable(s) to be deleted?", false)
 		if err != nil {
@@ -130,7 +130,11 @@ func runDeleteVariableNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		spinner.WithSuffix(fmt.Sprintf(" Deleting variables of service: %s...", opts.name)),
 	)
 
-	// In non-interactive mode, opts.keys may be empty — fetch existing variables first
+	if len(opts.deleteKeys) == 0 {
+		return fmt.Errorf("--delete-keys is required in non-interactive mode")
+	}
+
+	// opts.keys may be empty in non-interactive mode — fetch existing variables first
 	if len(opts.keys) == 0 {
 		varList, _, err := f.ApiClient.ListVariables(context.Background(), opts.id, opts.environmentID)
 		if err != nil {
