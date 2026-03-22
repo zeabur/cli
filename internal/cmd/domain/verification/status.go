@@ -9,30 +9,18 @@ import (
 	"github.com/zeabur/cli/internal/cmdutil"
 )
 
-func NewCmdVerification(f *cmdutil.Factory) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "verification",
-		Short: "Manage registrant verification for registered domains",
-	}
-
-	cmd.AddCommand(newCmdStatus(f))
-	cmd.AddCommand(newCmdResend(f))
-
-	return cmd
-}
-
-type resendOptions struct {
+type statusOptions struct {
 	id string
 }
 
-func newCmdResend(f *cmdutil.Factory) *cobra.Command {
-	opts := &resendOptions{}
+func newCmdStatus(f *cmdutil.Factory) *cobra.Command {
+	opts := &statusOptions{}
 
 	cmd := &cobra.Command{
-		Use:   "resend",
-		Short: "Resend the ICANN registrant verification email",
+		Use:   "status",
+		Short: "Check the ICANN registrant verification status of a domain",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runResend(f, opts)
+			return runStatus(f, opts)
 		},
 	}
 
@@ -41,7 +29,7 @@ func newCmdResend(f *cmdutil.Factory) *cobra.Command {
 	return cmd
 }
 
-func runResend(f *cmdutil.Factory, opts *resendOptions) error {
+func runStatus(f *cmdutil.Factory, opts *statusOptions) error {
 	ctx := context.Background()
 
 	if opts.id == "" {
@@ -60,7 +48,7 @@ func runResend(f *cmdutil.Factory, opts *resendOptions) error {
 		for i, d := range domains {
 			options[i] = d.Domain
 		}
-		idx, err := f.Prompter.Select("Select domain to resend verification email", "", options)
+		idx, err := f.Prompter.Select("Select domain to check verification status", "", options)
 		if err != nil {
 			return err
 		}
@@ -69,15 +57,31 @@ func runResend(f *cmdutil.Factory, opts *resendOptions) error {
 
 	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 		spinner.WithColor(cmdutil.SpinnerColor),
-		spinner.WithSuffix(" Resending verification email..."),
+		spinner.WithSuffix(" Checking verification status..."),
 	)
 	s.Start()
-	err := f.ApiClient.ResendRegistrantVerificationEmail(ctx, opts.id)
+	domain, err := f.ApiClient.GetRegisteredDomain(ctx, opts.id)
 	s.Stop()
 	if err != nil {
-		return fmt.Errorf("resend verification email failed: %w", err)
+		return fmt.Errorf("get registered domain failed: %w", err)
 	}
 
-	f.Log.Infof("Verification email resent successfully")
+	status := "N/A"
+	if domain.RegistrantVerificationStatus != nil {
+		status = *domain.RegistrantVerificationStatus
+	}
+
+	if f.JSON {
+		return f.Printer.JSON(map[string]string{
+			"domain": domain.Domain,
+			"status": status,
+		})
+	}
+
+	f.Printer.Table(
+		[]string{"Domain", "Verification Status"},
+		[][]string{{domain.Domain, status}},
+	)
+
 	return nil
 }

@@ -19,14 +19,19 @@ type RegisteredDomain struct {
 }
 
 func (d RegisteredDomain) Header() []string {
-	return []string{"ID", "Domain", "Status", "Auto-Renew", "Expires", "Price/yr"}
+	return []string{"ID", "Domain", "Status", "Verification", "Auto-Renew", "Expires", "Price/yr"}
 }
 
 func (d RegisteredDomain) Rows() [][]string {
+	verification := "N/A"
+	if d.RegistrantVerificationStatus != nil {
+		verification = *d.RegistrantVerificationStatus
+	}
 	return [][]string{{
 		d.ID,
 		d.Domain,
 		d.Status,
+		verification,
 		fmt.Sprintf("%v", d.AutoRenew),
 		d.ExpiresAt.Format("2006-01-02"),
 		fmt.Sprintf("$%.2f", float64(d.RenewalPrice)/100),
