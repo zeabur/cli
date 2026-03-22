@@ -17,6 +17,7 @@ func NewCmdVerification(f *cmdutil.Factory) *cobra.Command {
 
 	cmd.AddCommand(newCmdStatus(f))
 	cmd.AddCommand(newCmdResend(f))
+	cmd.AddCommand(newCmdUpdateContact(f))
 
 	return cmd
 }
