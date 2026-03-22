@@ -78,11 +78,14 @@ func runUpdateContact(f *cmdutil.Factory, opts *updateContactOptions) error {
 		opts.id = domains[idx].ID
 	}
 
+	var originalEmail string
+
 	if f.Interactive {
 		// Pre-fill from current registrant profile if available
 		domain, err := f.ApiClient.GetRegisteredDomain(ctx, opts.id)
 		if err == nil && domain.RegistrantProfile != nil {
 			p := domain.RegistrantProfile
+			originalEmail = p.Email
 			if opts.firstName == "" {
 				opts.firstName, _ = f.Prompter.Input("First name: ", p.FirstName)
 			}
@@ -200,7 +203,7 @@ func runUpdateContact(f *cmdutil.Factory, opts *updateContactOptions) error {
 	}
 
 	f.Log.Infof("Registrant contact updated successfully")
-	if opts.email != "" {
+	if opts.email != originalEmail {
 		f.Log.Infof("Note: changing the email triggers a new ICANN verification flow")
 	}
 
