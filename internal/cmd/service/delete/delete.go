@@ -14,8 +14,6 @@ type Options struct {
 	id   string
 	name string
 
-	environmentID string
-
 	skipConfirm bool
 }
 
@@ -31,7 +29,6 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	util.AddServiceParam(cmd, &opts.id, &opts.name)
-	util.AddEnvOfServiceParam(cmd, &opts.environmentID)
 	cmd.Flags().BoolVarP(&opts.skipConfirm, "yes", "y", false, "Skip confirmation")
 
 	return cmd
@@ -47,12 +44,11 @@ func runDelete(f *cmdutil.Factory, opts *Options) error {
 func runDeleteInteractive(f *cmdutil.Factory, opts *Options) error {
 	zctx := f.Config.GetContext()
 
-	if _, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
-		ProjectCtx:    zctx,
-		ServiceID:     &opts.id,
-		ServiceName:   &opts.name,
-		EnvironmentID: &opts.environmentID,
-		CreateNew:     false,
+	if _, err := f.ParamFiller.ServiceByName(fill.ServiceByNameOptions{
+		ProjectCtx:  zctx,
+		ServiceID:   &opts.id,
+		ServiceName: &opts.name,
+		CreateNew:   false,
 	}); err != nil {
 		return err
 	}
@@ -71,14 +67,6 @@ func runDeleteNonInteractive(f *cmdutil.Factory, opts *Options) error {
 
 	if opts.id == "" {
 		return fmt.Errorf("--id or --name is required")
-	}
-
-	if opts.environmentID == "" {
-		envID, err := util.ResolveEnvironmentIDByServiceID(f.ApiClient, opts.id)
-		if err != nil {
-			return err
-		}
-		opts.environmentID = envID
 	}
 
 	// to show friendly message
@@ -101,7 +89,7 @@ func runDeleteNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return nil
 	}
 
-	err := f.ApiClient.DeleteService(context.Background(), opts.id, opts.environmentID)
+	err := f.ApiClient.DeleteService(context.Background(), opts.id)
 	if err != nil {
 		return fmt.Errorf("delete service failed: %w", err)
 	}
