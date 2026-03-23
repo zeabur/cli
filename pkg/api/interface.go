@@ -77,7 +77,6 @@ type (
 		RestartService(ctx context.Context, id string, environmentID string) error
 		RedeployService(ctx context.Context, id string, environmentID string) error
 		SuspendService(ctx context.Context, id string, environmentID string) error
-		ExposeService(ctx context.Context, id string, environmentID string, projectID string, name string) (*model.TempTCPPort, error)
 		CreatePrebuiltService(ctx context.Context, projectID string, marketplaceCode string) (*model.Service, error)
 		CreatePrebuiltServiceCustom(ctx context.Context, projectID string, schema model.ServiceSpecSchemaInput) (*model.Service, error)
 		CreatePrebuiltServiceRaw(ctx context.Context, projectID string, rawSchema string) (*model.Service, error)
@@ -90,7 +89,7 @@ type (
 		GetServicePorts(ctx context.Context, serviceID string, environmentID string) ([]model.ServicePort, error)
 		GetPortForwardedHost(ctx context.Context, serviceID string) (string, error)
 		UpdateImageTag(ctx context.Context, serviceID string, environmentID string, tag string) error
-		DeleteService(ctx context.Context, id string, environmentID string) error
+		DeleteService(ctx context.Context, id string) error
 		ExecuteCommand(ctx context.Context, serviceID string, environmentID string, command []string) (*model.CommandResult, error)
 	}
 

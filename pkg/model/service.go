@@ -125,15 +125,6 @@ var (
 	_ Tabler = (*ServiceDetail)(nil)
 )
 
-// TempTCPPort is a temporary TCP port.
-type TempTCPPort struct {
-	ServiceID     string `json:"serviceID" graphql:"serviceID"`
-	EnvironmentID string `json:"environmentID" graphql:"environmentID"`
-	TargetPort    int    `json:"targetPort" graphql:"targetPort"`
-	NodePort      int    `json:"nodePort" graphql:"nodePort"`
-	RemainSeconds int    `json:"remainSeconds" graphql:"remainSeconds"`
-}
-
 // GitTrigger represents a git trigger.
 type GitTrigger struct {
 	BranchName string `json:"branchName" graphql:"branchName"`

@@ -238,24 +238,6 @@ func (c *client) SuspendService(ctx context.Context, id string, environmentID st
 	return err
 }
 
-func (c *client) ExposeService(ctx context.Context, id string, environmentID string, projectID string, name string) (*model.TempTCPPort, error) {
-	var mutation struct {
-		ExposeService model.TempTCPPort `graphql:"exposeTempTcpPort(serviceID: $serviceID, environmentID: $environmentID, projectID: $projectID, serviceName: $name)"`
-	}
-
-	err := c.Mutate(ctx, &mutation, V{
-		"serviceID":     ObjectID(id),
-		"environmentID": ObjectID(environmentID),
-		"projectID":     ObjectID(projectID),
-		"name":          name,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &mutation.ExposeService, nil
-}
-
 func (c *client) GetPrebuiltItems(ctx context.Context) ([]model.PrebuiltItem, error) {
 	var query struct {
 		PrebuiltItems []model.PrebuiltItem `graphql:"prebuiltMarketplaceItems"`
@@ -576,14 +558,13 @@ func (c *client) UpdateImageTag(ctx context.Context, serviceID, environmentID, t
 	return nil
 }
 
-func (c *client) DeleteService(ctx context.Context, id string, environmentID string) error {
+func (c *client) DeleteService(ctx context.Context, id string) error {
 	var mutation struct {
-		DeleteService bool `graphql:"deleteService(_id: $id, environmentID: $environmentID)"`
+		DeleteService bool `graphql:"deleteService(_id: $id)"`
 	}
 
 	err := c.Mutate(ctx, &mutation, V{
-		"id":            ObjectID(id),
-		"environmentID": ObjectID(environmentID),
+		"id": ObjectID(id),
 	})
 
 	return err
