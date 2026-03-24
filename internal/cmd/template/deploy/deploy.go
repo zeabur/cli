@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -22,6 +23,7 @@ import (
 
 type Options struct {
 	file           string
+	code           string
 	projectID      string
 	region         string
 	skipValidation bool
@@ -40,6 +42,7 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&opts.file, "file", "f", "", "Template file")
+	cmd.Flags().StringVarP(&opts.code, "code", "c", "", "Template code (fetches YAML from marketplace)")
 	cmd.Flags().StringVar(&opts.projectID, "project-id", "", "Project ID to deploy on")
 	cmd.Flags().StringVarP(&opts.region, "region", "r", "", "Region to create a new project in (e.g. tpe0, sfo0)")
 	cmd.Flags().BoolVar(&opts.skipValidation, "skip-validation", false, "Skip template validation")
@@ -57,7 +60,32 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 
 	var file []byte
 
-	if strings.HasPrefix(opts.file, "https://") || strings.HasPrefix(opts.file, "http://") {
+	if opts.code != "" {
+		templateURL := "https://zeabur.com/templates/" + url.PathEscape(opts.code) + ".yaml"
+		s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+			spinner.WithColor(cmdutil.SpinnerColor),
+			spinner.WithSuffix(" Fetching template by code ..."),
+		)
+
+		s.Start()
+		resp, err := http.Get(templateURL)
+		if err != nil {
+			s.Stop()
+			return fmt.Errorf("fetch template by code failed: %w", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			s.Stop()
+			return fmt.Errorf("template not found (code: %s, HTTP %d)", opts.code, resp.StatusCode)
+		}
+
+		file, err = io.ReadAll(resp.Body)
+		s.Stop()
+		if err != nil {
+			return fmt.Errorf("read template failed: %w", err)
+		}
+	} else if strings.HasPrefix(opts.file, "https://") || strings.HasPrefix(opts.file, "http://") {
 		s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 			spinner.WithColor(cmdutil.SpinnerColor),
 			spinner.WithSuffix(" Fetching remote template file ..."),
@@ -296,8 +324,12 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 }
 
 func paramCheck(opts *Options) error {
-	if opts.file == "" {
-		return fmt.Errorf("please specify template file by -f or --file, you can use remote file by http(s)://... or local file path")
+	if opts.file == "" && opts.code == "" {
+		return fmt.Errorf("please specify template file by -f/--file or template code by -c/--code")
+	}
+
+	if opts.file != "" && opts.code != "" {
+		return fmt.Errorf("please specify either -f/--file or -c/--code, not both")
 	}
 
 	return nil
