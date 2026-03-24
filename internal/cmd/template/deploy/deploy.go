@@ -68,16 +68,27 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 		)
 
 		s.Start()
-		resp, err := http.Get(templateURL)
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, templateURL, nil)
+		if err != nil {
+			s.Stop()
+			return fmt.Errorf("build template request failed: %w", err)
+		}
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			s.Stop()
 			return fmt.Errorf("fetch template by code failed: %w", err)
 		}
 		defer resp.Body.Close()
 
+		if resp.StatusCode == http.StatusNotFound {
+			s.Stop()
+			return fmt.Errorf("template not found (code: %s)", opts.code)
+		}
 		if resp.StatusCode != http.StatusOK {
 			s.Stop()
-			return fmt.Errorf("template not found (code: %s, HTTP %d)", opts.code, resp.StatusCode)
+			return fmt.Errorf("fetch template by code failed: unexpected HTTP %d", resp.StatusCode)
 		}
 
 		file, err = io.ReadAll(resp.Body)
