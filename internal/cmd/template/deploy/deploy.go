@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -22,6 +23,7 @@ import (
 
 type Options struct {
 	file           string
+	code           string
 	projectID      string
 	region         string
 	skipValidation bool
@@ -40,6 +42,7 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&opts.file, "file", "f", "", "Template file")
+	cmd.Flags().StringVarP(&opts.code, "code", "c", "", "Template code (fetches YAML from marketplace)")
 	cmd.Flags().StringVar(&opts.projectID, "project-id", "", "Project ID to deploy on")
 	cmd.Flags().StringVarP(&opts.region, "region", "r", "", "Region to create a new project in (e.g. tpe0, sfo0)")
 	cmd.Flags().BoolVar(&opts.skipValidation, "skip-validation", false, "Skip template validation")
@@ -51,13 +54,49 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 func runDeploy(f *cmdutil.Factory, opts *Options) error {
 	var err error
 
-	if err := paramCheck(opts); err != nil {
+	if err := paramCheck(f, opts); err != nil {
 		return err
 	}
 
 	var file []byte
 
-	if strings.HasPrefix(opts.file, "https://") || strings.HasPrefix(opts.file, "http://") {
+	if opts.code != "" {
+		templateURL := "https://zeabur.com/templates/" + url.PathEscape(opts.code) + ".yaml"
+		s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
+			spinner.WithColor(cmdutil.SpinnerColor),
+			spinner.WithSuffix(" Fetching template by code ..."),
+		)
+
+		s.Start()
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, templateURL, nil)
+		if err != nil {
+			s.Stop()
+			return fmt.Errorf("build template request failed: %w", err)
+		}
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			s.Stop()
+			return fmt.Errorf("fetch template by code failed: %w", err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode == http.StatusNotFound {
+			s.Stop()
+			return fmt.Errorf("template not found (code: %s)", opts.code)
+		}
+		if resp.StatusCode != http.StatusOK {
+			s.Stop()
+			return fmt.Errorf("fetch template by code failed: unexpected HTTP %d", resp.StatusCode)
+		}
+
+		file, err = io.ReadAll(resp.Body)
+		s.Stop()
+		if err != nil {
+			return fmt.Errorf("read template failed: %w", err)
+		}
+	} else if strings.HasPrefix(opts.file, "https://") || strings.HasPrefix(opts.file, "http://") {
 		s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 			spinner.WithColor(cmdutil.SpinnerColor),
 			spinner.WithSuffix(" Fetching remote template file ..."),
@@ -295,9 +334,42 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 	return nil
 }
 
-func paramCheck(opts *Options) error {
-	if opts.file == "" {
-		return fmt.Errorf("please specify template file by -f or --file, you can use remote file by http(s)://... or local file path")
+func paramCheck(f *cmdutil.Factory, opts *Options) error {
+	if opts.file != "" && opts.code != "" {
+		return fmt.Errorf("please specify either -f/--file or -c/--code, not both")
+	}
+
+	if opts.file == "" && opts.code == "" {
+		if !f.Interactive {
+			return fmt.Errorf("please specify template file by -f/--file or template code by -c/--code")
+		}
+
+		sourceIdx, err := f.Prompter.Select("How would you like to specify the template?", "", []string{
+			"Template file (-f/--file)",
+			"Template code (-c/--code)",
+		})
+		if err != nil {
+			return fmt.Errorf("source selection failed: %w", err)
+		}
+
+		switch sourceIdx {
+		case 0:
+			input, err := f.Prompter.Input("Template file path: ", "")
+			if err != nil {
+				return fmt.Errorf("input failed: %w", err)
+			}
+			opts.file = input
+		case 1:
+			input, err := f.Prompter.Input("Template code: ", "")
+			if err != nil {
+				return fmt.Errorf("input failed: %w", err)
+			}
+			opts.code = input
+		}
+
+		if opts.file == "" && opts.code == "" {
+			return fmt.Errorf("no template source provided")
+		}
 	}
 
 	return nil
