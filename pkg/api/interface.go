@@ -199,7 +199,22 @@ type (
 		DeleteZSendWebhook(ctx context.Context, id string) error
 		VerifyZSendWebhook(ctx context.Context, id string) (*model.VerifyZSendWebhookReply, error)
 
+		// Email record queries (GraphQL)
 		ListZSendEmails(ctx context.Context, page, pageSize *int, status, jobType, jobID *string) (*model.ListZSendEmailsReply, error)
 		GetZSendEmail(ctx context.Context, id string) (*model.ZSendEmail, error)
+
+		// Send (REST, requires Z-Send API key)
+		SendZSendEmail(ctx context.Context, apiKey string, req model.ZSendSendEmailRequest) (*model.ZSendSendEmailReply, error)
+		ScheduleZSendEmail(ctx context.Context, apiKey string, req model.ZSendScheduleEmailRequest) (*model.ZSendScheduleEmailReply, error)
+		SendZSendBatchEmail(ctx context.Context, apiKey string, req model.ZSendBatchEmailRequest) (*model.ZSendBatchEmailReply, error)
+
+		// Scheduled email management (REST, requires Z-Send API key)
+		ListZSendScheduledEmails(ctx context.Context, apiKey string, page, pageSize *int, status *string) (*model.ZSendListScheduledEmailsReply, error)
+		GetZSendScheduledEmail(ctx context.Context, apiKey string, id string) (*model.ZSendScheduledEmail, error)
+		CancelZSendScheduledEmail(ctx context.Context, apiKey string, id string) error
+
+		// Batch job management (REST, requires Z-Send API key)
+		ListZSendBatchEmailJobs(ctx context.Context, apiKey string, page, pageSize *int, status *string) (*model.ZSendListBatchJobsReply, error)
+		GetZSendBatchEmailJob(ctx context.Context, apiKey string, id string) (*model.ZSendBatchJob, error)
 	}
 )

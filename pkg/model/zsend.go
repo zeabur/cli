@@ -296,3 +296,158 @@ func (e ZSendEmails) Rows() [][]string {
 }
 
 var _ Tabler = (ZSendEmails)(nil)
+
+// ─────────────────────────────────────────────
+// REST API request / reply types
+// ─────────────────────────────────────────────
+
+// ZSendAttachment is an email attachment (base64 encoded content).
+type ZSendAttachment struct {
+	Filename    string `json:"filename"`
+	Content     string `json:"content"`
+	ContentType string `json:"content_type,omitempty"`
+}
+
+// ZSendSendEmailRequest is the request body for POST /api/v1/zsend/emails.
+type ZSendSendEmailRequest struct {
+	From        string            `json:"from"`
+	To          []string          `json:"to"`
+	Cc          []string          `json:"cc,omitempty"`
+	Bcc         []string          `json:"bcc,omitempty"`
+	ReplyTo     []string          `json:"reply_to,omitempty"`
+	Subject     string            `json:"subject"`
+	HTML        string            `json:"html,omitempty"`
+	Text        string            `json:"text,omitempty"`
+	Headers     map[string]string `json:"headers,omitempty"`
+	Tags        map[string]string `json:"tags,omitempty"`
+	Attachments []ZSendAttachment `json:"attachments,omitempty"`
+}
+
+// ZSendSendEmailReply is the response for sending a single email.
+type ZSendSendEmailReply struct {
+	ID        string `json:"id"`
+	MessageID string `json:"message_id"`
+	Status    string `json:"status"`
+}
+
+// ZSendScheduleEmailRequest is the request body for POST /api/v1/zsend/emails/schedule.
+type ZSendScheduleEmailRequest struct {
+	ZSendSendEmailRequest
+	ScheduledAt string `json:"scheduled_at"` // RFC3339
+}
+
+// ZSendScheduleEmailReply is the response for scheduling an email.
+type ZSendScheduleEmailReply struct {
+	ID     string `json:"id"`
+	Status string `json:"status"`
+}
+
+// ZSendBatchEmailRequest is the request body for POST /api/v1/zsend/emails/batch.
+type ZSendBatchEmailRequest struct {
+	Emails []ZSendSendEmailRequest `json:"emails"`
+}
+
+// ZSendBatchEmailReply is the response for sending a batch of emails.
+type ZSendBatchEmailReply struct {
+	JobID      string `json:"job_id"`
+	Status     string `json:"status"`
+	TotalCount int    `json:"total_count"`
+}
+
+// ZSendScheduledEmail represents a scheduled email (from GET /emails/scheduled/:id).
+type ZSendScheduledEmail struct {
+	ID          string            `json:"id"`
+	From        string            `json:"from"`
+	To          []string          `json:"to"`
+	Subject     string            `json:"subject"`
+	HTML        string            `json:"html"`
+	Text        string            `json:"text"`
+	Status      string            `json:"status"`
+	ScheduledAt string            `json:"scheduled_at"`
+	CreatedAt   string            `json:"created_at"`
+	SentAt      string            `json:"sent_at,omitempty"`
+	Attempts    int               `json:"attempts"`
+	LastError   string            `json:"last_error,omitempty"`
+	Headers     map[string]string `json:"headers,omitempty"`
+	Tags        map[string]string `json:"tags,omitempty"`
+}
+
+// ZSendListScheduledEmailsReply is the response for listing scheduled emails.
+type ZSendListScheduledEmailsReply struct {
+	ScheduledEmails []ZSendScheduledEmail `json:"scheduled_emails"`
+	TotalCount      int                   `json:"total_count"`
+}
+
+// ZSendScheduledEmails is a list of ZSendScheduledEmail for table display.
+type ZSendScheduledEmails []*ZSendScheduledEmail
+
+func (s ZSendScheduledEmails) Header() []string {
+	return []string{"ID", "From", "To", "Subject", "Status", "Scheduled At"}
+}
+
+func (s ZSendScheduledEmails) Rows() [][]string {
+	rows := make([][]string, 0, len(s))
+	for _, item := range s {
+		to := ""
+		if len(item.To) > 0 {
+			to = item.To[0]
+			if len(item.To) > 1 {
+				to = fmt.Sprintf("%s (+%d)", to, len(item.To)-1)
+			}
+		}
+		rows = append(rows, []string{
+			item.ID,
+			item.From,
+			to,
+			item.Subject,
+			item.Status,
+			item.ScheduledAt,
+		})
+	}
+	return rows
+}
+
+var _ Tabler = (ZSendScheduledEmails)(nil)
+
+// ZSendBatchJob represents a batch email job (from GET /emails/batch/:id).
+type ZSendBatchJob struct {
+	JobID       string `json:"job_id"`
+	TotalCount  int    `json:"total_count"`
+	SentCount   int    `json:"sent_count"`
+	FailedCount int    `json:"failed_count"`
+	Status      string `json:"status"`
+	CreatedAt   string `json:"created_at"`
+	StartedAt   string `json:"started_at,omitempty"`
+	CompletedAt string `json:"completed_at,omitempty"`
+	LastError   string `json:"last_error,omitempty"`
+}
+
+// ZSendListBatchJobsReply is the response for listing batch email jobs.
+type ZSendListBatchJobsReply struct {
+	Jobs       []ZSendBatchJob `json:"jobs"`
+	TotalCount int             `json:"total_count"`
+}
+
+// ZSendBatchJobs is a list of ZSendBatchJob for table display.
+type ZSendBatchJobs []*ZSendBatchJob
+
+func (b ZSendBatchJobs) Header() []string {
+	return []string{"Job ID", "Status", "Total", "Sent", "Failed", "Created At"}
+}
+
+func (b ZSendBatchJobs) Rows() [][]string {
+	rows := make([][]string, 0, len(b))
+	for _, item := range b {
+		rows = append(rows, []string{
+			item.JobID,
+			item.Status,
+			fmt.Sprintf("%d", item.TotalCount),
+			fmt.Sprintf("%d", item.SentCount),
+			fmt.Sprintf("%d", item.FailedCount),
+			item.CreatedAt,
+		})
+	}
+	return rows
+}
+
+var _ Tabler = (ZSendBatchJobs)(nil)
