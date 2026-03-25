@@ -125,7 +125,7 @@ func (c *client) ListZSendScheduledEmails(ctx context.Context, apiKey string, pa
 }
 
 func (c *client) GetZSendScheduledEmail(ctx context.Context, apiKey string, id string) (*model.ZSendScheduledEmail, error) {
-	data, _, err := zsendDo(ctx, apiKey, http.MethodGet, "/emails/scheduled/"+id, nil)
+	data, _, err := zsendDo(ctx, apiKey, http.MethodGet, "/emails/scheduled/"+url.PathEscape(id), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (c *client) GetZSendScheduledEmail(ctx context.Context, apiKey string, id s
 }
 
 func (c *client) CancelZSendScheduledEmail(ctx context.Context, apiKey string, id string) error {
-	_, _, err := zsendDo(ctx, apiKey, http.MethodDelete, "/emails/scheduled/"+id, nil)
+	_, _, err := zsendDo(ctx, apiKey, http.MethodDelete, "/emails/scheduled/"+url.PathEscape(id), nil)
 	return err
 }
 
@@ -169,7 +169,7 @@ func (c *client) ListZSendBatchEmailJobs(ctx context.Context, apiKey string, pag
 }
 
 func (c *client) GetZSendBatchEmailJob(ctx context.Context, apiKey string, id string) (*model.ZSendBatchJob, error) {
-	data, _, err := zsendDo(ctx, apiKey, http.MethodGet, "/emails/batch/"+id, nil)
+	data, _, err := zsendDo(ctx, apiKey, http.MethodGet, "/emails/batch/"+url.PathEscape(id), nil)
 	if err != nil {
 		return nil, err
 	}

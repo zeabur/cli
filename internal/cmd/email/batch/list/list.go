@@ -41,6 +41,13 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 }
 
 func runList(f *cmdutil.Factory, opts Options) error {
+	if opts.page < 1 {
+		return fmt.Errorf("page must be >= 1")
+	}
+	if opts.perPage < 1 || opts.perPage > 100 {
+		return fmt.Errorf("per-page must be between 1 and 100")
+	}
+
 	if opts.apiKey == "" {
 		opts.apiKey = os.Getenv("ZSEND_API_KEY")
 	}

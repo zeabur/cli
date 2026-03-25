@@ -12,31 +12,64 @@ import (
 	"github.com/zeabur/cli/internal/cmdutil"
 )
 
+type Options struct {
+	apiKey string
+	id     string
+}
+
 func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
-	var apiKey string
+	opts := Options{}
 
 	cmd := &cobra.Command{
-		Use:   "get <id>",
+		Use:   "get",
 		Short: "Get details of a scheduled email",
-		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runGet(f, apiKey, args[0])
+			return runGet(f, opts)
 		},
 	}
 
-	cmd.Flags().StringVar(&apiKey, "api-key", "", "Z-Send API key (or set ZSEND_API_KEY)")
+	cmd.Flags().StringVar(&opts.apiKey, "api-key", "", "Z-Send API key (or set ZSEND_API_KEY)")
+	cmd.Flags().StringVar(&opts.id, "id", "", "Scheduled email ID")
 
 	return cmd
 }
 
-func runGet(f *cmdutil.Factory, apiKey, id string) error {
-	if apiKey == "" {
-		apiKey = os.Getenv("ZSEND_API_KEY")
+func runGet(f *cmdutil.Factory, opts Options) error {
+	if f.Interactive {
+		return runGetInteractive(f, opts)
 	}
-	if apiKey == "" {
+	return runGetNonInteractive(f, opts)
+}
+
+func runGetInteractive(f *cmdutil.Factory, opts Options) error {
+	if opts.id == "" {
+		id, err := f.Prompter.Input("Scheduled Email ID: ", "")
+		if err != nil {
+			return err
+		}
+		opts.id = id
+	}
+	if err := paramCheck(opts); err != nil {
+		return err
+	}
+	return getScheduledEmail(f, opts)
+}
+
+func runGetNonInteractive(f *cmdutil.Factory, opts Options) error {
+	if err := paramCheck(opts); err != nil {
+		return err
+	}
+	return getScheduledEmail(f, opts)
+}
+
+func getScheduledEmail(f *cmdutil.Factory, opts Options) error {
+	if opts.apiKey == "" {
+		opts.apiKey = os.Getenv("ZSEND_API_KEY")
+	}
+	if opts.apiKey == "" {
 		return fmt.Errorf("Z-Send API key is required (--api-key or ZSEND_API_KEY)")
 	}
-	if !strings.HasPrefix(apiKey, "zs_") {
+	if !strings.HasPrefix(opts.apiKey, "zs_") {
 		return fmt.Errorf("invalid API key format: must start with zs_")
 	}
 
@@ -45,7 +78,7 @@ func runGet(f *cmdutil.Factory, apiKey, id string) error {
 		spinner.WithSuffix(" Fetching scheduled email..."),
 	)
 	s.Start()
-	email, err := f.ApiClient.GetZSendScheduledEmail(context.Background(), apiKey, id)
+	email, err := f.ApiClient.GetZSendScheduledEmail(context.Background(), opts.apiKey, opts.id)
 	s.Stop()
 	if err != nil {
 		return err
@@ -70,5 +103,12 @@ func runGet(f *cmdutil.Factory, apiKey, id string) error {
 			{"Created At", email.CreatedAt},
 		},
 	)
+	return nil
+}
+
+func paramCheck(opts Options) error {
+	if opts.id == "" {
+		return fmt.Errorf("scheduled email ID is required")
+	}
 	return nil
 }
