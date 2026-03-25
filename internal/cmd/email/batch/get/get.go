@@ -23,6 +23,7 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get",
 		Short: "Get details of a batch email job",
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGet(f, opts)
 		},
@@ -106,7 +107,7 @@ func getBatchJob(f *cmdutil.Factory, opts Options) error {
 }
 
 func paramCheck(opts Options) error {
-	if opts.id == "" {
+	if strings.TrimSpace(opts.id) == "" {
 		return fmt.Errorf("batch job ID is required")
 	}
 	return nil

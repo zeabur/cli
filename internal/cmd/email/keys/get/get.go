@@ -21,6 +21,7 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get",
 		Short: "Get details of an API key",
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGet(f, opts)
 		},
@@ -91,7 +92,7 @@ func getKey(f *cmdutil.Factory, opts Options) error {
 }
 
 func paramCheck(opts Options) error {
-	if opts.id == "" {
+	if strings.TrimSpace(opts.id) == "" {
 		return fmt.Errorf("API key ID is required")
 	}
 	return nil

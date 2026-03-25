@@ -3,6 +3,7 @@ package get
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
@@ -20,6 +21,7 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get",
 		Short: "Get details of an email record",
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGet(f, opts)
 		},
@@ -97,7 +99,7 @@ func getEmail(f *cmdutil.Factory, opts Options) error {
 }
 
 func paramCheck(opts Options) error {
-	if opts.id == "" {
+	if strings.TrimSpace(opts.id) == "" {
 		return fmt.Errorf("email ID is required")
 	}
 	return nil

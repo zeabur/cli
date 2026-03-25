@@ -98,7 +98,7 @@ func doCancel(f *cmdutil.Factory, opts Options) error {
 }
 
 func paramCheck(opts Options) error {
-	if opts.id == "" {
+	if strings.TrimSpace(opts.id) == "" {
 		return fmt.Errorf("scheduled email ID is required")
 	}
 	return nil
