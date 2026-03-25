@@ -126,6 +126,9 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 		if err != nil {
 			return err
 		}
+		if service == nil || environment == nil {
+			return nil
+		}
 		projectID = service.Project.ID
 	}
 
