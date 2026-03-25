@@ -57,6 +57,7 @@ func runCreate(f *cmdutil.Factory, opts Options) error {
 			f.Log.Errorf("fetch file failed: %v", err)
 			return err
 		}
+		defer get.Body.Close()
 
 		file, err = io.ReadAll(get.Body)
 		if err != nil {

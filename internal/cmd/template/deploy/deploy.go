@@ -69,6 +69,7 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 			f.Log.Errorf("fetch file failed: %v", err)
 			return err
 		}
+		defer get.Body.Close()
 
 		file, err = io.ReadAll(get.Body)
 		if err != nil {
@@ -281,8 +282,9 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 			if err != nil {
 				continue
 			}
+			get.Body.Close()
 
-			if get.StatusCode%100 != 5 {
+			if get.StatusCode/100 != 5 {
 				s.Stop()
 				f.Log.Infof("Service ready, you can now visit via https://%s.zeabur.app/", d)
 				break
