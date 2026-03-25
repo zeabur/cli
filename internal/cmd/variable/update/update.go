@@ -41,13 +41,11 @@ func NewCmdUpdateVariable(f *cmdutil.Factory) *cobra.Command {
 }
 
 func runUpdateVariable(f *cmdutil.Factory, opts *Options) error {
-	opts.keys = make(map[string]string)
-
 	if f.Interactive {
+		opts.keys = make(map[string]string)
 		return runUpdateVariableInteractive(f, opts)
-	} else {
-		return runUpdateVariableNonInteractive(f, opts)
 	}
+	return runUpdateVariableNonInteractive(f, opts)
 }
 
 func runUpdateVariableInteractive(f *cmdutil.Factory, opts *Options) error {
@@ -131,6 +129,23 @@ func runUpdateVariableNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		spinner.WithColor(cmdutil.SpinnerColor),
 		spinner.WithSuffix(fmt.Sprintf(" Updating variables of service: %s...", opts.name)),
 	)
+	s.Start()
+
+	// Fetch existing variables and merge with user-provided keys,
+	// so that unmentioned variables are preserved (not deleted).
+	// In interactive mode, opts.keys already contains the full
+	// variable map from the interactive flow.
+	varList, _, err := f.ApiClient.ListVariables(context.Background(), opts.id, opts.environmentID)
+	if err != nil {
+		s.Stop()
+		return err
+	}
+	mergedVars := varList.ToMap()
+	for k, v := range opts.keys {
+		mergedVars[k] = v
+	}
+	opts.keys = mergedVars
+
 	createVarResult, err := f.ApiClient.UpdateVariables(context.Background(), opts.id, opts.environmentID, opts.keys)
 	if err != nil {
 		s.Stop()

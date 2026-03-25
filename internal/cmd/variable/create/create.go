@@ -69,9 +69,9 @@ func runCreateVariableInteractive(f *cmdutil.Factory, opts *Options) error {
 		if err != nil {
 			return err
 		}
-		keyValue := strings.Split(varInput, "=")
+		keyValue := strings.SplitN(varInput, "=", 2)
 		if len(keyValue) != 2 {
-			return fmt.Errorf("invalid input")
+			return fmt.Errorf("invalid input: expected KEY=VALUE format")
 		}
 		opts.keys[keyValue[0]] = keyValue[1]
 
