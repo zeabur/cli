@@ -108,7 +108,7 @@ func runMetricNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	upperCaseMetricType := strings.ToUpper(opts.metricType)
-	mt := model.MetricType(opts.metricType)
+	mt := model.MetricType(upperCaseMetricType)
 
 	startTime := time.Now().Add(-time.Duration(opts.hour) * time.Hour)
 	endTime := time.Now()
@@ -126,7 +126,8 @@ func runMetricNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return nil
 	}
 
-	sum, avg, max, min := 0.0, 0.0, 0.0, 0.0
+	sum, avg, max := 0.0, 0.0, 0.0
+	min := metrics.Metrics[0].Value
 
 	for _, metric := range metrics.Metrics {
 		sum += metric.Value

@@ -90,7 +90,7 @@ func runRedeployNonInteractive(f *cmdutil.Factory, opts *Options) error {
 
 	// double check
 	if f.Interactive && !opts.skipConfirm {
-		confirm, err := f.Prompter.Confirm(fmt.Sprintf("Are you sure to deploy service <%s>?", idOrName), true)
+		confirm, err := f.Prompter.Confirm(fmt.Sprintf("Are you sure to redeploy service <%s>?", idOrName), true)
 		if err != nil {
 			return err
 		}
