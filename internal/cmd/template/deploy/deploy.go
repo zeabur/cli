@@ -54,7 +54,7 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 func runDeploy(f *cmdutil.Factory, opts *Options) error {
 	var err error
 
-	if err := paramCheck(opts); err != nil {
+	if err := paramCheck(f, opts); err != nil {
 		return err
 	}
 
@@ -334,13 +334,42 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 	return nil
 }
 
-func paramCheck(opts *Options) error {
-	if opts.file == "" && opts.code == "" {
-		return fmt.Errorf("please specify template file by -f/--file or template code by -c/--code")
-	}
-
+func paramCheck(f *cmdutil.Factory, opts *Options) error {
 	if opts.file != "" && opts.code != "" {
 		return fmt.Errorf("please specify either -f/--file or -c/--code, not both")
+	}
+
+	if opts.file == "" && opts.code == "" {
+		if !f.Interactive {
+			return fmt.Errorf("please specify template file by -f/--file or template code by -c/--code")
+		}
+
+		sourceIdx, err := f.Prompter.Select("How would you like to specify the template?", "", []string{
+			"Template file (-f/--file)",
+			"Template code (-c/--code)",
+		})
+		if err != nil {
+			return fmt.Errorf("source selection failed: %w", err)
+		}
+
+		switch sourceIdx {
+		case 0:
+			input, err := f.Prompter.Input("Template file path: ", "")
+			if err != nil {
+				return fmt.Errorf("input failed: %w", err)
+			}
+			opts.file = input
+		case 1:
+			input, err := f.Prompter.Input("Template code: ", "")
+			if err != nil {
+				return fmt.Errorf("input failed: %w", err)
+			}
+			opts.code = input
+		}
+
+		if opts.file == "" && opts.code == "" {
+			return fmt.Errorf("no template source provided")
+		}
 	}
 
 	return nil
