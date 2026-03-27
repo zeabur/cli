@@ -73,10 +73,27 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 				return err
 			}
 		} else {
-			// create a new service
-			service, err = f.ApiClient.CreateEmptyService(context.Background(), projectID, opts.name)
-			if err != nil {
-				return err
+			// check if a service with the same name already exists
+			if opts.name != "" {
+				existingServices, err := f.ApiClient.ListAllServices(context.Background(), projectID)
+				if err != nil {
+					return fmt.Errorf("listing services: %w", err)
+				}
+				for _, s := range existingServices {
+					if s.Name == opts.name {
+						service = s
+						f.Log.Infof("Found existing service '%s', redeploying...", opts.name)
+						break
+					}
+				}
+			}
+
+			// create a new service if no existing one was found
+			if service == nil {
+				service, err = f.ApiClient.CreateEmptyService(context.Background(), projectID, opts.name)
+				if err != nil {
+					return err
+				}
 			}
 		}
 
