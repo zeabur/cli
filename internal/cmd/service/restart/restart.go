@@ -97,6 +97,8 @@ func runRestartNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		if !confirm {
 			return nil
 		}
+	} else if !f.Interactive && !opts.skipConfirm {
+		return fmt.Errorf("restarting service requires --yes flag in non-interactive mode")
 	}
 
 	err := f.ApiClient.RestartService(context.Background(), opts.id, opts.environmentID)
