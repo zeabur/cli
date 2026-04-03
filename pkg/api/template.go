@@ -39,7 +39,7 @@ func (c *client) ListAllTemplates(ctx context.Context) (model.Templates, error) 
 			templates = append(templates, template.Node)
 		}
 
-		skip += 5
+		skip += 100
 		next = templateCon.PageInfo.HasNextPage
 	}
 

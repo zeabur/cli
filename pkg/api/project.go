@@ -43,7 +43,7 @@ func (c *client) ListAllProjects(ctx context.Context) (model.Projects, error) {
 			projects = append(projects, project.Node)
 		}
 
-		skip += 5
+		skip += 100
 		next = projectCon.PageInfo.HasNextPage
 	}
 
