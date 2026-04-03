@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import os from "os";
 import { fileURLToPath } from "url";
 
@@ -40,5 +40,5 @@ function getArch() {
     const pathToBinary = fileURLToPath(new URL(`./zeabur_${platform}_${arch}/zeabur${platform === "windows" ? ".exe" : ""}`, import.meta.url));
     const args = process.argv.slice(2);
 
-    execSync(`${pathToBinary} ${args.join(" ")}`, { stdio: "inherit" });
+    execFileSync(pathToBinary, args, { stdio: "inherit" });
 })()
