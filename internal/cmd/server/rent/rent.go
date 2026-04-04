@@ -154,6 +154,8 @@ func runRentNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		if !confirm {
 			return nil
 		}
+	} else if !f.Interactive && !opts.skipConfirm {
+		return fmt.Errorf("renting a server requires --yes flag in non-interactive mode")
 	}
 
 	serverID, err := f.ApiClient.RentServer(context.Background(), opts.provider, opts.region, opts.plan)
