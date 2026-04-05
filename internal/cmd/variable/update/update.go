@@ -3,6 +3,7 @@ package update
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
@@ -16,6 +17,7 @@ type Options struct {
 	name          string
 	environmentID string
 	keys          map[string]string
+	rawKeys       []string
 	skipConfirm   bool
 	inputDone     bool
 }
@@ -35,7 +37,7 @@ func NewCmdUpdateVariable(f *cmdutil.Factory) *cobra.Command {
 	util.AddServiceParam(cmd, &opts.id, &opts.name)
 	util.AddEnvOfServiceParam(cmd, &opts.environmentID)
 	cmd.Flags().BoolVarP(&opts.skipConfirm, "yes", "y", false, "Skip confirmation")
-	cmd.Flags().StringToStringVarP(&opts.keys, "key", "k", nil, "Key value pair of the variable")
+	cmd.Flags().StringArrayVarP(&opts.rawKeys, "key", "k", nil, "Key value pair of the variable (KEY=VALUE)")
 
 	return cmd
 }
@@ -104,7 +106,27 @@ func runUpdateVariableInteractive(f *cmdutil.Factory, opts *Options) error {
 	return runUpdateVariableNonInteractive(f, opts)
 }
 
+func parseRawKeys(rawKeys []string) (map[string]string, error) {
+	result := make(map[string]string, len(rawKeys))
+	for _, raw := range rawKeys {
+		parts := strings.SplitN(raw, "=", 2)
+		if len(parts) != 2 || parts[0] == "" {
+			return nil, fmt.Errorf("invalid --key format %q: expected KEY=VALUE", raw)
+		}
+		result[parts[0]] = parts[1]
+	}
+	return result, nil
+}
+
 func runUpdateVariableNonInteractive(f *cmdutil.Factory, opts *Options) error {
+	// Parse rawKeys from StringArrayVar into the keys map (non-interactive mode)
+	if opts.keys == nil && len(opts.rawKeys) > 0 {
+		parsed, err := parseRawKeys(opts.rawKeys)
+		if err != nil {
+			return err
+		}
+		opts.keys = parsed
+	}
 	if opts.id == "" && opts.name != "" {
 		service, err := util.GetServiceByName(f.Config, f.ApiClient, opts.name)
 		if err != nil {
