@@ -3,6 +3,7 @@ package rename
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
@@ -72,7 +73,7 @@ func runRenameInteractive(f *cmdutil.Factory, opts *Options) error {
 		opts.id = servers[idx].ID
 	}
 
-	if opts.name == "" {
+	if strings.TrimSpace(opts.name) == "" {
 		name, err := f.Prompter.Input("New server name", "")
 		if err != nil {
 			return err
@@ -87,6 +88,7 @@ func runRenameNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	if opts.id == "" {
 		return fmt.Errorf("--id is required")
 	}
+	opts.name = strings.TrimSpace(opts.name)
 	if opts.name == "" {
 		return fmt.Errorf("--name is required")
 	}
