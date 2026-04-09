@@ -10,6 +10,7 @@ import (
 	serverProviderCmd "github.com/zeabur/cli/internal/cmd/server/provider"
 	serverRebootCmd "github.com/zeabur/cli/internal/cmd/server/reboot"
 	serverRegionCmd "github.com/zeabur/cli/internal/cmd/server/region"
+	serverRenameCmd "github.com/zeabur/cli/internal/cmd/server/rename"
 	serverRentCmd "github.com/zeabur/cli/internal/cmd/server/rent"
 	serverSSHCmd "github.com/zeabur/cli/internal/cmd/server/ssh"
 	"github.com/zeabur/cli/internal/cmdutil"
@@ -25,6 +26,7 @@ func NewCmdServer(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(serverListCmd.NewCmdList(f))
 	cmd.AddCommand(serverGetCmd.NewCmdGet(f))
 	cmd.AddCommand(serverRebootCmd.NewCmdReboot(f))
+	cmd.AddCommand(serverRenameCmd.NewCmdRename(f))
 	cmd.AddCommand(serverRentCmd.NewCmdRent(f))
 	cmd.AddCommand(serverProviderCmd.NewCmdProvider(f))
 	cmd.AddCommand(serverRegionCmd.NewCmdRegion(f))

@@ -50,6 +50,7 @@ type (
 		ListServers(ctx context.Context) (model.ServerListItems, error)
 		GetServer(ctx context.Context, id string) (*model.ServerDetail, error)
 		RebootServer(ctx context.Context, id string) error
+		RenameServer(ctx context.Context, id, name string) error
 		ListDedicatedServerProviders(ctx context.Context) ([]model.CloudProvider, error)
 		ListDedicatedServerRegions(ctx context.Context, provider string) ([]model.DedicatedServerRegion, error)
 		ListDedicatedServerPlans(ctx context.Context, provider, region string) (model.DedicatedServerPlans, error)

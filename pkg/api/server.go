@@ -52,6 +52,24 @@ func (c *client) RebootServer(ctx context.Context, id string) error {
 	return nil
 }
 
+func (c *client) RenameServer(ctx context.Context, id, name string) error {
+	var mutation struct {
+		UpdateServerName bool `graphql:"updateServerName(_id: $id, name: $name)"`
+	}
+
+	err := c.Mutate(ctx, &mutation, V{
+		"id":   ObjectID(id),
+		"name": name,
+	})
+	if err != nil {
+		return err
+	}
+	if !mutation.UpdateServerName {
+		return fmt.Errorf("rename server was not accepted")
+	}
+	return nil
+}
+
 func (c *client) ListDedicatedServerProviders(ctx context.Context) ([]model.CloudProvider, error) {
 	var query struct {
 		Providers []model.CloudProvider `graphql:"dedicatedServerProviders"`
