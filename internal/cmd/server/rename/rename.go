@@ -86,7 +86,7 @@ func runRenameInteractive(f *cmdutil.Factory, opts *Options) error {
 
 func runRenameNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	if opts.id == "" {
-		return fmt.Errorf("--id is required")
+		return fmt.Errorf("server-id or --id is required")
 	}
 	opts.name = strings.TrimSpace(opts.name)
 	if opts.name == "" {
