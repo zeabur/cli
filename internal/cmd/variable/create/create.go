@@ -16,6 +16,7 @@ type Options struct {
 	id            string
 	name          string
 	environmentID string
+	rawKeys       []string
 	keys          map[string]string
 	skipConfirm   bool
 	inputDone     bool
@@ -36,17 +37,44 @@ func NewCmdCreateVariable(f *cmdutil.Factory) *cobra.Command {
 	util.AddServiceParam(cmd, &opts.id, &opts.name)
 	util.AddEnvOfServiceParam(cmd, &opts.environmentID)
 	cmd.Flags().BoolVarP(&opts.skipConfirm, "yes", "y", false, "Skip confirmation")
-	cmd.Flags().StringToStringVarP(&opts.keys, "key", "k", nil, "Key value pair of the variable")
+	cmd.Flags().StringArrayVarP(&opts.rawKeys, "key", "k", nil, "Key value pair of the variable (KEY=VALUE)")
 
 	return cmd
 }
 
 func runCreateVariable(f *cmdutil.Factory, opts *Options) error {
+	if err := parseRawKeys(opts); err != nil {
+		return err
+	}
+
 	if f.Interactive {
 		return runCreateVariableInteractive(f, opts)
 	} else {
 		return runCreateVariableNonInteractive(f, opts)
 	}
+}
+
+// parseRawKeys converts the raw "KEY=VALUE" strings from --key flags
+// into the keys map. It splits on the first "=" only, so values
+// containing "=", "${}", commas, and other special characters are preserved.
+func parseRawKeys(opts *Options) error {
+	if len(opts.rawKeys) == 0 {
+		return nil
+	}
+
+	if opts.keys == nil {
+		opts.keys = make(map[string]string, len(opts.rawKeys))
+	}
+
+	for _, kv := range opts.rawKeys {
+		parts := strings.SplitN(kv, "=", 2)
+		if len(parts) != 2 || parts[0] == "" {
+			return fmt.Errorf("invalid key-value pair %q: expected KEY=VALUE format", kv)
+		}
+		opts.keys[parts[0]] = parts[1]
+	}
+
+	return nil
 }
 
 func runCreateVariableInteractive(f *cmdutil.Factory, opts *Options) error {
