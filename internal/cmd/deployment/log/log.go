@@ -140,7 +140,7 @@ func queryLogs(f *cmdutil.Factory, opts *Options) error {
 		}
 	case logTypeBuild:
 		if deploymentID == "" {
-			return fmt.Errorf("no deployment found for service %s and environment %s", opts.serviceID, opts.environmentID)
+			return fmt.Errorf("no build logs available: this service was started from a container image and was not built on Zeabur")
 		}
 		logs, err = f.ApiClient.GetBuildLogs(context.Background(), deploymentID)
 		if err != nil {
