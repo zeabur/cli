@@ -123,7 +123,10 @@ func queryLogs(f *cmdutil.Factory, opts *Options) error {
 	deploymentID := opts.deploymentID
 	if deploymentID == "" {
 		deployment, exist, e := f.ApiClient.GetLatestDeployment(context.Background(), opts.serviceID, opts.environmentID)
-		if e == nil && exist {
+		if e != nil {
+			return fmt.Errorf("failed to get latest deployment: %w", e)
+		}
+		if exist {
 			deploymentID = deployment.ID
 			f.Log.Infof("Deployment ID: %s", deploymentID)
 		}
