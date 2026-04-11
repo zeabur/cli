@@ -119,24 +119,25 @@ func queryLogs(f *cmdutil.Factory, opts *Options) error {
 	var logs model.Logs
 	var err error
 
+	// Auto-resolve deploymentID if not provided
+	deploymentID := opts.deploymentID
+	if deploymentID == "" {
+		deployment, exist, e := f.ApiClient.GetLatestDeployment(context.Background(), opts.serviceID, opts.environmentID)
+		if e == nil && exist {
+			deploymentID = deployment.ID
+			f.Log.Infof("Deployment ID: %s", deploymentID)
+		}
+	}
+
 	switch opts.logType {
 	case logTypeRuntime:
-		logs, err = f.ApiClient.GetRuntimeLogs(context.Background(), opts.serviceID, opts.environmentID, opts.deploymentID)
+		logs, err = f.ApiClient.GetRuntimeLogs(context.Background(), opts.serviceID, opts.environmentID, deploymentID)
 		if err != nil {
 			return fmt.Errorf("failed to get runtime logs: %w", err)
 		}
 	case logTypeBuild:
-		deploymentID := opts.deploymentID
 		if deploymentID == "" {
-			deployment, exist, e := f.ApiClient.GetLatestDeployment(context.Background(), opts.serviceID, opts.environmentID)
-			if e != nil {
-				return fmt.Errorf("failed to get latest deployment: %w", e)
-			}
-			if !exist {
-				return fmt.Errorf("no deployment found for service %s and environment %s", opts.serviceID, opts.environmentID)
-			}
-			deploymentID = deployment.ID
-			f.Log.Infof("Deployment ID: %s", deploymentID)
+			return fmt.Errorf("no deployment found for service %s and environment %s", opts.serviceID, opts.environmentID)
 		}
 		logs, err = f.ApiClient.GetBuildLogs(context.Background(), deploymentID)
 		if err != nil {
