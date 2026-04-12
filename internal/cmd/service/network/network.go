@@ -91,6 +91,12 @@ func runNetwork(f *cmdutil.Factory, opts *Options) error {
 	var portForwardedHost string
 
 	if opts.environmentID != "" {
+		ports, err = f.ApiClient.GetServicePorts(ctx, opts.id, opts.environmentID)
+		if err != nil {
+			s.Stop()
+			return err
+		}
+
 		portForwardingMode, err = f.ApiClient.GetPortForwardingMode(ctx, opts.id, opts.environmentID)
 		if err != nil {
 			s.Stop()
@@ -98,12 +104,6 @@ func runNetwork(f *cmdutil.Factory, opts *Options) error {
 		}
 
 		if portForwardingMode == model.PortForwardingModeEnabled {
-			ports, err = f.ApiClient.GetServicePorts(ctx, opts.id, opts.environmentID)
-			if err != nil {
-				s.Stop()
-				return err
-			}
-
 			portForwardedHost, err = f.ApiClient.GetPortForwardedHost(ctx, opts.id)
 			if err != nil {
 				s.Stop()
@@ -119,36 +119,45 @@ func runNetwork(f *cmdutil.Factory, opts *Options) error {
 			"dnsName": dnsName + ".zeabur.internal",
 		}
 		if opts.environmentID != "" {
+			portList := make([]map[string]interface{}, 0, len(ports))
+			for _, p := range ports {
+				pm := map[string]interface{}{
+					"id":   p.ID,
+					"port": p.Port,
+					"type": p.Type,
+				}
+				if p.ForwardedPort != nil {
+					pm["forwardedPort"] = *p.ForwardedPort
+				}
+				portList = append(portList, pm)
+			}
+			result["ports"] = portList
 			result["portForwardingMode"] = string(portForwardingMode)
 			if portForwardingMode == model.PortForwardingModeEnabled {
 				result["portForwardedHost"] = portForwardedHost
-				portList := make([]map[string]interface{}, 0, len(ports))
-				for _, p := range ports {
-					pm := map[string]interface{}{
-						"id":   p.ID,
-						"port": p.Port,
-						"type": p.Type,
-					}
-					if p.ForwardedPort != nil {
-						pm["forwardedPort"] = *p.ForwardedPort
-					}
-					portList = append(portList, pm)
-				}
-				result["ports"] = portList
 			}
 		}
 		return f.Printer.JSON(result)
 	}
 
-	f.Log.Infof("Private DNS name for %s: %s", opts.name, dnsName+".zeabur.internal")
+	internalHost := dnsName + ".zeabur.internal"
 
+	f.Log.Infof("Private Networking (between services on Zeabur)")
+	for _, p := range ports {
+		f.Log.Infof("  %s (%s): %s:%d", p.ID, p.Type, internalHost, p.Port)
+	}
+
+	fmt.Println()
+	f.Log.Infof("Public Networking (connect from outside Zeabur)")
 	if opts.environmentID != "" {
-		f.Log.Infof("Port forwarding: %s", portForwardingMode)
-		if portForwardingMode == model.PortForwardingModeEnabled && portForwardedHost != "" {
-			for _, p := range ports {
-				if p.ForwardedPort != nil && (p.Type == "TCP" || p.Type == "UDP") {
-					f.Log.Infof("  %s (%s %d) → %s:%d", p.ID, p.Type, p.Port, portForwardedHost, *p.ForwardedPort)
-				}
+		for _, p := range ports {
+			if p.Type == "HTTP" {
+				f.Log.Infof("  %s (%s): bind a domain to access externally", p.ID, p.Type)
+			} else if portForwardingMode == model.PortForwardingModeEnabled && portForwardedHost != "" && p.ForwardedPort != nil {
+				f.Log.Infof("  %s (%s): %s:%d", p.ID, p.Type, portForwardedHost, *p.ForwardedPort)
+			} else {
+				f.Log.Warnf("  %s (%s): port forwarding is disabled", p.ID, p.Type)
+				f.Log.Infof("    To enable, run: npx zeabur@latest service port-forward --id %s --enable", opts.id)
 			}
 		}
 	}
