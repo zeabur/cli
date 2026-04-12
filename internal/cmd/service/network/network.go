@@ -142,6 +142,16 @@ func runNetwork(f *cmdutil.Factory, opts *Options) error {
 
 	internalHost := dnsName + ".zeabur.internal"
 
+	if len(ports) == 0 {
+		f.Log.Infof("Private DNS name: %s", internalHost)
+		if opts.environmentID == "" {
+			f.Log.Warnf("No environment specified; port details unavailable")
+		} else {
+			f.Log.Warnf("No ports configured for this service")
+		}
+		return nil
+	}
+
 	f.Log.Infof("Private Networking (between services on Zeabur)")
 	for _, p := range ports {
 		f.Log.Infof("  %s (%s): %s:%d", p.ID, p.Type, internalHost, p.Port)
