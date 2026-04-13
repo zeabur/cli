@@ -102,8 +102,19 @@ func runUpdateVariableInteractive(f *cmdutil.Factory, opts *Options) error {
 		if err != nil {
 			return err
 		}
-		opts.keys[keyTable[updateVarSelect]] = varInput
-		opts.updatedKeys = append(opts.updatedKeys, keyTable[updateVarSelect])
+		selectedKey := keyTable[updateVarSelect]
+		opts.keys[selectedKey] = varInput
+
+		seen := false
+		for _, k := range opts.updatedKeys {
+			if k == selectedKey {
+				seen = true
+				break
+			}
+		}
+		if !seen {
+			opts.updatedKeys = append(opts.updatedKeys, selectedKey)
+		}
 
 		doneConfirm, err := f.Prompter.Confirm("Are you done entering value of variable?", false)
 		if err != nil {
