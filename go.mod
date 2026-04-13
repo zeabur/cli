@@ -11,7 +11,7 @@ require (
 	github.com/fatih/color v1.19.0
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/hashicorp/go-envparse v0.1.0
-	github.com/hasura/go-graphql-client v0.15.1
+	github.com/hasura/go-graphql-client v0.16.0
 	github.com/onsi/ginkgo/v2 v2.28.1
 	github.com/onsi/gomega v1.39.1
 	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06
