@@ -16,8 +16,18 @@ type Options struct {
 	name          string
 	environmentID string
 	keys          map[string]string
+	updatedKeys   []string // tracks only the keys the user explicitly changed
 	skipConfirm   bool
 	inputDone     bool
+}
+
+// maskValue masks a variable value for display, showing only the first 3
+// characters followed by asterisks. Short values are fully masked.
+func maskValue(v string) string {
+	if len(v) <= 3 {
+		return "***"
+	}
+	return v[:3] + "***"
 }
 
 func NewCmdUpdateVariable(f *cmdutil.Factory) *cobra.Command {
@@ -76,7 +86,7 @@ func runUpdateVariableInteractive(f *cmdutil.Factory, opts *Options) error {
 	selectTable := make([]string, 0, len(varMap))
 	for k, v := range varMap {
 		keyTable = append(keyTable, k)
-		selectTable = append(selectTable, fmt.Sprintf("%s = %s", k, v))
+		selectTable = append(selectTable, fmt.Sprintf("%s = %s", k, maskValue(v)))
 		opts.keys[k] = v
 	}
 
@@ -93,6 +103,7 @@ func runUpdateVariableInteractive(f *cmdutil.Factory, opts *Options) error {
 			return err
 		}
 		opts.keys[keyTable[updateVarSelect]] = varInput
+		opts.updatedKeys = append(opts.updatedKeys, keyTable[updateVarSelect])
 
 		doneConfirm, err := f.Prompter.Confirm("Are you done entering value of variable?", false)
 		if err != nil {
@@ -123,6 +134,15 @@ func runUpdateVariableNonInteractive(f *cmdutil.Factory, opts *Options) error {
 			return err
 		}
 		opts.environmentID = envID
+	}
+
+	// Remember which keys the user explicitly requested to update,
+	// so we only show those in the output (not the full merged set).
+	// In interactive mode, updatedKeys is already populated.
+	if len(opts.updatedKeys) == 0 {
+		for k := range opts.keys {
+			opts.updatedKeys = append(opts.updatedKeys, k)
+		}
 	}
 
 	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
@@ -158,20 +178,20 @@ func runUpdateVariableNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	s.Stop()
 
 	if f.JSON {
-		out := make([]map[string]string, 0, len(opts.keys))
-		for k, v := range opts.keys {
-			out = append(out, map[string]string{"Key": k, "Value": v})
+		out := make([]map[string]string, 0, len(opts.updatedKeys))
+		for _, k := range opts.updatedKeys {
+			out = append(out, map[string]string{"Key": k})
 		}
 		return f.Printer.JSON(out)
 	}
 
 	f.Log.Infof("Successfully updated variables of service: %s\n", opts.name)
 
-	table := make([][]string, 0, len(opts.keys))
-	for k, v := range opts.keys {
-		table = append(table, []string{k, v})
+	table := make([][]string, 0, len(opts.updatedKeys))
+	for _, k := range opts.updatedKeys {
+		table = append(table, []string{k})
 	}
-	f.Printer.Table([]string{"Key", "Value"}, table)
+	f.Printer.Table([]string{"Key"}, table)
 
 	return nil
 }
