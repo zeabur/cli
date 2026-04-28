@@ -3,6 +3,7 @@ package search
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
@@ -41,6 +42,10 @@ func runSearch(f *cmdutil.Factory, opts *Options) error {
 			return err
 		}
 		opts.query = query
+	}
+
+	if !strings.ContainsRune(opts.query, '.') {
+		return fmt.Errorf("please provide a full domain name with TLD (e.g., example.com, example.io)")
 	}
 
 	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
