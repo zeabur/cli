@@ -127,6 +127,8 @@ func runPurchaseNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		if !confirm {
 			return nil
 		}
+	} else if !f.Interactive && !opts.skipConfirm {
+		return fmt.Errorf("purchasing a domain requires --yes flag in non-interactive mode")
 	}
 
 	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
