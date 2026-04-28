@@ -44,7 +44,7 @@ func runSearch(f *cmdutil.Factory, opts *Options) error {
 		opts.query = query
 	}
 
-	if !strings.Contains(opts.query, ".") {
+	if !strings.ContainsRune(opts.query, '.') {
 		return fmt.Errorf("please provide a full domain name with TLD (e.g., example.com, example.io)")
 	}
 
