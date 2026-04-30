@@ -3,8 +3,7 @@ package file
 import (
 	"github.com/spf13/cobra"
 
-	fileListCmd "github.com/zeabur/cli/internal/cmd/file/list"
-	fileReadCmd "github.com/zeabur/cli/internal/cmd/file/read"
+	filePullCmd "github.com/zeabur/cli/internal/cmd/file/pull"
 	"github.com/zeabur/cli/internal/cmdutil"
 )
 
@@ -15,8 +14,7 @@ func NewCmdFile(f *cmdutil.Factory) *cobra.Command {
 		Short: "Manage uploaded files",
 	}
 
-	cmd.AddCommand(fileListCmd.NewCmdList(f))
-	cmd.AddCommand(fileReadCmd.NewCmdRead(f))
+	cmd.AddCommand(filePullCmd.NewCmdPull(f))
 
 	return cmd
 }
