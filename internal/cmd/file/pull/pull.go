@@ -2,6 +2,7 @@ package pull
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
@@ -38,7 +39,10 @@ func runPull(cmd *cobra.Command, f *cmdutil.Factory, uploadID string, targetDir 
 		if err != nil {
 			return err
 		}
-		uploadID = id
+		uploadID = strings.TrimSpace(id)
+		if uploadID == "" {
+			return fmt.Errorf("upload-id is required")
+		}
 	}
 
 	count, err := f.ApiClient.PullUploadFiles(cmd.Context(), uploadID, targetDir)

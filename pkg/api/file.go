@@ -59,6 +59,8 @@ func (c *client) PullUploadFiles(ctx context.Context, uploadID string, targetDir
 }
 
 func (c *client) pullDir(ctx context.Context, uploadID string, remotePath string, localDir string) (int, error) {
+	baseDir := filepath.Clean(localDir)
+
 	var pathPtr *string
 	if remotePath != "" {
 		pathPtr = &remotePath
@@ -72,7 +74,11 @@ func (c *client) pullDir(ctx context.Context, uploadID string, remotePath string
 	count := 0
 	for _, entry := range entries {
 		fullRemote := remotePath + entry
-		fullLocal := filepath.Join(localDir, fullRemote)
+		fullLocal := filepath.Join(baseDir, fullRemote)
+
+		if !strings.HasPrefix(filepath.Clean(fullLocal), baseDir) {
+			return count, fmt.Errorf("path traversal detected: %q", fullRemote)
+		}
 
 		if strings.HasSuffix(entry, "/") {
 			if err := os.MkdirAll(fullLocal, 0o755); err != nil {
@@ -86,7 +92,6 @@ func (c *client) pullDir(ctx context.Context, uploadID string, remotePath string
 		} else {
 			ext := strings.ToLower(filepath.Ext(entry))
 			if binaryExtensions[ext] {
-				count++
 				continue
 			}
 			content, err := c.ReadUploadFile(ctx, uploadID, fullRemote)
