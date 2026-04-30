@@ -1,7 +1,6 @@
 package read
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -15,27 +14,26 @@ type Options struct {
 
 // NewCmdRead creates the file read command.
 func NewCmdRead(f *cmdutil.Factory) *cobra.Command {
-	opts := &Options{}
-
 	cmd := &cobra.Command{
 		Use:   "read <upload-id> <path>",
 		Short: "Read a file from an upload",
 		Args:  cobra.RangeArgs(0, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			opts := &Options{}
 			if len(args) > 0 {
 				opts.uploadID = args[0]
 			}
 			if len(args) > 1 {
 				opts.path = args[1]
 			}
-			return runRead(f, opts)
+			return runRead(cmd, f, opts)
 		},
 	}
 
 	return cmd
 }
 
-func runRead(f *cmdutil.Factory, opts *Options) error {
+func runRead(cmd *cobra.Command, f *cmdutil.Factory, opts *Options) error {
 	if opts.uploadID == "" {
 		if !f.Interactive {
 			return fmt.Errorf("upload-id is required")
@@ -58,7 +56,7 @@ func runRead(f *cmdutil.Factory, opts *Options) error {
 		opts.path = p
 	}
 
-	content, err := f.ApiClient.ReadUploadFile(context.Background(), opts.uploadID, opts.path)
+	content, err := f.ApiClient.ReadUploadFile(cmd.Context(), opts.uploadID, opts.path)
 	if err != nil {
 		return fmt.Errorf("read file failed: %w", err)
 	}

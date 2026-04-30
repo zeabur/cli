@@ -1,7 +1,6 @@
 package list
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -16,29 +15,27 @@ type Options struct {
 
 // NewCmdList creates the file list command.
 func NewCmdList(f *cmdutil.Factory) *cobra.Command {
-	opts := &Options{}
-
 	cmd := &cobra.Command{
 		Use:     "list <upload-id> [path]",
 		Short:   "List files in an upload",
 		Aliases: []string{"ls"},
 		Args:    cobra.RangeArgs(0, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			opts := &Options{}
 			if len(args) > 0 {
 				opts.uploadID = args[0]
 			}
-			opts.path = ""
 			if len(args) > 1 {
 				opts.path = args[1]
 			}
-			return runList(f, opts)
+			return runList(cmd, f, opts)
 		},
 	}
 
 	return cmd
 }
 
-func runList(f *cmdutil.Factory, opts *Options) error {
+func runList(cmd *cobra.Command, f *cmdutil.Factory, opts *Options) error {
 	if opts.uploadID == "" {
 		if !f.Interactive {
 			return fmt.Errorf("upload-id is required")
@@ -55,7 +52,7 @@ func runList(f *cmdutil.Factory, opts *Options) error {
 		pathPtr = &opts.path
 	}
 
-	files, err := f.ApiClient.ListUploadFiles(context.Background(), opts.uploadID, pathPtr)
+	files, err := f.ApiClient.ListUploadFiles(cmd.Context(), opts.uploadID, pathPtr)
 	if err != nil {
 		return fmt.Errorf("list files failed: %w", err)
 	}
