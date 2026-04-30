@@ -22,9 +22,11 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		Use:     "list <upload-id> [path]",
 		Short:   "List files in an upload",
 		Aliases: []string{"ls"},
-		Args:    cobra.RangeArgs(1, 2),
+		Args:    cobra.RangeArgs(0, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			opts.uploadID = args[0]
+			if len(args) > 0 {
+				opts.uploadID = args[0]
+			}
 			opts.path = ""
 			if len(args) > 1 {
 				opts.path = args[1]
@@ -37,6 +39,17 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 }
 
 func runList(f *cmdutil.Factory, opts *Options) error {
+	if opts.uploadID == "" {
+		if !f.Interactive {
+			return fmt.Errorf("upload-id is required")
+		}
+		id, err := f.Prompter.Input("Enter upload ID:", "")
+		if err != nil {
+			return err
+		}
+		opts.uploadID = id
+	}
+
 	var pathPtr *string
 	if opts.path != "" {
 		pathPtr = &opts.path
