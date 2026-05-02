@@ -2,6 +2,7 @@ package searchrepo
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/zeabur/cli/internal/cmdutil"
@@ -34,7 +35,10 @@ func runSearchRepo(cmd *cobra.Command, f *cmdutil.Factory, keyword string) error
 		if err != nil {
 			return err
 		}
-		keyword = k
+		keyword = strings.TrimSpace(k)
+		if keyword == "" {
+			return fmt.Errorf("keyword is required")
+		}
 	}
 
 	repos, err := f.ApiClient.SearchGitRepositories(cmd.Context(), &keyword)
