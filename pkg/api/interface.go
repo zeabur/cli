@@ -182,7 +182,7 @@ type (
 	FileAPI interface {
 		ListUploadFiles(ctx context.Context, uploadID string, path *string) ([]string, error)
 		ReadUploadFile(ctx context.Context, uploadID string, path string) (string, error)
-		PullUploadFiles(ctx context.Context, uploadID string, targetDir string) (int, error)
+		PullUploadFiles(ctx context.Context, uploadID string, targetDir string) (int, int, error)
 	}
 
 	ZSendAPI interface {

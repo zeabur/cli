@@ -54,11 +54,12 @@ func (c *client) ReadUploadFile(ctx context.Context, uploadID string, path strin
 }
 
 // PullUploadFiles downloads all files from an upload to a local directory.
-func (c *client) PullUploadFiles(ctx context.Context, uploadID string, targetDir string) (int, error) {
+// Returns (pulled count, skipped binary count, error).
+func (c *client) PullUploadFiles(ctx context.Context, uploadID string, targetDir string) (int, int, error) {
 	return c.pullDir(ctx, uploadID, "", targetDir)
 }
 
-func (c *client) pullDir(ctx context.Context, uploadID string, remotePath string, localDir string) (int, error) {
+func (c *client) pullDir(ctx context.Context, uploadID string, remotePath string, localDir string) (int, int, error) {
 	baseDir := filepath.Clean(localDir)
 
 	var pathPtr *string
@@ -68,46 +69,49 @@ func (c *client) pullDir(ctx context.Context, uploadID string, remotePath string
 
 	entries, err := c.ListUploadFiles(ctx, uploadID, pathPtr)
 	if err != nil {
-		return 0, fmt.Errorf("list %q: %w", remotePath, err)
+		return 0, 0, fmt.Errorf("list %q: %w", remotePath, err)
 	}
 
-	count := 0
+	count, skipped := 0, 0
 	for _, entry := range entries {
 		fullRemote := remotePath + entry
 		fullLocal := filepath.Join(baseDir, fullRemote)
 
-		if !strings.HasPrefix(filepath.Clean(fullLocal), baseDir) {
-			return count, fmt.Errorf("path traversal detected: %q", fullRemote)
+		rel, relErr := filepath.Rel(baseDir, filepath.Clean(fullLocal))
+		if relErr != nil || strings.HasPrefix(rel, "..") {
+			return count, skipped, fmt.Errorf("path traversal detected: %q", fullRemote)
 		}
 
 		if strings.HasSuffix(entry, "/") {
 			if err := os.MkdirAll(fullLocal, 0o755); err != nil {
-				return count, fmt.Errorf("mkdir %q: %w", fullLocal, err)
+				return count, skipped, fmt.Errorf("mkdir %q: %w", fullLocal, err)
 			}
-			n, err := c.pullDir(ctx, uploadID, fullRemote, localDir)
+			n, s, err := c.pullDir(ctx, uploadID, fullRemote, localDir)
 			count += n
+			skipped += s
 			if err != nil {
-				return count, err
+				return count, skipped, err
 			}
 		} else {
 			ext := strings.ToLower(filepath.Ext(entry))
 			if binaryExtensions[ext] {
+				skipped++
 				continue
 			}
 			content, err := c.ReadUploadFile(ctx, uploadID, fullRemote)
 			if err != nil {
-				return count, fmt.Errorf("read %q: %w", fullRemote, err)
+				return count, skipped, fmt.Errorf("read %q: %w", fullRemote, err)
 			}
 			dir := filepath.Dir(fullLocal)
 			if err := os.MkdirAll(dir, 0o755); err != nil {
-				return count, fmt.Errorf("mkdir %q: %w", dir, err)
+				return count, skipped, fmt.Errorf("mkdir %q: %w", dir, err)
 			}
 			if err := os.WriteFile(fullLocal, []byte(content), 0o644); err != nil {
-				return count, fmt.Errorf("write %q: %w", fullLocal, err)
+				return count, skipped, fmt.Errorf("write %q: %w", fullLocal, err)
 			}
 			count++
 		}
 	}
 
-	return count, nil
+	return count, skipped, nil
 }

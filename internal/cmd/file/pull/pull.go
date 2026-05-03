@@ -45,12 +45,15 @@ func runPull(cmd *cobra.Command, f *cmdutil.Factory, uploadID string, targetDir 
 		}
 	}
 
-	count, err := f.ApiClient.PullUploadFiles(cmd.Context(), uploadID, targetDir)
+	count, skipped, err := f.ApiClient.PullUploadFiles(cmd.Context(), uploadID, targetDir)
 	if err != nil {
 		return fmt.Errorf("pull files failed: %w", err)
 	}
 
 	f.Log.Infof("Pulled %d files to %s", count, targetDir)
+	if skipped > 0 {
+		f.Log.Infof("Skipped %d binary files (images, fonts, archives, etc.)", skipped)
+	}
 
 	return nil
 }
