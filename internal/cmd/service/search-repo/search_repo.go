@@ -17,7 +17,7 @@ func NewCmdSearchRepo(f *cmdutil.Factory) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var keyword string
 			if len(args) > 0 {
-				keyword = args[0]
+				keyword = strings.TrimSpace(args[0])
 			}
 			return runSearchRepo(cmd, f, keyword)
 		},
