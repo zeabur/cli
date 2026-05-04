@@ -23,6 +23,7 @@ type Client interface {
 	AIHubAPI
 	ZSendAPI
 	RegisteredDomainAPI
+	FileAPI
 }
 
 type (
@@ -176,6 +177,12 @@ type (
 
 		ResendRegistrantVerificationEmail(ctx context.Context, registeredDomainID string) error
 		UpdateRegistrantContact(ctx context.Context, registeredDomainID string, input model.UpdateRegistrantContactInput) error
+	}
+
+	FileAPI interface {
+		ListUploadFiles(ctx context.Context, uploadID string, path *string) ([]string, error)
+		ReadUploadFile(ctx context.Context, uploadID string, path string) (string, error)
+		PullUploadFiles(ctx context.Context, uploadID string, targetDir string) (int, int, error)
 	}
 
 	ZSendAPI interface {
