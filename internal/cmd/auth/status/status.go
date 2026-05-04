@@ -54,7 +54,8 @@ func runStatus(f *cmdutil.Factory, opts *statusOptions) error {
 		return f.Printer.JSON(user)
 	}
 
-	f.Log.Infof("Logged in as %s, email: %s", user.Name, user.Email)
+	f.Log.Infof("Logged in as %s (%s), email: %s, plan: %s, credit: $%.2f",
+		user.Name, user.Username, user.Email, user.Subscription.Plan, float64(user.Credit)/100)
 
 	if opts.verbose {
 		f.Printer.Table(user.Header(), user.Rows())
