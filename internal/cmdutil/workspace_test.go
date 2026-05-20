@@ -47,7 +47,7 @@ func TestResolveWorkspaceArg_ByID_CaseInsensitive(t *testing.T) {
 func TestResolveWorkspaceArg_ByID_NotAMember(t *testing.T) {
 	teams := []model.Team{{ID: "65aa1234567890abcdef1234", Name: "acme"}}
 	_, err := cmdutil.ResolveWorkspaceArg(teams, "65bbffffffffffffffffffff")
-	if err == nil || !(strings.Contains(err.Error(), "not a team") || strings.Contains(err.Error(), "no team")) {
+	if err == nil || (!strings.Contains(err.Error(), "not a team") && !strings.Contains(err.Error(), "no team")) {
 		t.Fatalf("want membership error, got %v", err)
 	}
 }

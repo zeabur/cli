@@ -136,7 +136,9 @@ func setProject(f *cmdutil.Factory, id, name string, shouldCheck bool) error {
 			return fmt.Errorf("failed to get project: %w", err)
 		}
 		f.Config.GetContext().SetProject(zcontext.NewBasicInfo(project.ID, project.Name))
-
+		// User may have passed only --id; backfill the local `name` so the
+		// success log below names the resolved project instead of "<>".
+		name = project.Name
 	} else {
 		f.Config.GetContext().SetProject(zcontext.NewBasicInfo(id, name))
 	}
@@ -235,7 +237,9 @@ func setService(f *cmdutil.Factory, id, name string, shouldCheck bool) error {
 			return fmt.Errorf("failed to get service: %w", err)
 		}
 		f.Config.GetContext().SetService(zcontext.NewBasicInfo(service.ID, service.Name))
-
+		// User may have passed only --id; backfill the local `name` so the
+		// success log below names the resolved service instead of "<>".
+		name = service.Name
 	} else {
 		f.Config.GetContext().SetService(zcontext.NewBasicInfo(id, name))
 	}
