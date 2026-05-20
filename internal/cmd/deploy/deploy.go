@@ -195,7 +195,8 @@ func selectInteractively(f *cmdutil.Factory, opts *Options) (*model.Service, *mo
 		spinner.WithSuffix(" Fetching projects ..."),
 	)
 	s.Start()
-	projects, err := f.ApiClient.ListAllProjects(context.Background())
+	ownerID := f.CurrentOwnerID()
+	projects, err := f.ApiClient.ListAllProjects(context.Background(), ownerID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -207,7 +208,13 @@ func selectInteractively(f *cmdutil.Factory, opts *Options) (*model.Service, *mo
 			return nil, nil, err
 		}
 		if confirm {
-			project, err := f.ApiClient.CreateProject(context.Background(), "default", nil)
+			// When the active workspace is a team, make it visible that the
+			// new project will land under that team — not the personal
+			// account — so the user isn't surprised by where it shows up.
+			if ws := f.Config.GetContext().GetWorkspace(); ws.IsTeam() {
+				f.Log.Infof("→ Creating new project in team workspace %q", ws.Name)
+			}
+			project, err := f.ApiClient.CreateProject(context.Background(), ownerID, "default", nil)
 			if err != nil {
 				f.Log.Error("Failed to create project: ", err)
 				return nil, nil, err

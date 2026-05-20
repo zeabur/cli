@@ -6,6 +6,14 @@ import "github.com/spf13/viper"
 const (
 	KeyContext = "context"
 
+	// Workspace lives at the top level (sibling to context), mirroring its
+	// role as an outer scope: a workspace switch invalidates the inner
+	// project / environment / service context.
+	KeyWorkspace     = "workspace"
+	KeyWorkspaceID   = KeyWorkspace + ".id"
+	KeyWorkspaceName = KeyWorkspace + ".name"
+	KeyWorkspaceKind = KeyWorkspace + ".kind"
+
 	KeyProject     = KeyContext + ".project"
 	KeyProjectID   = KeyProject + ".id"
 	KeyProjectName = KeyProject + ".name"
@@ -26,6 +34,30 @@ type viperContext struct {
 // NewViperContext creates a new Context based on viper
 func NewViperContext(viper *viper.Viper) Context {
 	return &viperContext{viper: viper}
+}
+
+func (c *viperContext) GetWorkspace() *Workspace {
+	return &Workspace{
+		ID:   c.viper.GetString(KeyWorkspaceID),
+		Name: c.viper.GetString(KeyWorkspaceName),
+		Kind: c.viper.GetString(KeyWorkspaceKind),
+	}
+}
+
+func (c *viperContext) SetWorkspace(w *Workspace) {
+	if w == nil {
+		c.ClearWorkspace()
+		return
+	}
+	c.viper.Set(KeyWorkspaceID, w.ID)
+	c.viper.Set(KeyWorkspaceName, w.Name)
+	c.viper.Set(KeyWorkspaceKind, w.Kind)
+}
+
+func (c *viperContext) ClearWorkspace() {
+	c.viper.Set(KeyWorkspaceID, "")
+	c.viper.Set(KeyWorkspaceName, "")
+	c.viper.Set(KeyWorkspaceKind, "")
 }
 
 func (c *viperContext) GetProject() BasicInfo {

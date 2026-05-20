@@ -104,7 +104,7 @@ func runCreateNonInteractive(f *cmdutil.Factory, opts *Options) error {
 }
 
 func createProject(f *cmdutil.Factory, projectRegion string, projectName *string) error {
-	project, err := f.ApiClient.CreateProject(context.Background(), projectRegion, projectName)
+	project, err := f.ApiClient.CreateProject(context.Background(), f.CurrentOwnerID(), projectRegion, projectName)
 	if err != nil {
 		f.Log.Error(err)
 		return err

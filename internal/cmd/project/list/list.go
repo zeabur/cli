@@ -30,7 +30,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 
 // runList will list all projects page by page
 func runList(f *cmdutil.Factory, opts Options) error {
-	projects, err := f.ApiClient.ListAllProjects(context.Background())
+	projects, err := f.ApiClient.ListAllProjects(context.Background(), f.CurrentOwnerID())
 	if err != nil {
 		return err
 	}
