@@ -49,7 +49,7 @@ func runDeleteNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	if opts.id == "" && opts.name != "" {
-		project, err := util.GetProjectByName(f.Config, f.ApiClient, opts.name)
+		project, err := util.GetProjectByName(f.ApiClient, f.CurrentOwnerID(), f.Config.GetUsername(), opts.name)
 		if err != nil {
 			return err
 		}

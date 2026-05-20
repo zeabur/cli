@@ -8,6 +8,7 @@ import (
 	"github.com/zeabur/cli/internal/util"
 
 	"github.com/zeabur/cli/internal/cmdutil"
+	"github.com/zeabur/cli/pkg/model"
 )
 
 type Options struct {
@@ -57,9 +58,20 @@ func runGetNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
-	ownerName := f.Config.GetUsername()
-
-	project, err := f.ApiClient.GetProject(context.Background(), opts.id, ownerName, opts.name)
+	var (
+		project *model.Project
+		err     error
+	)
+	if opts.id != "" {
+		// ID path resolves the owner from the project itself — works for
+		// both personal and team-owned projects.
+		project, err = f.ApiClient.GetProject(context.Background(), opts.id, "", "")
+	} else {
+		// Name path must respect the active workspace; the backend
+		// `project(owner, name)` query keys on the caller's personal
+		// username and would miss team-owned projects.
+		project, err = util.GetProjectByName(f.ApiClient, f.CurrentOwnerID(), f.Config.GetUsername(), opts.name)
+	}
 	if err != nil {
 		return fmt.Errorf("failed to get project: %w", err)
 	}

@@ -80,7 +80,7 @@ func runLogInteractive(f *cmdutil.Factory, opts *Options) error {
 func runLogNonInteractive(f *cmdutil.Factory, opts *Options) (err error) {
 	// Resolve serviceID from serviceName first
 	if opts.serviceID == "" && opts.serviceName != "" {
-		service, err := util.GetServiceByName(f.Config, f.ApiClient, opts.serviceName)
+		service, err := util.GetServiceByName(f.ApiClient, f.CurrentOwnerID(), f.Config.GetUsername(), f.Config.GetContext().GetProject().GetName(), f.Config.GetContext().GetProject().GetID(), opts.serviceName)
 		if err != nil {
 			return fmt.Errorf("failed to get service: %w", err)
 		}

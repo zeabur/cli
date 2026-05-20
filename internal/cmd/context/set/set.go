@@ -11,6 +11,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/zeabur/cli/internal/cmdutil"
+	"github.com/zeabur/cli/internal/util"
+	"github.com/zeabur/cli/pkg/model"
 	"github.com/zeabur/cli/pkg/zcontext"
 )
 
@@ -115,8 +117,21 @@ func setProject(f *cmdutil.Factory, id, name string, shouldCheck bool) error {
 	}
 
 	if shouldCheck {
-		ctx := context.Background()
-		project, err := f.ApiClient.GetProject(ctx, id, f.Config.GetUsername(), name)
+		var (
+			project *model.Project
+			err     error
+		)
+		if id != "" {
+			// ID path is workspace-agnostic — `project(_id)` resolves the
+			// owner from the project itself, so this works for both
+			// personal and team-owned projects.
+			project, err = f.ApiClient.GetProject(context.Background(), id, "", "")
+		} else {
+			// Name path: must respect the active workspace, otherwise a
+			// team workspace silently looks up the project under the
+			// caller's personal account.
+			project, err = util.GetProjectByName(f.ApiClient, f.CurrentOwnerID(), f.Config.GetUsername(), name)
+		}
 		if err != nil {
 			return fmt.Errorf("failed to get project: %w", err)
 		}
@@ -197,8 +212,25 @@ func setService(f *cmdutil.Factory, id, name string, shouldCheck bool) error {
 	}
 
 	if shouldCheck {
-		ctx := context.Background()
-		service, err := f.ApiClient.GetService(ctx, id, f.Config.GetUsername(), f.Config.GetContext().GetProject().GetName(), name)
+		var (
+			service *model.Service
+			err     error
+		)
+		if id != "" {
+			service, err = f.ApiClient.GetService(context.Background(), id, "", "", "")
+		} else {
+			// Same workspace-aware lookup as setProject — `service(owner,
+			// projectName, name)` keys on the caller's personal username
+			// and would miss a team-owned project.
+			service, err = util.GetServiceByName(
+				f.ApiClient,
+				f.CurrentOwnerID(),
+				f.Config.GetUsername(),
+				f.Config.GetContext().GetProject().GetName(),
+				f.Config.GetContext().GetProject().GetID(),
+				name,
+			)
+		}
 		if err != nil {
 			return fmt.Errorf("failed to get service: %w", err)
 		}

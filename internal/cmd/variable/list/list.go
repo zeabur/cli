@@ -63,7 +63,7 @@ func runListVariablesInteractive(f *cmdutil.Factory, opts *Options) error {
 
 func runListVariablesNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	if opts.id == "" && opts.name != "" {
-		service, err := util.GetServiceByName(f.Config, f.ApiClient, opts.name)
+		service, err := util.GetServiceByName(f.ApiClient, f.CurrentOwnerID(), f.Config.GetUsername(), f.Config.GetContext().GetProject().GetName(), f.Config.GetContext().GetProject().GetID(), opts.name)
 		if err != nil {
 			return err
 		}
