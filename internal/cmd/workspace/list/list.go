@@ -26,7 +26,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 }
 
 func run(f *cmdutil.Factory) error {
-	teams, err := f.ApiClient.ListTeams(context.Background())
+	teams, err := f.ListTeams(context.Background())
 	if err != nil {
 		return fmt.Errorf("list teams: %w", err)
 	}

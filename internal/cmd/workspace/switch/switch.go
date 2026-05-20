@@ -37,7 +37,11 @@ because resource IDs do not overlap between workspaces.`,
 }
 
 func run(f *cmdutil.Factory, arg string) error {
-	team, err := cmdutil.ResolveWorkspaceArg(context.Background(), f.ApiClient, arg)
+	teams, err := f.ListTeams(context.Background())
+	if err != nil {
+		return fmt.Errorf("list teams: %w", err)
+	}
+	team, err := cmdutil.ResolveWorkspaceArg(teams, arg)
 	if err != nil {
 		return err
 	}

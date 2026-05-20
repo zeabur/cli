@@ -50,7 +50,9 @@ func (c *client) ListAllProjects(ctx context.Context, ownerID string) (model.Pro
 	var projects []*model.Project
 
 	for next {
-		projectCon, err := c.ListProjects(context.Background(), ownerID, skip, 100)
+		// Propagate the caller's context so cancellation / deadlines
+		// reach each page request (CodeRabbit PLA-1590 review).
+		projectCon, err := c.ListProjects(ctx, ownerID, skip, 100)
 		if err != nil {
 			return nil, err
 		}

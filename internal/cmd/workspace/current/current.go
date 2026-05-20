@@ -38,10 +38,14 @@ func run(f *cmdutil.Factory) error {
 
 	// For a team workspace also fetch the freshest role from the backend so
 	// `current` reports the live role rather than whatever was cached when
-	// the workspace was last switched in.
+	// the workspace was last switched in. Don't fail the command on
+	// network error — the persisted name/id is still useful — but log it
+	// at debug so it isn't completely silent (PLA-1590 review N3).
 	role := ""
-	teams, err := f.ApiClient.ListTeams(context.Background())
-	if err == nil {
+	teams, err := f.ListTeams(context.Background())
+	if err != nil {
+		f.Log.Debugf("workspace current: list teams failed, omitting role: %v", err)
+	} else {
 		for _, t := range teams {
 			if t.ID == ws.ID && t.MyRole != nil {
 				role = "  " + t.MyRole.Display()

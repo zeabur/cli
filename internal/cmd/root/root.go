@@ -36,6 +36,7 @@ import (
 	"github.com/zeabur/cli/pkg/fill"
 	"github.com/zeabur/cli/pkg/log"
 	"github.com/zeabur/cli/pkg/selector"
+	"github.com/zeabur/cli/pkg/zcontext"
 )
 
 // NewCmdRoot creates the root command
@@ -189,35 +190,47 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 	return cmd, nil
 }
 
-// resolveWorkspaceFlag turns the raw --workspace value into a team ObjectID
-// and records it on the Factory. Empty flag is a no-op. The keyword
-// "personal" is intentionally NOT recognized — `zeabur workspace clear` is
-// the only way to address personal, and team names are unconstrained (a
-// user-named "personal" team must be reachable). Backend-side RBAC validates
-// the resolved ID on every call; resolution here is a UX layer.
+// resolveWorkspaceFlag turns the raw --workspace value into a team and
+// records it on the Factory. Empty flag is a no-op. The keyword "personal"
+// is intentionally NOT recognized — `zeabur workspace clear` is the only
+// way to address personal, and team names are unconstrained (a user-named
+// "personal" team must be reachable). Backend-side RBAC validates the
+// resolved ID on every call; resolution here is a UX layer.
+//
+// Uses f.ListTeams (per-process cache) so flag resolution, the lazy verify,
+// and downstream commands all share a single backend round-trip.
 func resolveWorkspaceFlag(f *cmdutil.Factory) error {
 	raw := strings.TrimSpace(f.Workspace)
 	if raw == "" {
 		return nil
 	}
-	team, err := cmdutil.ResolveWorkspaceArg(context.Background(), f.ApiClient, raw)
+	teams, err := f.ListTeams(context.Background())
+	if err != nil {
+		return fmt.Errorf("--workspace: list teams: %w", err)
+	}
+	team, err := cmdutil.ResolveWorkspaceArg(teams, raw)
 	if err != nil {
 		return fmt.Errorf("--workspace: %w", err)
 	}
-	f.SetWorkspaceOverride(team.ID)
+	f.SetWorkspaceOverride(&zcontext.Workspace{
+		ID:   team.ID,
+		Name: team.Name,
+		Kind: zcontext.WorkspaceKindTeam,
+	})
 	return nil
 }
 
 // verifyPersistedWorkspace warns and falls back to personal when the
 // persisted workspace is no longer a team the caller belongs to (team
-// deleted, caller removed, etc.). Best-effort: any transport error leaves the
-// workspace untouched so an offline blip doesn't silently switch users out.
+// deleted, caller removed, etc.). Best-effort: any transport error leaves
+// the workspace untouched so an offline blip doesn't silently switch users
+// out. Uses the same memoized ListTeams as resolveWorkspaceFlag.
 func verifyPersistedWorkspace(f *cmdutil.Factory) {
 	ws := f.Config.GetContext().GetWorkspace()
 	if ws.IsPersonal() {
 		return
 	}
-	teams, err := f.ApiClient.ListTeams(context.Background())
+	teams, err := f.ListTeams(context.Background())
 	if err != nil {
 		f.Log.Debugf("workspace verify skipped: %v", err)
 		return

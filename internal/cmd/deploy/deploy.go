@@ -195,12 +195,16 @@ func selectInteractively(f *cmdutil.Factory, opts *Options) (*model.Service, *mo
 		spinner.WithSuffix(" Fetching projects ..."),
 	)
 	s.Start()
-	ownerID := f.CurrentOwnerID()
+	// Snapshot the active workspace so the hint below names the same team
+	// the create call actually files the project under. Reading the
+	// persisted workspace here would race the --workspace flag override.
+	ws := f.CurrentWorkspace()
+	ownerID := ws.ID
 	projects, err := f.ApiClient.ListAllProjects(context.Background(), ownerID)
+	s.Stop()
 	if err != nil {
 		return nil, nil, err
 	}
-	s.Stop()
 
 	if len(projects) == 0 {
 		confirm, err := f.Prompter.Confirm("No projects found. Would you like to create one now?", true)
@@ -211,7 +215,7 @@ func selectInteractively(f *cmdutil.Factory, opts *Options) (*model.Service, *mo
 			// When the active workspace is a team, make it visible that the
 			// new project will land under that team — not the personal
 			// account — so the user isn't surprised by where it shows up.
-			if ws := f.Config.GetContext().GetWorkspace(); ws.IsTeam() {
+			if ws.IsTeam() {
 				f.Log.Infof("→ Creating new project in team workspace %q", ws.Name)
 			}
 			project, err := f.ApiClient.CreateProject(context.Background(), ownerID, "default", nil)

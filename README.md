@@ -125,7 +125,11 @@ By default, the CLI acts under the personal workspace — the account that logge
 # show your personal workspace + all teams you belong to, with your role per team
 npx zeabur workspace list
 
-# switch to a team by name (or by 24-char team ID if the name is not unique)
+# switch to a team — pass either the team name OR its 24-char ObjectID.
+# A 24-char hex value is always interpreted as an ID; anything else is
+# looked up by name. If multiple teams share a name the CLI errors out and
+# prints the per-candidate `workspace switch <id>` invocation so you can
+# pick by ID (team names are unconstrained, so duplicates are possible).
 npx zeabur workspace switch acme
 
 # show the workspace the CLI is currently using

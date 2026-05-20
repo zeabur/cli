@@ -1,30 +1,17 @@
-package cmdutil
+package cmdutil_test
 
 import (
-	"context"
 	"strings"
 	"testing"
 
-	"github.com/zeabur/cli/pkg/api"
+	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/pkg/model"
 )
-
-// fakeListTeamsClient stubs api.Client.ListTeams. Other Client methods are
-// inherited from the embedded nil interface and will panic if exercised —
-// ResolveWorkspaceArg must only call ListTeams.
-type fakeListTeamsClient struct {
-	api.Client
-	teams []model.Team
-}
-
-func (c *fakeListTeamsClient) ListTeams(_ context.Context) ([]model.Team, error) {
-	return c.teams, nil
-}
 
 func ptrRole(r model.TeamMemberRole) *model.TeamMemberRole { return &r }
 
 func TestResolveWorkspaceArg_EmptyArg(t *testing.T) {
-	_, err := ResolveWorkspaceArg(context.Background(), &fakeListTeamsClient{}, "  ")
+	_, err := cmdutil.ResolveWorkspaceArg(nil, "  ")
 	if err == nil || !strings.Contains(err.Error(), "required") {
 		t.Fatalf("want 'required' error, got %v", err)
 	}
@@ -32,8 +19,8 @@ func TestResolveWorkspaceArg_EmptyArg(t *testing.T) {
 
 func TestResolveWorkspaceArg_ByID_Match(t *testing.T) {
 	id := "65aa1234567890abcdef1234"
-	c := &fakeListTeamsClient{teams: []model.Team{{ID: id, Name: "acme", MyRole: ptrRole(model.TeamMemberRoleAdministrator)}}}
-	team, err := ResolveWorkspaceArg(context.Background(), c, id)
+	teams := []model.Team{{ID: id, Name: "acme", MyRole: ptrRole(model.TeamMemberRoleAdministrator)}}
+	team, err := cmdutil.ResolveWorkspaceArg(teams, id)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -42,20 +29,35 @@ func TestResolveWorkspaceArg_ByID_Match(t *testing.T) {
 	}
 }
 
+// TestResolveWorkspaceArg_ByID_CaseInsensitive: isObjectIDHex accepts upper
+// and lower hex, so the comparison against teams[i].ID must do the same.
+// Mongo ObjectIDs are conventionally lowercase, but a user pasting a UUID
+// from a browser tab might end up with uppercase — that must still resolve.
+func TestResolveWorkspaceArg_ByID_CaseInsensitive(t *testing.T) {
+	teams := []model.Team{{ID: "65aa1234567890abcdef1234", Name: "acme"}}
+	team, err := cmdutil.ResolveWorkspaceArg(teams, "65AA1234567890ABCDEF1234")
+	if err != nil {
+		t.Fatalf("uppercase ID should resolve, got %v", err)
+	}
+	if team.ID != "65aa1234567890abcdef1234" {
+		t.Fatalf("returned team ID = %s, want lowercase canonical", team.ID)
+	}
+}
+
 func TestResolveWorkspaceArg_ByID_NotAMember(t *testing.T) {
-	c := &fakeListTeamsClient{teams: []model.Team{{ID: "65aa1234567890abcdef1234", Name: "acme"}}}
-	_, err := ResolveWorkspaceArg(context.Background(), c, "65bbffffffffffffffffffff")
-	if err == nil || !strings.Contains(err.Error(), "not a team") && !strings.Contains(err.Error(), "no team") {
+	teams := []model.Team{{ID: "65aa1234567890abcdef1234", Name: "acme"}}
+	_, err := cmdutil.ResolveWorkspaceArg(teams, "65bbffffffffffffffffffff")
+	if err == nil || !(strings.Contains(err.Error(), "not a team") || strings.Contains(err.Error(), "no team")) {
 		t.Fatalf("want membership error, got %v", err)
 	}
 }
 
 func TestResolveWorkspaceArg_ByName_Unique(t *testing.T) {
-	c := &fakeListTeamsClient{teams: []model.Team{
+	teams := []model.Team{
 		{ID: "65aa1234567890abcdef1234", Name: "acme", MyRole: ptrRole(model.TeamMemberRoleEditor)},
 		{ID: "65bb5678901234abcdef5678", Name: "beta", MyRole: ptrRole(model.TeamMemberRoleViewer)},
-	}}
-	team, err := ResolveWorkspaceArg(context.Background(), c, "acme")
+	}
+	team, err := cmdutil.ResolveWorkspaceArg(teams, "acme")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -65,8 +67,8 @@ func TestResolveWorkspaceArg_ByName_Unique(t *testing.T) {
 }
 
 func TestResolveWorkspaceArg_ByName_NotFound(t *testing.T) {
-	c := &fakeListTeamsClient{teams: []model.Team{{ID: "65aa1234567890abcdef1234", Name: "acme"}}}
-	_, err := ResolveWorkspaceArg(context.Background(), c, "zeta")
+	teams := []model.Team{{ID: "65aa1234567890abcdef1234", Name: "acme"}}
+	_, err := cmdutil.ResolveWorkspaceArg(teams, "zeta")
 	if err == nil || !strings.Contains(err.Error(), `no workspace named`) {
 		t.Fatalf("want 'no workspace named' error, got %v", err)
 	}
@@ -79,40 +81,33 @@ func TestResolveWorkspaceArg_ByName_NotFound(t *testing.T) {
 func TestResolveWorkspaceArg_ByName_Ambiguous(t *testing.T) {
 	id1 := "65aa1234567890abcdef1234"
 	id2 := "65bb5678901234abcdef5678"
-	c := &fakeListTeamsClient{teams: []model.Team{
+	teams := []model.Team{
 		{ID: id1, Name: "acme", MyRole: ptrRole(model.TeamMemberRoleAdministrator)},
 		{ID: id2, Name: "acme", MyRole: ptrRole(model.TeamMemberRoleViewer)},
-	}}
-	_, err := ResolveWorkspaceArg(context.Background(), c, "acme")
+	}
+	_, err := cmdutil.ResolveWorkspaceArg(teams, "acme")
 	if err == nil {
 		t.Fatal("want ambiguous error, got nil")
 	}
 	msg := err.Error()
-	for _, want := range []string{"ambiguous", "2 workspaces named", id1, id2, "Administrator", "Viewer", "zeabur workspace switch"} {
+	for _, want := range []string{"ambiguous", "2 workspaces named", id1, id2, "Administrator", "Viewer", "workspace switch"} {
 		if !strings.Contains(msg, want) {
 			t.Errorf("error missing %q\nfull: %s", want, msg)
 		}
 	}
 }
 
-// TestIsObjectIDHex sanity-checks the predicate that decides whether to take
-// the ID path vs the name path in ResolveWorkspaceArg.
-func TestIsObjectIDHex(t *testing.T) {
-	cases := []struct {
-		s    string
-		want bool
-	}{
-		{"65aa1234567890abcdef1234", true},
-		{"65AA1234567890ABCDEF1234", true},
-		{"65aa1234567890abcdef123", false},  // 23 chars
-		{"65aa1234567890abcdef12345", false}, // 25 chars
-		{"65aa1234567890abcdef123g", false},  // non-hex
-		{"", false},
-		{"acme", false},
+// TestResolveWorkspaceArg_NonHex_NotMistakenForID guards the hex-vs-name
+// branch: a 24-char string that isn't valid hex falls into the name path,
+// not the ID path. Otherwise a user typing a name that happens to be 24
+// characters long would get the misleading "no team with id" error.
+func TestResolveWorkspaceArg_NonHex_NotMistakenForID(t *testing.T) {
+	teams := []model.Team{{ID: "65aa1234567890abcdef1234", Name: "non-hex-but-twentyfour"}}
+	team, err := cmdutil.ResolveWorkspaceArg(teams, "non-hex-but-twentyfour")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
-	for _, tc := range cases {
-		if got := isObjectIDHex(tc.s); got != tc.want {
-			t.Errorf("isObjectIDHex(%q) = %v, want %v", tc.s, got, tc.want)
-		}
+	if team.ID != "65aa1234567890abcdef1234" {
+		t.Fatalf("team ID = %s, want 65aa...", team.ID)
 	}
 }
