@@ -23,7 +23,11 @@ func NewCmdCurrent(f *cmdutil.Factory) *cobra.Command {
 }
 
 func run(f *cmdutil.Factory) error {
-	ws := f.Config.GetContext().GetWorkspace()
+	// Use the effective workspace (CurrentWorkspace) so the report honours
+	// a `--workspace` flag override for the current invocation, matching
+	// what every other command in the process sees. Reading the persisted
+	// workspace directly would silently lie about the override.
+	ws := f.CurrentWorkspace()
 	if ws.IsPersonal() {
 		label := f.Config.GetUser()
 		if label == "" {

@@ -31,7 +31,11 @@ func run(f *cmdutil.Factory) error {
 		return fmt.Errorf("list teams: %w", err)
 	}
 
-	currentID := f.Config.GetContext().GetWorkspace().ID
+	// Use the effective workspace so the `*` marker tracks a `--workspace`
+	// flag override, not just the persisted state. Otherwise
+	// `--workspace foo workspace list` would print `*` on the persisted
+	// team rather than `foo`.
+	currentID := f.CurrentOwnerID()
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 
