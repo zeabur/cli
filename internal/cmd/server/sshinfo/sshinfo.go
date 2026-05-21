@@ -117,6 +117,8 @@ func runSSHInfoNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return fmt.Errorf("marshal failed: %w", err)
 	}
 
-	fmt.Println(string(data)) //nolint:gosec // Intentionally outputting credentials for agent consumption
+	if _, err := fmt.Println(string(data)); err != nil { //nolint:gosec // Intentionally outputting credentials for agent consumption
+		return fmt.Errorf("write output failed: %w", err)
+	}
 	return nil
 }
