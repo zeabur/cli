@@ -81,7 +81,7 @@ func runSSHInfoInteractive(f *cmdutil.Factory, opts *Options) error {
 
 func runSSHInfoNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	if opts.id == "" {
-		return fmt.Errorf("--id is required")
+		return fmt.Errorf("server ID is required (use --id or positional server-id)")
 	}
 
 	ctx := context.Background()
@@ -99,9 +99,10 @@ func runSSHInfoNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	var password string
 	if server.IsManaged {
 		pw, err := f.ApiClient.RevealServerPassword(ctx, opts.id)
-		if err == nil && pw != "" {
-			password = pw
+		if err != nil {
+			return fmt.Errorf("reveal server password failed: %w", err)
 		}
+		password = pw
 	}
 
 	info := SSHInfo{
