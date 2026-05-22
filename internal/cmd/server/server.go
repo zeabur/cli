@@ -13,6 +13,7 @@ import (
 	serverRenameCmd "github.com/zeabur/cli/internal/cmd/server/rename"
 	serverRentCmd "github.com/zeabur/cli/internal/cmd/server/rent"
 	serverSSHCmd "github.com/zeabur/cli/internal/cmd/server/ssh"
+	serverSSHInfoCmd "github.com/zeabur/cli/internal/cmd/server/sshinfo"
 	"github.com/zeabur/cli/internal/cmdutil"
 )
 
@@ -32,6 +33,7 @@ func NewCmdServer(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(serverRegionCmd.NewCmdRegion(f))
 	cmd.AddCommand(serverPlanCmd.NewCmdPlan(f))
 	cmd.AddCommand(serverSSHCmd.NewCmdSSH(f))
+	cmd.AddCommand(serverSSHInfoCmd.NewCmdSSHInfo(f))
 
 	return cmd
 }
