@@ -69,6 +69,7 @@ func runDeleteDomainInteractive(f *cmdutil.Factory, opts *Options) error {
 	s.Start()
 	domainList, err := f.ApiClient.ListDomains(context.Background(), opts.id, opts.environmentID)
 	if err != nil {
+		s.Stop()
 		return err
 	}
 	s.Stop()
@@ -128,13 +129,13 @@ func runDeleteDomainNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	s.Start()
 	deleteResult, err := f.ApiClient.RemoveDomain(context.Background(), opts.domainName)
 	if err != nil {
+		s.Stop()
 		return err
 	}
 	s.Stop()
 
 	if !deleteResult {
-		f.Log.Warnf("Delete domain %s failed", opts.domainName)
-		return nil
+		return fmt.Errorf("delete domain %s failed", opts.domainName)
 	}
 
 	if f.JSON {
