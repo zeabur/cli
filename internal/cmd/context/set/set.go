@@ -136,18 +136,51 @@ func setProject(f *cmdutil.Factory, id, name string, shouldCheck bool) error {
 			err     error
 		)
 		if id != "" {
-			// ID path is workspace-agnostic — `project(_id)` resolves the
-			// owner from the project itself, so this works for both
-			// personal and team-owned projects.
+			// Backend `project(_id)` is owner-agnostic: it'll happily return a
+			// project from a different team as long as the caller has read
+			// access (e.g. they're a member of both teams). That makes
+			// `context set project --id <other-team-project>` a back-door
+			// cross-workspace contamination path — once pinned, subsequent
+			// name-based service / variable / etc. commands resolve under
+			// `<current-team>` ownerID but `<other-team>` projectID, and
+			// happily delete / restart the wrong team's services.
+			//
+			// For team workspaces, verify the project actually belongs to
+			// the current team via the owner-scoped ListAllProjects.
+			// Personal workspace keeps its legacy behaviour because
+			// collaborator workflows depend on pinning by-ID a project the
+			// caller doesn't own (PLA-1590 cross-workspace guard).
 			project, err = f.ApiClient.GetProject(context.Background(), id, "", "")
+			if err != nil {
+				return fmt.Errorf("failed to get project: %w", err)
+			}
+			if ownerID := f.CurrentOwnerID(); ownerID != "" {
+				teamProjects, listErr := f.ApiClient.ListAllProjects(context.Background(), ownerID)
+				if listErr != nil {
+					return fmt.Errorf("verify project workspace membership: %w", listErr)
+				}
+				belongs := false
+				for _, p := range teamProjects {
+					if p.ID == id {
+						belongs = true
+						break
+					}
+				}
+				if !belongs {
+					return fmt.Errorf(
+						"project %q does not belong to workspace %q; either run `zeabur workspace switch <team>` first, or pin by --name",
+						project.Name, f.CurrentWorkspace().Name,
+					)
+				}
+			}
 		} else {
 			// Name path: must respect the active workspace, otherwise a
 			// team workspace silently looks up the project under the
 			// caller's personal account.
 			project, err = util.GetProjectByName(f.ApiClient, f.CurrentOwnerID(), f.Config.GetUsername(), name)
-		}
-		if err != nil {
-			return fmt.Errorf("failed to get project: %w", err)
+			if err != nil {
+				return fmt.Errorf("failed to get project: %w", err)
+			}
 		}
 		f.Config.GetContext().SetProject(zcontext.NewBasicInfo(project.ID, project.Name))
 		// User may have passed only --id; backfill the local `name` so the
