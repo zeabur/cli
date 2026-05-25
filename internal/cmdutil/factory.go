@@ -96,6 +96,65 @@ func (f *Factory) SetWorkspaceOverride(ws *zcontext.Workspace) {
 	f.workspaceOverride = ws
 }
 
+// HasWorkspaceOverride reports whether the caller invoked the command with a
+// `--workspace <name|id>` flag. Use this to gate any behaviour that should
+// only apply to "one-shot override" mode — most prominently, refusing to
+// read or write the persisted inner context (project / environment / service),
+// because that context belongs to whatever the persisted workspace is and
+// would silently cross workspaces when reused under an override.
+//
+// PLA-1590 contract: --workspace is a stateless override. It must not
+// observe or modify the persisted inner context. Commands that need a
+// project / service in override mode must take an explicit `--id` flag.
+func (f *Factory) HasWorkspaceOverride() bool {
+	return f.workspaceOverride != nil
+}
+
+// CurrentProjectID returns the persisted project context ID, but only when
+// no --workspace override is active. Under an override the persisted context
+// belongs to a (potentially) different workspace, so reusing it would cross
+// scopes — instead return "" so name-based service / variable / etc. lookups
+// fail-closed with an actionable error and the caller must pass an explicit
+// `--id` / `--service-id`.
+func (f *Factory) CurrentProjectID() string {
+	if f.HasWorkspaceOverride() || f.Config == nil {
+		return ""
+	}
+	return f.Config.GetContext().GetProject().GetID()
+}
+
+// CurrentProjectName mirrors CurrentProjectID. The personal path of the
+// service-by-name lookup uses the project name; return "" under override so
+// that path also refuses rather than reaches into the persisted context.
+func (f *Factory) CurrentProjectName() string {
+	if f.HasWorkspaceOverride() || f.Config == nil {
+		return ""
+	}
+	return f.Config.GetContext().GetProject().GetName()
+}
+
+// CurrentEnvironmentID — same rule as CurrentProjectID, applied to the
+// persisted environment context. Reserved for future use; today no team
+// command consumes environment context implicitly, but the helper keeps the
+// override contract uniform across all three inner-context fields.
+func (f *Factory) CurrentEnvironmentID() string {
+	if f.HasWorkspaceOverride() || f.Config == nil {
+		return ""
+	}
+	return f.Config.GetContext().GetEnvironment().GetID()
+}
+
+// CurrentServiceID — same rule as CurrentProjectID for the persisted service
+// context. Currently unused by team-path lookups (services are looked up by
+// project + name) but exposed so future consumers stay on the same override
+// contract.
+func (f *Factory) CurrentServiceID() string {
+	if f.HasWorkspaceOverride() || f.Config == nil {
+		return ""
+	}
+	return f.Config.GetContext().GetService().GetID()
+}
+
 // ListTeams returns the caller's teams via api.Client.ListTeams, memoized for
 // the lifetime of this Factory. The same Factory is shared across every
 // PersistentPreRunE / Run / PersistentPostRunE callback within a single CLI

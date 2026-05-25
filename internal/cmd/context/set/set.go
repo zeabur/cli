@@ -68,6 +68,20 @@ func NewCmdSet(f *cmdutil.Factory) *cobra.Command {
 }
 
 func runSet(f *cmdutil.Factory, opts *Options) error {
+	// `context set` writes persistent state — it cannot be combined with the
+	// one-shot `--workspace` override, because the persisted context is
+	// always interpreted relative to the persisted workspace, never the
+	// override. Mixing the two would leave a project / service / environment
+	// from team B pinned under persisted workspace A, which then causes
+	// silent cross-workspace operations on subsequent commands. Reject up
+	// front with an actionable hint (PLA-1590 B+).
+	if f.HasWorkspaceOverride() {
+		return fmt.Errorf(
+			"`context set` writes persistent state and cannot be combined with `--workspace`; " +
+				"run `zeabur workspace switch <team>` first, then `zeabur context set ...`",
+		)
+	}
+
 	if f.Interactive {
 		return runSetInteractive(f, opts)
 	}

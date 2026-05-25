@@ -123,6 +123,109 @@ func TestFactory_CurrentOwnerID_OverrideNilClears(t *testing.T) {
 	}
 }
 
+// TestFactory_HasWorkspaceOverride guards the predicate that gates every
+// "stateless override" behaviour added by PLA-1590 B+.
+func TestFactory_HasWorkspaceOverride(t *testing.T) {
+	f := &cmdutil.Factory{}
+	if f.HasWorkspaceOverride() {
+		t.Fatal("brand-new Factory must not report an override")
+	}
+	f.SetWorkspaceOverride(&zcontext.Workspace{ID: "abc"})
+	if !f.HasWorkspaceOverride() {
+		t.Fatal("after SetWorkspaceOverride, HasWorkspaceOverride must be true")
+	}
+	f.SetWorkspaceOverride(nil)
+	if f.HasWorkspaceOverride() {
+		t.Fatal("after SetWorkspaceOverride(nil), HasWorkspaceOverride must be false")
+	}
+}
+
+// TestFactory_CurrentInnerContext_OverrideHides is the core invariant of
+// PLA-1590 B+: when a `--workspace` override is active, the inner persisted
+// context (project / environment / service) is *not* observable. Every
+// helper that consumers use to read inner-context IDs returns the empty
+// string under override, even if the persisted config has values set. This
+// is what makes name-based service / variable / etc. lookups fail-closed
+// in override mode instead of silently operating on the wrong workspace.
+func TestFactory_CurrentInnerContext_OverrideHides(t *testing.T) {
+	v := viper.New()
+	v.Set("workspace.id", "persisted-team-id")
+	v.Set("workspace.name", "persisted-team")
+	v.Set("workspace.kind", zcontext.WorkspaceKindTeam)
+	v.Set("context.project.id", "pinned-project")
+	v.Set("context.project.name", "pinned-project-name")
+	v.Set("context.environment.id", "pinned-env")
+	v.Set("context.service.id", "pinned-service")
+	cfg := stubConfig{ctx: zcontext.NewViperContext(v)}
+	f := &cmdutil.Factory{Config: cfg}
+
+	// Without override: inner context is observable (back-compat).
+	if got := f.CurrentProjectID(); got != "pinned-project" {
+		t.Errorf("no override: CurrentProjectID = %q, want pinned-project", got)
+	}
+	if got := f.CurrentProjectName(); got != "pinned-project-name" {
+		t.Errorf("no override: CurrentProjectName = %q, want pinned-project-name", got)
+	}
+	if got := f.CurrentEnvironmentID(); got != "pinned-env" {
+		t.Errorf("no override: CurrentEnvironmentID = %q, want pinned-env", got)
+	}
+	if got := f.CurrentServiceID(); got != "pinned-service" {
+		t.Errorf("no override: CurrentServiceID = %q, want pinned-service", got)
+	}
+
+	// With override: every inner-context helper returns "" so name-based
+	// downstream lookups fail-closed with an actionable error.
+	f.SetWorkspaceOverride(&zcontext.Workspace{
+		ID: "override-id", Name: "override-team", Kind: zcontext.WorkspaceKindTeam,
+	})
+	for _, tc := range []struct {
+		name string
+		got  string
+	}{
+		{"CurrentProjectID", f.CurrentProjectID()},
+		{"CurrentProjectName", f.CurrentProjectName()},
+		{"CurrentEnvironmentID", f.CurrentEnvironmentID()},
+		{"CurrentServiceID", f.CurrentServiceID()},
+	} {
+		if tc.got != "" {
+			t.Errorf("override active: %s = %q, want empty (B+ stateless override)", tc.name, tc.got)
+		}
+	}
+
+	// CurrentOwnerID still returns the override (verified elsewhere); inner
+	// context returns empty. The mismatch is intentional — inner context
+	// without a known scope is the bug we're guarding against.
+	if got := f.CurrentOwnerID(); got != "override-id" {
+		t.Errorf("override active: CurrentOwnerID = %q, want override-id", got)
+	}
+
+	// Clearing the override restores the inner context.
+	f.SetWorkspaceOverride(nil)
+	if got := f.CurrentProjectID(); got != "pinned-project" {
+		t.Errorf("after clear: CurrentProjectID = %q, want pinned-project", got)
+	}
+}
+
+// TestFactory_CurrentInnerContext_NilConfigSafe: helpers must not panic on
+// a Factory with no Config (e.g. the brand-new user shape from
+// TestFactory_PersonalUserInvariant).
+func TestFactory_CurrentInnerContext_NilConfigSafe(t *testing.T) {
+	f := &cmdutil.Factory{}
+	for _, tc := range []struct {
+		name string
+		got  string
+	}{
+		{"CurrentProjectID", f.CurrentProjectID()},
+		{"CurrentProjectName", f.CurrentProjectName()},
+		{"CurrentEnvironmentID", f.CurrentEnvironmentID()},
+		{"CurrentServiceID", f.CurrentServiceID()},
+	} {
+		if tc.got != "" {
+			t.Errorf("nil Config: %s = %q, want empty", tc.name, tc.got)
+		}
+	}
+}
+
 // fakeListTeamsAPI counts ListTeams invocations so the cache tests can
 // assert how many backend round-trips the Factory makes.
 type fakeListTeamsAPI struct {

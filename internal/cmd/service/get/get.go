@@ -59,7 +59,7 @@ func runGetInteractive(f *cmdutil.Factory, opts *Options) error {
 
 func runGetNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	if opts.id == "" && opts.name != "" {
-		service, err := util.GetServiceByName(f.ApiClient, f.CurrentOwnerID(), f.Config.GetUsername(), f.Config.GetContext().GetProject().GetName(), f.Config.GetContext().GetProject().GetID(), opts.name)
+		service, err := util.GetServiceByName(f.ApiClient, f.CurrentOwnerID(), f.Config.GetUsername(), f.CurrentProjectName(), f.CurrentProjectID(), opts.name)
 		if err != nil {
 			return err
 		}

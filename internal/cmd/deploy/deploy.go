@@ -224,7 +224,13 @@ func selectInteractively(f *cmdutil.Factory, opts *Options) (*model.Service, *mo
 				return nil, nil, err
 			}
 			f.Log.Infof("Project %s created. Run this command again to deploy on it.", project.Name)
-			f.Config.GetContext().SetProject(zcontext.NewBasicInfo(project.ID, project.Name))
+			// `--workspace` override is one-shot (PLA-1590 B+): the newly-
+			// created project belongs to the override workspace, not to the
+			// persisted one, so writing it to the persisted context would
+			// silently cross workspaces on the next command. Skip.
+			if !f.HasWorkspaceOverride() {
+				f.Config.GetContext().SetProject(zcontext.NewBasicInfo(project.ID, project.Name))
+			}
 
 			return nil, nil, nil
 		}
@@ -237,7 +243,9 @@ func selectInteractively(f *cmdutil.Factory, opts *Options) (*model.Service, *mo
 		return nil, nil, err
 	}
 
-	f.Config.GetContext().SetProject(zcontext.NewBasicInfo(project.ID, project.Name))
+	if !f.HasWorkspaceOverride() {
+		f.Config.GetContext().SetProject(zcontext.NewBasicInfo(project.ID, project.Name))
+	}
 
 	_, environment, err := f.Selector.SelectEnvironment(project.ID)
 	if err != nil {
