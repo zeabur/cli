@@ -8,6 +8,7 @@ import (
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
 	"github.com/zeabur/cli/pkg/model"
+	"github.com/zeabur/cli/pkg/zcontext"
 )
 
 type Options struct {
@@ -23,7 +24,14 @@ func NewCmdDelete(f *cmdutil.Factory) *cobra.Command {
 		Use:     "delete",
 		Short:   "Delete project",
 		Aliases: []string{"del"},
-		PreRunE: util.DefaultIDNameByContext(f.Config.GetContext().GetProject(), &opts.id, &opts.name),
+		// Closure (not direct call) so EffectiveContext is resolved at
+		// PreRunE time — after PersistentPreRunE has parsed `--workspace`
+		// — instead of at Cobra construction time when the override flag
+		// has not yet been seen (PLA-1590 B+).
+		PreRunE: util.DefaultIDNameByContext(
+			func() zcontext.BasicInfo { return f.EffectiveContext().GetProject() },
+			&opts.id, &opts.name,
+		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDelete(f, opts)
 		},

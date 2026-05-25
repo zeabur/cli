@@ -23,9 +23,14 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 }
 
 func runGet(f *cmdutil.Factory, opts *Options) error {
-	project := f.Config.GetContext().GetProject()
-	environment := f.Config.GetContext().GetEnvironment()
-	service := f.Config.GetContext().GetService()
+	// Use the effective context so `--workspace` override truthfully shows
+	// "(not set)" for inner context — displaying the persisted team-A
+	// project under an override to team-B would mislead the user into
+	// thinking it's available there (PLA-1590 B+).
+	ctx := f.EffectiveContext()
+	project := ctx.GetProject()
+	environment := ctx.GetEnvironment()
+	service := ctx.GetService()
 
 	header := []string{"Context", "Name", "ID"}
 	data := [][]string{
@@ -55,6 +60,14 @@ func runGet(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	f.Printer.Table(header, data)
+
+	// Human-readable mode also tells the user *why* everything is unset when
+	// they're running under a `--workspace` override, so they don't
+	// misread it as a config bug. JSON mode stays structurally clean
+	// (no prose mixed into the payload) so scripts keep parsing it.
+	if f.HasWorkspaceOverride() {
+		f.Log.Info("Note: --workspace is one-shot; persisted project/service/environment context is not used.")
+	}
 
 	return nil
 }

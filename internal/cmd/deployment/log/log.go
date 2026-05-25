@@ -61,7 +61,7 @@ func runLog(f *cmdutil.Factory, opts *Options) error {
 
 func runLogInteractive(f *cmdutil.Factory, opts *Options) error {
 	if opts.deploymentID == "" {
-		zctx := f.Config.GetContext()
+		zctx := f.EffectiveContext()
 		_, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
 			ProjectCtx:    zctx,
 			ServiceID:     &opts.serviceID,

@@ -50,7 +50,7 @@ func runCreateVariable(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runCreateVariableInteractive(f *cmdutil.Factory, opts *Options) error {
-	zctx := f.Config.GetContext()
+	zctx := f.EffectiveContext()
 
 	if _, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
 		ProjectCtx:    zctx,

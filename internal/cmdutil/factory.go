@@ -47,6 +47,14 @@ type (
 		teamsCache    []model.Team
 		teamsCacheErr error
 		teamsCacheHit bool
+
+		// ephemeralCtx is the in-memory inner context handed out by
+		// EffectiveContext under --workspace override. Lazy-initialised on
+		// first call so the same instance is shared across every
+		// `Set -> later GetProject` cycle within one command (ParamFiller
+		// depends on this). Reset between commands by virtue of being a
+		// per-Factory field; Factory itself is per-invocation.
+		ephemeralCtx zcontext.Context
 	}
 	// PersistentFlags are flags that are common to all commands
 	PersistentFlags struct {
@@ -153,6 +161,38 @@ func (f *Factory) CurrentServiceID() string {
 		return ""
 	}
 	return f.Config.GetContext().GetService().GetID()
+}
+
+// EffectiveContext returns the inner context (project / environment /
+// service) that the current command should consume. Without an override
+// this is the persisted config context, byte-equivalent to reading
+// `f.Config.GetContext()` directly. Under `--workspace` override it
+// returns an in-memory ephemeral context whose initial reads are empty
+// and whose writes never reach the config file — so an interactive command
+// can transiently pick a team-B project / service without polluting the
+// persisted team-A context (PLA-1590 B++).
+//
+// The ephemeral instance is cached on the Factory so that within a single
+// command, `Set → later Get` cycles inside ParamFiller see the values they
+// just wrote. The cache is implicitly scoped to one invocation because the
+// Factory itself is constructed once per command.
+//
+// Callers that intentionally manipulate persisted workspace state
+// (`workspace switch`, `workspace clear`, lazy verify in root, `auth
+// logout`) must keep going through `f.Config.GetContext()` directly —
+// EffectiveContext is for inner context only and would silently no-op
+// their writes.
+func (f *Factory) EffectiveContext() zcontext.Context {
+	if !f.HasWorkspaceOverride() {
+		if f.Config == nil {
+			return zcontext.NewEphemeralContext(nil)
+		}
+		return f.Config.GetContext()
+	}
+	if f.ephemeralCtx == nil {
+		f.ephemeralCtx = zcontext.NewEphemeralContext(f.CurrentWorkspace())
+	}
+	return f.ephemeralCtx
 }
 
 // ListTeams returns the caller's teams via api.Client.ListTeams, memoized for

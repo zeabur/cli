@@ -1,39 +1,24 @@
 package util
 
 import (
-	"errors"
-
 	"github.com/spf13/cobra"
-	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/pkg/zcontext"
 )
 
-// NeedProjectContextWhenNonInteractive checks if the project context is set in the non-interactive mode.
-// If overrideID is provided and non-empty, the check is skipped (the caller already has a project ID from a flag).
-func NeedProjectContextWhenNonInteractive(f *cmdutil.Factory, overrideID ...*string) CobraRunE {
+// DefaultIDNameByContext returns a Cobra PreRunE that auto-fills `id` and
+// `name` from the resource the supplied closure returns, provided both are
+// empty. Useful for commands like `project get/delete` that should default
+// to "whatever the user has pinned" when invoked with no flags.
+//
+// The argument is a closure rather than the BasicInfo directly so the
+// resolution happens at PreRunE time (after global flags are parsed),
+// not at Cobra command construction time. This matters for PLA-1590:
+// `--workspace` only takes effect after PersistentPreRunE runs, so a
+// caller passing `f.EffectiveContext().GetProject()` directly would
+// capture the persisted project, not the override-aware empty.
+func DefaultIDNameByContext(basicInfoFn func() zcontext.BasicInfo, id, name *string) CobraRunE {
 	return func(cmd *cobra.Command, args []string) error {
-		if len(overrideID) > 0 && overrideID[0] != nil && *overrideID[0] != "" {
-			return nil
-		}
-		if !f.Interactive && f.Config.GetContext().GetProject().Empty() {
-			return errors.New("please run <zeabur context set project> first")
-		}
-		return nil
-	}
-}
-
-func DefaultIDNameByContext(basicInfo zcontext.BasicInfo, id, name *string) CobraRunE {
-	return func(cmd *cobra.Command, args []string) error {
-		defaultByContext(basicInfo, id, name)
-		return nil
-	}
-}
-
-func DefaultIDByContext(basicInfo zcontext.BasicInfo, id *string) CobraRunE {
-	var unused string
-
-	return func(cmd *cobra.Command, args []string) error {
-		defaultByContext(basicInfo, id, &unused)
+		defaultByContext(basicInfoFn(), id, name)
 		return nil
 	}
 }

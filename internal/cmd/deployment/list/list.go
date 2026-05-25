@@ -45,7 +45,7 @@ func runList(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runListInteractive(f *cmdutil.Factory, opts *Options) error {
-	zctx := f.Config.GetContext()
+	zctx := f.EffectiveContext()
 	_, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
 		ProjectCtx:    zctx,
 		ServiceID:     &opts.serviceID,

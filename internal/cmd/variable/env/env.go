@@ -49,7 +49,7 @@ func runUpdateVariableByEnv(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	if f.Interactive && opts.id == "" && opts.name == "" {
-		zctx := f.Config.GetContext()
+		zctx := f.EffectiveContext()
 		if _, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
 			ProjectCtx:    zctx,
 			ServiceID:     &opts.id,

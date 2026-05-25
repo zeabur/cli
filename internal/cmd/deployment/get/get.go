@@ -49,7 +49,7 @@ func runGet(f *cmdutil.Factory, opts *Options) error {
 
 func runGetInteractive(f *cmdutil.Factory, opts *Options) error {
 	if opts.deploymentID == "" {
-		zctx := f.Config.GetContext()
+		zctx := f.EffectiveContext()
 		_, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
 			ProjectCtx:    zctx,
 			ServiceID:     &opts.serviceID,

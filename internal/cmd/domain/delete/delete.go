@@ -50,7 +50,7 @@ func runDeleteDomain(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runDeleteDomainInteractive(f *cmdutil.Factory, opts *Options) error {
-	zctx := f.Config.GetContext()
+	zctx := f.EffectiveContext()
 
 	if _, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
 		ProjectCtx:    zctx,

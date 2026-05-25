@@ -226,6 +226,95 @@ func TestFactory_CurrentInnerContext_NilConfigSafe(t *testing.T) {
 	}
 }
 
+// TestFactory_EffectiveContext_NoOverride: without override, EffectiveContext
+// returns the persisted config context. This is the back-compat path —
+// vanilla users (no --workspace flag) see no behaviour change.
+func TestFactory_EffectiveContext_NoOverride(t *testing.T) {
+	v := viper.New()
+	v.Set("context.project.id", "pinned-project")
+	v.Set("context.project.name", "pinned-project-name")
+	cfg := stubConfig{ctx: zcontext.NewViperContext(v)}
+	f := &cmdutil.Factory{Config: cfg}
+
+	got := f.EffectiveContext().GetProject()
+	if got.GetID() != "pinned-project" || got.GetName() != "pinned-project-name" {
+		t.Fatalf("got %+v, want persisted project pass-through", got)
+	}
+}
+
+// TestFactory_EffectiveContext_OverrideReturnsEphemeral_WithWorkspace: the
+// override case returns an ephemeral context whose GetWorkspace() reports
+// the override workspace (NOT personal — that would be a second-order trap
+// for code that reads ctx.GetWorkspace()).
+func TestFactory_EffectiveContext_OverrideReturnsEphemeral_WithWorkspace(t *testing.T) {
+	v := viper.New()
+	v.Set("workspace.id", "persisted-team-id")
+	v.Set("context.project.id", "persisted-project")
+	cfg := stubConfig{ctx: zcontext.NewViperContext(v)}
+	f := &cmdutil.Factory{Config: cfg}
+
+	overrideWS := &zcontext.Workspace{ID: "override-team-id", Name: "override-team", Kind: zcontext.WorkspaceKindTeam}
+	f.SetWorkspaceOverride(overrideWS)
+
+	ctx := f.EffectiveContext()
+	// Inner context: starts empty (no persisted leak).
+	if !ctx.GetProject().Empty() {
+		t.Errorf("under override, GetProject must start empty (persisted must not leak), got id=%q", ctx.GetProject().GetID())
+	}
+	// Workspace: reports the override, not personal.
+	if got := ctx.GetWorkspace(); got.ID != overrideWS.ID {
+		t.Errorf("ephemeral GetWorkspace = %+v, want override %+v", got, overrideWS)
+	}
+}
+
+// TestFactory_EffectiveContext_OverrideCachedWithinCommand: the ephemeral
+// context must be the SAME instance across calls within one Factory's
+// lifetime — ParamFiller's `Set → later Get` flow depends on it. Otherwise
+// the second call would get a fresh empty context and lose the project
+// the first call wrote.
+func TestFactory_EffectiveContext_OverrideCachedWithinCommand(t *testing.T) {
+	cfg := stubConfig{ctx: zcontext.NewViperContext(viper.New())}
+	f := &cmdutil.Factory{Config: cfg}
+	f.SetWorkspaceOverride(&zcontext.Workspace{ID: "x", Kind: zcontext.WorkspaceKindTeam})
+
+	first := f.EffectiveContext()
+	first.SetProject(zcontext.NewBasicInfo("set-during-cycle", "name"))
+
+	second := f.EffectiveContext()
+	if got := second.GetProject(); got.GetID() != "set-during-cycle" {
+		t.Errorf("second EffectiveContext() must see writes from the first; got %+v", got)
+	}
+}
+
+// TestFactory_EffectiveContext_OverridePersistedUnpolluted: the ephemeral
+// context's writes must not reach the underlying persisted config. This is
+// the whole point of B+: --workspace doesn't modify state.
+func TestFactory_EffectiveContext_OverridePersistedUnpolluted(t *testing.T) {
+	v := viper.New()
+	v.Set("context.project.id", "persisted-X")
+	v.Set("context.project.name", "persisted-X-name")
+	cfg := stubConfig{ctx: zcontext.NewViperContext(v)}
+	f := &cmdutil.Factory{Config: cfg}
+	f.SetWorkspaceOverride(&zcontext.Workspace{ID: "team-B", Kind: zcontext.WorkspaceKindTeam})
+
+	// Simulate ParamFiller deciding to "remember" a fresh project.
+	f.EffectiveContext().SetProject(zcontext.NewBasicInfo("team-B-project", "tb-name"))
+
+	// Persisted viper must still say persisted-X.
+	if got := v.GetString("context.project.id"); got != "persisted-X" {
+		t.Errorf("ephemeral write leaked into persisted config: id=%q", got)
+	}
+	if got := v.GetString("context.project.name"); got != "persisted-X-name" {
+		t.Errorf("ephemeral write leaked into persisted config: name=%q", got)
+	}
+
+	// Once override is cleared, persisted state is what surfaces again.
+	f.SetWorkspaceOverride(nil)
+	if got := f.EffectiveContext().GetProject().GetID(); got != "persisted-X" {
+		t.Errorf("after clearing override, EffectiveContext must show persisted; got %q", got)
+	}
+}
+
 // fakeListTeamsAPI counts ListTeams invocations so the cache tests can
 // assert how many backend round-trips the Factory makes.
 type fakeListTeamsAPI struct {

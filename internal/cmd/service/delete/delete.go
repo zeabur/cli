@@ -42,7 +42,7 @@ func runDelete(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runDeleteInteractive(f *cmdutil.Factory, opts *Options) error {
-	zctx := f.Config.GetContext()
+	zctx := f.EffectiveContext()
 
 	if _, err := f.ParamFiller.ServiceByName(fill.ServiceByNameOptions{
 		ProjectCtx:  zctx,

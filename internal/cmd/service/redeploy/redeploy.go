@@ -46,7 +46,7 @@ func runRedeploy(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runRedeployInteractive(f *cmdutil.Factory, opts *Options) error {
-	zctx := f.Config.GetContext()
+	zctx := f.EffectiveContext()
 
 	if _, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
 		ProjectCtx:    zctx,

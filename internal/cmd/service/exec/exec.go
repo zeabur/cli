@@ -59,7 +59,7 @@ func runExec(f *cmdutil.Factory, opts *Options) error {
 
 func runExecInteractive(f *cmdutil.Factory, opts *Options) error {
 	if opts.id == "" && opts.name == "" {
-		zctx := f.Config.GetContext()
+		zctx := f.EffectiveContext()
 		if _, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
 			ProjectCtx:    zctx,
 			ServiceID:     &opts.id,

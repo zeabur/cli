@@ -47,7 +47,7 @@ func runGet(f *cmdutil.Factory, opts *Options) error {
 
 func runGetInteractive(f *cmdutil.Factory, opts *Options) error {
 	if _, err := f.ParamFiller.ServiceByName(fill.ServiceByNameOptions{
-		ProjectCtx:  f.Config.GetContext(),
+		ProjectCtx:  f.EffectiveContext(),
 		ServiceID:   &opts.id,
 		ServiceName: &opts.name,
 	}); err != nil {
