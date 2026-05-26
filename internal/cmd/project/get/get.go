@@ -8,6 +8,8 @@ import (
 	"github.com/zeabur/cli/internal/util"
 
 	"github.com/zeabur/cli/internal/cmdutil"
+	"github.com/zeabur/cli/pkg/model"
+	"github.com/zeabur/cli/pkg/zcontext"
 )
 
 type Options struct {
@@ -22,7 +24,14 @@ func NewCmdGet(f *cmdutil.Factory) *cobra.Command {
 		Use:     "get",
 		Short:   "Get project",
 		Long:    "Get project, use --id or --name to specify the project",
-		PreRunE: util.DefaultIDNameByContext(f.Config.GetContext().GetProject(), &opts.id, &opts.name),
+		// Closure (not direct call) so EffectiveContext is resolved at
+		// PreRunE time — after PersistentPreRunE has parsed `--workspace`
+		// — instead of at Cobra construction time when the override flag
+		// has not yet been seen (PLA-1590 B+).
+		PreRunE: util.DefaultIDNameByContext(
+			func() zcontext.BasicInfo { return f.EffectiveContext().GetProject() },
+			&opts.id, &opts.name,
+		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGet(f, opts)
 		},
@@ -57,9 +66,20 @@ func runGetNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 
-	ownerName := f.Config.GetUsername()
-
-	project, err := f.ApiClient.GetProject(context.Background(), opts.id, ownerName, opts.name)
+	var (
+		project *model.Project
+		err     error
+	)
+	if opts.id != "" {
+		// ID path resolves the owner from the project itself — works for
+		// both personal and team-owned projects.
+		project, err = f.ApiClient.GetProject(context.Background(), opts.id, "", "")
+	} else {
+		// Name path must respect the active workspace; the backend
+		// `project(owner, name)` query keys on the caller's personal
+		// username and would miss team-owned projects.
+		project, err = util.GetProjectByName(f.ApiClient, f.CurrentOwnerID(), f.Config.GetUsername(), opts.name)
+	}
 	if err != nil {
 		return fmt.Errorf("failed to get project: %w", err)
 	}

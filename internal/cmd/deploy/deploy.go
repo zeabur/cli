@@ -195,11 +195,16 @@ func selectInteractively(f *cmdutil.Factory, opts *Options) (*model.Service, *mo
 		spinner.WithSuffix(" Fetching projects ..."),
 	)
 	s.Start()
-	projects, err := f.ApiClient.ListAllProjects(context.Background())
+	// Snapshot the active workspace so the hint below names the same team
+	// the create call actually files the project under. Reading the
+	// persisted workspace here would race the --workspace flag override.
+	ws := f.CurrentWorkspace()
+	ownerID := ws.ID
+	projects, err := f.ApiClient.ListAllProjects(context.Background(), ownerID)
+	s.Stop()
 	if err != nil {
 		return nil, nil, err
 	}
-	s.Stop()
 
 	if len(projects) == 0 {
 		confirm, err := f.Prompter.Confirm("No projects found. Would you like to create one now?", true)
@@ -207,13 +212,25 @@ func selectInteractively(f *cmdutil.Factory, opts *Options) (*model.Service, *mo
 			return nil, nil, err
 		}
 		if confirm {
-			project, err := f.ApiClient.CreateProject(context.Background(), "default", nil)
+			// When the active workspace is a team, make it visible that the
+			// new project will land under that team — not the personal
+			// account — so the user isn't surprised by where it shows up.
+			if ws.IsTeam() {
+				f.Log.Infof("→ Creating new project in team workspace %q", ws.Name)
+			}
+			project, err := f.ApiClient.CreateProject(context.Background(), ownerID, "default", nil)
 			if err != nil {
 				f.Log.Error("Failed to create project: ", err)
 				return nil, nil, err
 			}
 			f.Log.Infof("Project %s created. Run this command again to deploy on it.", project.Name)
-			f.Config.GetContext().SetProject(zcontext.NewBasicInfo(project.ID, project.Name))
+			// `--workspace` override is one-shot (PLA-1590 B+): the newly-
+			// created project belongs to the override workspace, not to the
+			// persisted one, so writing it to the persisted context would
+			// silently cross workspaces on the next command. Skip.
+			if !f.HasWorkspaceOverride() {
+				f.Config.GetContext().SetProject(zcontext.NewBasicInfo(project.ID, project.Name))
+			}
 
 			return nil, nil, nil
 		}
@@ -226,7 +243,9 @@ func selectInteractively(f *cmdutil.Factory, opts *Options) (*model.Service, *mo
 		return nil, nil, err
 	}
 
-	f.Config.GetContext().SetProject(zcontext.NewBasicInfo(project.ID, project.Name))
+	if !f.HasWorkspaceOverride() {
+		f.Config.GetContext().SetProject(zcontext.NewBasicInfo(project.ID, project.Name))
+	}
 
 	_, environment, err := f.Selector.SelectEnvironment(project.ID)
 	if err != nil {

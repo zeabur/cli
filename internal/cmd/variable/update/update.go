@@ -59,7 +59,7 @@ func runUpdateVariable(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runUpdateVariableInteractive(f *cmdutil.Factory, opts *Options) error {
-	zctx := f.Config.GetContext()
+	zctx := f.EffectiveContext()
 
 	if _, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
 		ProjectCtx:    zctx,
@@ -128,7 +128,7 @@ func runUpdateVariableInteractive(f *cmdutil.Factory, opts *Options) error {
 
 func runUpdateVariableNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	if opts.id == "" && opts.name != "" {
-		service, err := util.GetServiceByName(f.Config, f.ApiClient, opts.name)
+		service, err := util.GetServiceByName(f.ApiClient, f.CurrentOwnerID(), f.Config.GetUsername(), f.CurrentProjectName(), f.CurrentProjectID(), opts.name)
 		if err != nil {
 			return err
 		}

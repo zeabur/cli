@@ -117,6 +117,41 @@ npx zeabur deployment log -t=build --env-id <env-id> --service-name <service-nam
 npx zeabur <command> --help
 ```
 
+## Workspaces (personal / team)
+
+By default, the CLI acts under the personal workspace — the account that logged in. To list or create projects under a team you belong to, switch the workspace:
+
+```shell
+# show your personal workspace + all teams you belong to, with your role per team
+npx zeabur workspace list
+
+# switch to a team — pass either the team name OR its 24-char ObjectID.
+# A 24-char hex value is always interpreted as an ID; anything else is
+# looked up by name. If multiple teams share a name the CLI errors out and
+# prints the per-candidate `workspace switch <id>` invocation so you can
+# pick by ID (team names are unconstrained, so duplicates are possible).
+npx zeabur workspace switch acme
+
+# show the workspace the CLI is currently using
+npx zeabur workspace current
+
+# return to the personal workspace
+npx zeabur workspace clear
+```
+
+Switching a workspace clears the pinned project / environment / service context, because resource IDs do not overlap between workspaces.
+
+The workspace only affects directory-level commands (`project list`, `project create`, `deploy` without a linked project). Commands that take a specific service or deployment ID use that resource's own owner and are workspace-independent — your team's `service restart` works the same regardless of which workspace is active.
+
+For one-off commands that should run under a different workspace without switching the persisted state, use the `--workspace` flag:
+
+```shell
+# list projects in the "acme" team without switching workspaces
+npx zeabur --workspace acme project list
+```
+
+`switch personal` is **not** a way to return to personal — it always looks for a team literally named `personal` (team names are unconstrained). Use `workspace clear` to go back.
+
 ## Development Guide
 
 [Development Guide](docs/development_guide.md)

@@ -29,12 +29,14 @@ import (
 	uploadCmd "github.com/zeabur/cli/internal/cmd/upload"
 	variableCmd "github.com/zeabur/cli/internal/cmd/variable"
 	versionCmd "github.com/zeabur/cli/internal/cmd/version"
+	workspaceCmd "github.com/zeabur/cli/internal/cmd/workspace"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/pkg/api"
 	"github.com/zeabur/cli/pkg/config"
 	"github.com/zeabur/cli/pkg/fill"
 	"github.com/zeabur/cli/pkg/log"
 	"github.com/zeabur/cli/pkg/selector"
+	"github.com/zeabur/cli/pkg/zcontext"
 )
 
 // NewCmdRoot creates the root command
@@ -98,7 +100,21 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 				}
 				// set up the client
 				f.ApiClient = api.New(f.Config.GetTokenString())
-				f.Selector = selector.New(f.ApiClient, f.Log, f.Prompter)
+
+				// Resolve the --workspace flag (one-shot override) and lazy-
+				// verify the persisted workspace. Both steps are best-effort
+				// — flag errors abort the command (explicit user intent), but
+				// a verify hiccup (offline / 5xx) only warns; the user still
+				// gets to run their command. The selector reads the resolved
+				// owner via a closure on Factory so subsequent calls within
+				// the same process see flag overrides and switch updates
+				// without re-instantiating the selector.
+				if err := resolveWorkspaceFlag(f); err != nil {
+					return err
+				}
+				verifyPersistedWorkspace(f)
+
+				f.Selector = selector.New(f.ApiClient, f.Log, f.Prompter, f.CurrentOwnerID)
 				f.ParamFiller = fill.NewParamFiller(f.Selector)
 			}
 
@@ -145,6 +161,8 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 	cmd.PersistentFlags().BoolVarP(&f.Interactive, config.KeyInteractive, "i", true, "use interactive mode")
 	cmd.PersistentFlags().BoolVar(&f.AutoCheckUpdate, config.KeyAutoCheckUpdate, true, "automatically check update")
 	cmd.PersistentFlags().BoolVar(&f.JSON, "json", false, "output in JSON format")
+	cmd.PersistentFlags().StringVar(&f.Workspace, "workspace", "",
+		"one-shot workspace override (team name or ID); to return to personal use 'zeabur workspace clear'")
 
 	// Child commands
 	cmd.AddCommand(deployCmd.NewCmdDeploy(f))
@@ -164,11 +182,67 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 	cmd.AddCommand(emailCmd.NewCmdEmail(f))
 	cmd.AddCommand(fileCmd.NewCmdFile(f))
 	cmd.AddCommand(aihubCmd.NewCmdAIHub(f))
+	cmd.AddCommand(workspaceCmd.NewCmdWorkspace(f))
 
 	// replace default help command with our custom one that supports --all
 	cmd.SetHelpCommand(helpCmd.NewCmdHelp(cmd))
 
 	return cmd, nil
+}
+
+// resolveWorkspaceFlag turns the raw --workspace value into a team and
+// records it on the Factory. Empty flag is a no-op. The keyword "personal"
+// is intentionally NOT recognized — `zeabur workspace clear` is the only
+// way to address personal, and team names are unconstrained (a user-named
+// "personal" team must be reachable). Backend-side RBAC validates the
+// resolved ID on every call; resolution here is a UX layer.
+//
+// Uses f.ListTeams (per-process cache) so flag resolution, the lazy verify,
+// and downstream commands all share a single backend round-trip.
+func resolveWorkspaceFlag(f *cmdutil.Factory) error {
+	raw := strings.TrimSpace(f.Workspace)
+	if raw == "" {
+		return nil
+	}
+	teams, err := f.ListTeams(context.Background())
+	if err != nil {
+		return fmt.Errorf("--workspace: list teams: %w", err)
+	}
+	team, err := cmdutil.ResolveWorkspaceArg(teams, raw)
+	if err != nil {
+		return fmt.Errorf("--workspace: %w", err)
+	}
+	f.SetWorkspaceOverride(&zcontext.Workspace{
+		ID:   team.ID,
+		Name: team.Name,
+		Kind: zcontext.WorkspaceKindTeam,
+	})
+	return nil
+}
+
+// verifyPersistedWorkspace warns and falls back to personal when the
+// persisted workspace is no longer a team the caller belongs to (team
+// deleted, caller removed, etc.). Best-effort: any transport error leaves
+// the workspace untouched so an offline blip doesn't silently switch users
+// out. Uses the same memoized ListTeams as resolveWorkspaceFlag.
+func verifyPersistedWorkspace(f *cmdutil.Factory) {
+	ws := f.Config.GetContext().GetWorkspace()
+	if ws.IsPersonal() {
+		return
+	}
+	teams, err := f.ListTeams(context.Background())
+	if err != nil {
+		f.Log.Debugf("workspace verify skipped: %v", err)
+		return
+	}
+	for _, t := range teams {
+		if t.ID == ws.ID {
+			return
+		}
+	}
+	f.Log.Warnf("Persisted workspace %q [%s] is no longer in your memberships; falling back to personal.", ws.Name, ws.ID)
+	f.Config.GetContext().ClearWorkspace()
+	f.Config.GetContext().ClearAll()
 }
 
 // normalizeIDFlag strips a known prefix from a prefixed MongoDB ObjectID flag value.

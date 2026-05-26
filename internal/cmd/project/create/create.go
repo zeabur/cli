@@ -104,7 +104,7 @@ func runCreateNonInteractive(f *cmdutil.Factory, opts *Options) error {
 }
 
 func createProject(f *cmdutil.Factory, projectRegion string, projectName *string) error {
-	project, err := f.ApiClient.CreateProject(context.Background(), projectRegion, projectName)
+	project, err := f.ApiClient.CreateProject(context.Background(), f.CurrentOwnerID(), projectRegion, projectName)
 	if err != nil {
 		f.Log.Error(err)
 		return err
@@ -114,6 +114,16 @@ func createProject(f *cmdutil.Factory, projectRegion string, projectName *string
 		return f.Printer.JSON(map[string]string{"status": "success", "id": project.ID, "name": project.Name, "message": "Project created"})
 	}
 	f.Log.Infof("Project %s created", project.Name)
+	// `--workspace` is a stateless one-shot override (PLA-1590 B+): writing
+	// the newly-created project (which belongs to the override workspace)
+	// into the persisted context would silently pin a team-B project under
+	// persisted workspace team-A and cause cross-workspace operations on
+	// the next command. Skip the write in override mode; the user can pin
+	// it explicitly after `workspace switch` if they want.
+	if f.HasWorkspaceOverride() {
+		f.Log.Infof("(persistent project context not modified — `--workspace` override is one-shot; run `zeabur workspace switch %s` to make it your default)", f.CurrentWorkspace().Name)
+		return nil
+	}
 	err = setProject(f, project.ID, project.Name)
 	if err != nil {
 		f.Log.Error(err)

@@ -10,6 +10,7 @@ import (
 // Client is the interface of the Zeabur API client.
 type Client interface {
 	UserAPI
+	TeamAPI
 	ProjectAPI
 	ServiceAPI
 	EnvironmentAPI
@@ -31,11 +32,22 @@ type (
 		GetUserInfo(ctx context.Context) (*model.User, error)
 	}
 
+	// TeamAPI groups team / workspace queries.
+	TeamAPI interface {
+		// ListTeams returns every team the caller belongs to, with the
+		// caller's role per team via Team.myRole.
+		ListTeams(ctx context.Context) ([]model.Team, error)
+	}
+
 	ProjectAPI interface {
-		ListProjects(ctx context.Context, skip, limit int) (*model.ProjectConnection, error)
-		ListAllProjects(ctx context.Context) (model.Projects, error)
+		// ListProjects accepts an optional ownerID (empty = caller's personal
+		// projects). For a team workspace pass the team's ObjectID hex.
+		ListProjects(ctx context.Context, ownerID string, skip, limit int) (*model.ProjectConnection, error)
+		ListAllProjects(ctx context.Context, ownerID string) (model.Projects, error)
 		GetProject(ctx context.Context, id string, ownerName string, name string) (*model.Project, error)
-		CreateProject(ctx context.Context, region string, name *string) (*model.Project, error)
+		// CreateProject creates a project under the given owner. Empty
+		// ownerID means the caller's personal projects.
+		CreateProject(ctx context.Context, ownerID, region string, name *string) (*model.Project, error)
 		DeleteProject(ctx context.Context, id string) error
 		ExportProject(ctx context.Context, id string, environmentID string) (*model.ExportedTemplate, error)
 

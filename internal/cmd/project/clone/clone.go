@@ -71,7 +71,7 @@ func runCloneInteractive(f *cmdutil.Factory, opts *Options) error {
 		}
 		opts.ProjectID = projectInfo.GetID()
 	} else if opts.ProjectID == "" && opts.ProjectName != "" {
-		project, err := util.GetProjectByName(f.Config, f.ApiClient, opts.ProjectName)
+		project, err := util.GetProjectByName(f.ApiClient, f.CurrentOwnerID(), f.Config.GetUsername(), opts.ProjectName)
 		if err != nil {
 			return err
 		}
@@ -132,7 +132,7 @@ func runCloneNonInteractive(f *cmdutil.Factory, opts *Options) error {
 
 	// Resolve project ID from name if needed
 	if opts.ProjectID == "" && opts.ProjectName != "" {
-		project, err := util.GetProjectByName(f.Config, f.ApiClient, opts.ProjectName)
+		project, err := util.GetProjectByName(f.ApiClient, f.CurrentOwnerID(), f.Config.GetUsername(), opts.ProjectName)
 		if err != nil {
 			return err
 		}

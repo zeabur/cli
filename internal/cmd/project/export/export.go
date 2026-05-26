@@ -41,7 +41,7 @@ func runExport(f *cmdutil.Factory, opts Options) error {
 	}
 
 	if opts.ProjectID == "" && opts.ProjectName != "" {
-		project, err := util.GetProjectByName(f.Config, f.ApiClient, opts.ProjectName)
+		project, err := util.GetProjectByName(f.ApiClient, f.CurrentOwnerID(), f.Config.GetUsername(), opts.ProjectName)
 		if err != nil {
 			return fmt.Errorf("get project %s failed: %w", opts.ProjectName, err)
 		}

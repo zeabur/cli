@@ -47,7 +47,7 @@ func runGet(f *cmdutil.Factory, opts *Options) error {
 
 func runGetInteractive(f *cmdutil.Factory, opts *Options) error {
 	if _, err := f.ParamFiller.ServiceByName(fill.ServiceByNameOptions{
-		ProjectCtx:  f.Config.GetContext(),
+		ProjectCtx:  f.EffectiveContext(),
 		ServiceID:   &opts.id,
 		ServiceName: &opts.name,
 	}); err != nil {
@@ -59,7 +59,7 @@ func runGetInteractive(f *cmdutil.Factory, opts *Options) error {
 
 func runGetNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	if opts.id == "" && opts.name != "" {
-		service, err := util.GetServiceByName(f.Config, f.ApiClient, opts.name)
+		service, err := util.GetServiceByName(f.ApiClient, f.CurrentOwnerID(), f.Config.GetUsername(), f.CurrentProjectName(), f.CurrentProjectID(), opts.name)
 		if err != nil {
 			return err
 		}

@@ -49,7 +49,7 @@ func runGet(f *cmdutil.Factory, opts *Options) error {
 
 func runGetInteractive(f *cmdutil.Factory, opts *Options) error {
 	if opts.deploymentID == "" {
-		zctx := f.Config.GetContext()
+		zctx := f.EffectiveContext()
 		_, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
 			ProjectCtx:    zctx,
 			ServiceID:     &opts.serviceID,
@@ -81,7 +81,7 @@ func runGetNonInteractive(f *cmdutil.Factory, opts *Options) (err error) {
 
 	// Resolve service ID from name
 	if opts.serviceID == "" && opts.serviceName != "" {
-		service, err := util.GetServiceByName(f.Config, f.ApiClient, opts.serviceName)
+		service, err := util.GetServiceByName(f.ApiClient, f.CurrentOwnerID(), f.Config.GetUsername(), f.CurrentProjectName(), f.CurrentProjectID(), opts.serviceName)
 		if err != nil {
 			return fmt.Errorf("failed to get service: %w", err)
 		}

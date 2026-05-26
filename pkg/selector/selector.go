@@ -34,16 +34,26 @@ type (
 )
 
 type selector struct {
-	client   api.Client
-	log      *zap.SugaredLogger
-	prompter prompt.Prompter
+	client         api.Client
+	log            *zap.SugaredLogger
+	prompter       prompt.Prompter
+	currentOwnerID func() string
 }
 
-func New(client api.Client, log *zap.SugaredLogger, prompter prompt.Prompter) Selector {
+// New returns a Selector. ownerIDFn resolves the current workspace owner ID
+// at call time — it must be a closure (not a captured string) so a mid-run
+// workspace switch and the --workspace flag override take effect on the very
+// next selector call. Pass nil or a closure that returns "" for the
+// personal workspace.
+func New(client api.Client, log *zap.SugaredLogger, prompter prompt.Prompter, ownerIDFn func() string) Selector {
+	if ownerIDFn == nil {
+		ownerIDFn = func() string { return "" }
+	}
 	return &selector{
-		client:   client,
-		log:      log,
-		prompter: prompter,
+		client:         client,
+		log:            log,
+		prompter:       prompter,
+		currentOwnerID: ownerIDFn,
 	}
 }
 
@@ -69,7 +79,7 @@ func (s *selector) SelectProject(opts ...SelectProjectOptionsApplyer) (zcontext.
 		applyer(&options)
 	}
 
-	projects, err := s.client.ListAllProjects(context.Background())
+	projects, err := s.client.ListAllProjects(context.Background(), s.currentOwnerID())
 	if err != nil {
 		return nil, nil, fmt.Errorf("list projects failed: %w", err)
 	}
@@ -118,7 +128,7 @@ func (s *selector) SelectProject(opts ...SelectProjectOptionsApplyer) (zcontext.
 
 		projectRegion := availableRegions[projectRegionIndex].GetID()
 
-		project, err := s.client.CreateProject(context.Background(), projectRegion, nil)
+		project, err := s.client.CreateProject(context.Background(), s.currentOwnerID(), projectRegion, nil)
 		if err != nil {
 			return nil, nil, fmt.Errorf("create project failed: %w", err)
 		}

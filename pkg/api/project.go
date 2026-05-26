@@ -7,35 +7,52 @@ import (
 	"github.com/zeabur/cli/pkg/model"
 )
 
-// ListProjects returns projects owned by the current user.
-// Note: the backend hasn't implemented pagination yet, currently we return all projects at once.
-func (c *client) ListProjects(ctx context.Context, skip, limit int) (*model.ProjectConnection, error) {
+// ListProjects returns projects owned by the given owner. An empty ownerID
+// means the caller's personal projects (the pre-workspace default — preserved
+// for callers that don't yet pass an owner).
+//
+// Note: the backend hasn't implemented pagination yet, currently we return all
+// projects at once.
+func (c *client) ListProjects(ctx context.Context, ownerID string, skip, limit int) (*model.ProjectConnection, error) {
 	skip, limit = normalizePagination(skip, limit)
 
-	var query struct {
-		Projects model.ProjectConnection `graphql:"projects(skip: $skip, limit: $limit)"`
+	if ownerID == "" {
+		var query struct {
+			Projects model.ProjectConnection `graphql:"projects(skip: $skip, limit: $limit)"`
+		}
+		if err := c.Query(ctx, &query, V{
+			"skip":  skip,
+			"limit": limit,
+		}); err != nil {
+			return nil, err
+		}
+		return &query.Projects, nil
 	}
 
-	err := c.Query(ctx, &query, V{
-		"skip":  skip,
-		"limit": limit,
-	})
-	if err != nil {
+	var query struct {
+		Projects model.ProjectConnection `graphql:"projects(ownerID: $ownerID, skip: $skip, limit: $limit)"`
+	}
+	if err := c.Query(ctx, &query, V{
+		"ownerID": ObjectID(ownerID),
+		"skip":    skip,
+		"limit":   limit,
+	}); err != nil {
 		return nil, err
 	}
-
 	return &query.Projects, nil
 }
 
-// ListAllProjects returns all projects owned by the current user.
-func (c *client) ListAllProjects(ctx context.Context) (model.Projects, error) {
+// ListAllProjects walks every page of ListProjects for the given owner.
+func (c *client) ListAllProjects(ctx context.Context, ownerID string) (model.Projects, error) {
 	skip := 0
 	next := true
 
 	var projects []*model.Project
 
 	for next {
-		projectCon, err := c.ListProjects(context.Background(), skip, 100)
+		// Propagate the caller's context so cancellation / deadlines
+		// reach each page request (CodeRabbit PLA-1590 review).
+		projectCon, err := c.ListProjects(ctx, ownerID, skip, 100)
 		if err != nil {
 			return nil, err
 		}
@@ -110,20 +127,33 @@ func (c *client) getProjectByOwnerUsernameAndProject(ctx context.Context,
 	return &query.Project, nil
 }
 
-// Create a project with the region and optional name.
-func (c *client) CreateProject(ctx context.Context, region string, name *string) (*model.Project, error) {
-	var mutation struct {
-		CreateProject model.Project `graphql:"createProject(region: $region, name: $name)"`
+// CreateProject creates a project under the given owner. An empty ownerID
+// creates the project under the caller's personal account (the pre-workspace
+// default).
+func (c *client) CreateProject(ctx context.Context, ownerID, region string, name *string) (*model.Project, error) {
+	if ownerID == "" {
+		var mutation struct {
+			CreateProject model.Project `graphql:"createProject(region: $region, name: $name)"`
+		}
+		if err := c.Mutate(ctx, &mutation, V{
+			"region": region,
+			"name":   name,
+		}); err != nil {
+			return nil, err
+		}
+		return &mutation.CreateProject, nil
 	}
 
-	err := c.Mutate(ctx, &mutation, V{
-		"region": region,
-		"name":   name,
-	})
-	if err != nil {
+	var mutation struct {
+		CreateProject model.Project `graphql:"createProject(ownerID: $ownerID, region: $region, name: $name)"`
+	}
+	if err := c.Mutate(ctx, &mutation, V{
+		"ownerID": ObjectID(ownerID),
+		"region":  region,
+		"name":    name,
+	}); err != nil {
 		return nil, err
 	}
-
 	return &mutation.CreateProject, nil
 }
 

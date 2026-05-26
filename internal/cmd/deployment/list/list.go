@@ -45,7 +45,7 @@ func runList(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runListInteractive(f *cmdutil.Factory, opts *Options) error {
-	zctx := f.Config.GetContext()
+	zctx := f.EffectiveContext()
 	_, err := f.ParamFiller.ServiceByNameWithEnvironment(fill.ServiceByNameWithEnvironmentOptions{
 		ProjectCtx:    zctx,
 		ServiceID:     &opts.serviceID,
@@ -63,7 +63,7 @@ func runListInteractive(f *cmdutil.Factory, opts *Options) error {
 func runListNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	// Resolve service ID from name
 	if opts.serviceID == "" && opts.serviceName != "" {
-		service, err := util.GetServiceByName(f.Config, f.ApiClient, opts.serviceName)
+		service, err := util.GetServiceByName(f.ApiClient, f.CurrentOwnerID(), f.Config.GetUsername(), f.CurrentProjectName(), f.CurrentProjectID(), opts.serviceName)
 		if err != nil {
 			return fmt.Errorf("failed to get service: %w", err)
 		}

@@ -131,7 +131,7 @@ func runDeploy(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	if opts.region != "" && opts.projectID == "" {
-		project, err := f.ApiClient.CreateProject(context.Background(), opts.region, nil)
+		project, err := f.ApiClient.CreateProject(context.Background(), f.CurrentOwnerID(), opts.region, nil)
 		if err != nil {
 			return fmt.Errorf("create project in region %s: %w", opts.region, err)
 		}

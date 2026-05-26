@@ -1,6 +1,8 @@
 package cmdutil
 
 import (
+	"context"
+
 	"github.com/zeabur/cli/pkg/fill"
 	"github.com/zeabur/cli/pkg/printer"
 	"github.com/zeabur/cli/pkg/selector"
@@ -9,7 +11,9 @@ import (
 	"github.com/zeabur/cli/pkg/api"
 	"github.com/zeabur/cli/pkg/auth"
 	"github.com/zeabur/cli/pkg/config"
+	"github.com/zeabur/cli/pkg/model"
 	"github.com/zeabur/cli/pkg/prompt"
+	"github.com/zeabur/cli/pkg/zcontext"
 )
 
 type (
@@ -26,16 +30,202 @@ type (
 		Selector    selector.Selector  // interactive selector
 		ParamFiller fill.ParamFiller   // fill params
 		PersistentFlags
+
+		// workspaceOverride is the team resolved from the --workspace flag
+		// during PersistentPreRunE. Nil when the flag is not set;
+		// CurrentOwnerID / CurrentWorkspace then fall back to the persisted
+		// workspace. Stored as the full Workspace (not just an ID) so
+		// downstream code that wants to show a name — e.g. the
+		// "creating new project in team workspace X" hint in deploy — gets
+		// the same effective workspace as CurrentOwnerID.
+		workspaceOverride *zcontext.Workspace
+
+		// teamsCache memoizes the per-process ListTeams reply. A single CLI
+		// invocation can otherwise hit `teams` up to three times (flag
+		// resolution, persisted-workspace verify, the command itself); see
+		// PLA-1590 review feedback.
+		teamsCache    []model.Team
+		teamsCacheErr error
+		teamsCacheHit bool
+
+		// ephemeralCtx is the in-memory inner context handed out by
+		// EffectiveContext under --workspace override. Lazy-initialised on
+		// first call so the same instance is shared across every
+		// `Set -> later GetProject` cycle within one command (ParamFiller
+		// depends on this). Reset between commands by virtue of being a
+		// per-Factory field; Factory itself is per-invocation.
+		ephemeralCtx zcontext.Context
 	}
 	// PersistentFlags are flags that are common to all commands
 	PersistentFlags struct {
-		Debug            bool // debug mode, default false
-		Interactive      bool // interactive mode, default true
-		AutoRefreshToken bool // auto refresh token, default true, only when token is from browser(OAuth2)
-		AutoCheckUpdate  bool // auto check update, default true
-		JSON             bool // output in JSON format, default false
+		Debug            bool   // debug mode, default false
+		Interactive      bool   // interactive mode, default true
+		AutoRefreshToken bool   // auto refresh token, default true, only when token is from browser(OAuth2)
+		AutoCheckUpdate  bool   // auto check update, default true
+		JSON             bool   // output in JSON format, default false
+		Workspace        string // --workspace <name|id> one-shot override
 	}
 )
+
+// CurrentOwnerID returns the team ObjectID hex that directory-level commands
+// (project list / create / deploy-no-link) should act under. Empty string ==
+// the caller's personal account.
+//
+// Resolution order:
+//  1. --workspace flag (resolved to a Workspace during PersistentPreRunE)
+//  2. Persisted workspace in the config file
+//
+// Returning an empty string is the canonical "personal" signal that the
+// project API uses to fall back to the un-owner-scoped GraphQL query.
+func (f *Factory) CurrentOwnerID() string {
+	return f.CurrentWorkspace().ID
+}
+
+// CurrentWorkspace returns the effective workspace under the same resolution
+// rules as CurrentOwnerID, including the name and kind. Callers that want to
+// display the active workspace (the "creating new project in team workspace
+// X" hint in deploy) should read this rather than the persisted workspace,
+// so a --workspace override shows up correctly.
+func (f *Factory) CurrentWorkspace() *zcontext.Workspace {
+	if f.workspaceOverride != nil {
+		return f.workspaceOverride
+	}
+	if f.Config == nil {
+		return &zcontext.Workspace{}
+	}
+	return f.Config.GetContext().GetWorkspace()
+}
+
+// SetWorkspaceOverride records the resolved workspace for a --workspace flag
+// value. Called from PersistentPreRunE after the flag string has been
+// disambiguated against the list of teams. Passing nil clears any prior
+// override.
+func (f *Factory) SetWorkspaceOverride(ws *zcontext.Workspace) {
+	f.workspaceOverride = ws
+}
+
+// HasWorkspaceOverride reports whether the caller invoked the command with a
+// `--workspace <name|id>` flag. Use this to gate any behaviour that should
+// only apply to "one-shot override" mode — most prominently, refusing to
+// read or write the persisted inner context (project / environment / service),
+// because that context belongs to whatever the persisted workspace is and
+// would silently cross workspaces when reused under an override.
+//
+// PLA-1590 contract: --workspace is a stateless override. It must not
+// observe or modify the persisted inner context. Commands that need a
+// project / service in override mode must take an explicit `--id` flag.
+func (f *Factory) HasWorkspaceOverride() bool {
+	return f.workspaceOverride != nil
+}
+
+// CurrentProjectID returns the persisted project context ID, but only when
+// no --workspace override is active. Under an override the persisted context
+// belongs to a (potentially) different workspace, so reusing it would cross
+// scopes — instead return "" so name-based service / variable / etc. lookups
+// fail-closed with an actionable error and the caller must pass an explicit
+// `--id` / `--service-id`.
+func (f *Factory) CurrentProjectID() string {
+	if f.HasWorkspaceOverride() || f.Config == nil {
+		return ""
+	}
+	return f.Config.GetContext().GetProject().GetID()
+}
+
+// CurrentProjectName mirrors CurrentProjectID. The personal path of the
+// service-by-name lookup uses the project name; return "" under override so
+// that path also refuses rather than reaches into the persisted context.
+func (f *Factory) CurrentProjectName() string {
+	if f.HasWorkspaceOverride() || f.Config == nil {
+		return ""
+	}
+	return f.Config.GetContext().GetProject().GetName()
+}
+
+// CurrentEnvironmentID — same rule as CurrentProjectID, applied to the
+// persisted environment context. Reserved for future use; today no team
+// command consumes environment context implicitly, but the helper keeps the
+// override contract uniform across all three inner-context fields.
+func (f *Factory) CurrentEnvironmentID() string {
+	if f.HasWorkspaceOverride() || f.Config == nil {
+		return ""
+	}
+	return f.Config.GetContext().GetEnvironment().GetID()
+}
+
+// CurrentServiceID — same rule as CurrentProjectID for the persisted service
+// context. Currently unused by team-path lookups (services are looked up by
+// project + name) but exposed so future consumers stay on the same override
+// contract.
+func (f *Factory) CurrentServiceID() string {
+	if f.HasWorkspaceOverride() || f.Config == nil {
+		return ""
+	}
+	return f.Config.GetContext().GetService().GetID()
+}
+
+// EffectiveContext returns the inner context (project / environment /
+// service) that the current command should consume. Without an override
+// this is the persisted config context, byte-equivalent to reading
+// `f.Config.GetContext()` directly. Under `--workspace` override it
+// returns an in-memory ephemeral context whose initial reads are empty
+// and whose writes never reach the config file — so an interactive command
+// can transiently pick a team-B project / service without polluting the
+// persisted team-A context (PLA-1590 B++).
+//
+// The ephemeral instance is cached on the Factory so that within a single
+// command, `Set → later Get` cycles inside ParamFiller see the values they
+// just wrote. The cache is implicitly scoped to one invocation because the
+// Factory itself is constructed once per command.
+//
+// Callers that intentionally manipulate persisted workspace state
+// (`workspace switch`, `workspace clear`, lazy verify in root, `auth
+// logout`) must keep going through `f.Config.GetContext()` directly —
+// EffectiveContext is for inner context only and would silently no-op
+// their writes.
+func (f *Factory) EffectiveContext() zcontext.Context {
+	if !f.HasWorkspaceOverride() {
+		if f.Config == nil {
+			return zcontext.NewEphemeralContext(nil)
+		}
+		return f.Config.GetContext()
+	}
+	// Cache the ephemeral context but invalidate it if the override
+	// workspace changes mid-process. Today only `resolveWorkspaceFlag`
+	// in PersistentPreRunE calls SetWorkspaceOverride and it runs
+	// exactly once per invocation, so the cache match is the common
+	// path. The mismatch branch is purely defensive: a future caller
+	// that flips the override (e.g. an interactive command that lets
+	// the user switch teams mid-run) would otherwise see a stale
+	// in-memory project/service from the previous override.
+	ws := f.CurrentWorkspace()
+	if f.ephemeralCtx == nil {
+		f.ephemeralCtx = zcontext.NewEphemeralContext(ws)
+		return f.ephemeralCtx
+	}
+	cachedWS := f.ephemeralCtx.GetWorkspace()
+	if cachedWS.ID != ws.ID || cachedWS.Name != ws.Name || cachedWS.Kind != ws.Kind {
+		f.ephemeralCtx = zcontext.NewEphemeralContext(ws)
+	}
+	return f.ephemeralCtx
+}
+
+// ListTeams returns the caller's teams via api.Client.ListTeams, memoized for
+// the lifetime of this Factory. The same Factory is shared across every
+// PersistentPreRunE / Run / PersistentPostRunE callback within a single CLI
+// invocation, so one fetch covers --workspace flag resolution, the lazy
+// startup verify, and downstream commands that surface roles.
+//
+// Errors are sticky: a failed fetch is cached and returned on every
+// subsequent call, so callers don't accidentally retry against a broken
+// backend within the same process.
+func (f *Factory) ListTeams(ctx context.Context) ([]model.Team, error) {
+	if f.teamsCacheHit {
+		return f.teamsCache, f.teamsCacheErr
+	}
+	f.teamsCache, f.teamsCacheErr = f.ApiClient.ListTeams(ctx)
+	f.teamsCacheHit = true
+	return f.teamsCache, f.teamsCacheErr
+}
 
 // NewFactory returns a new cmd factory
 func NewFactory() *Factory {
