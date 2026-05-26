@@ -18,7 +18,7 @@ import (
 // helper captured the BasicInfo eagerly (the pre-fix behaviour) the swap
 // would be ignored and id/name would be filled from the original value.
 func TestDefaultIDNameByContext_LazyEvaluation(t *testing.T) {
-	var source zcontext.BasicInfo = zcontext.NewBasicInfo("old-id", "old-name")
+	var source = zcontext.NewBasicInfo("old-id", "old-name")
 	getter := func() zcontext.BasicInfo { return source }
 
 	var id, name string

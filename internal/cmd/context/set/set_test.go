@@ -1,4 +1,4 @@
-package set
+package set_test
 
 import (
 	"context"
@@ -7,13 +7,14 @@ import (
 	"testing"
 
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 
+	"github.com/zeabur/cli/internal/cmd/context/set"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/pkg/api"
 	"github.com/zeabur/cli/pkg/config"
 	"github.com/zeabur/cli/pkg/model"
 	"github.com/zeabur/cli/pkg/zcontext"
-	"go.uber.org/zap"
 )
 
 // stubProjectClient stubs the two ApiClient methods setProject's ID path
@@ -53,17 +54,21 @@ func newStubConfig() *stubConfig {
 	return &stubConfig{v: viper.New()}
 }
 
-func (s *stubConfig) GetTokenString() string         { return "" }
-func (s *stubConfig) SetTokenString(string)          {}
-func (s *stubConfig) GetUser() string                { return "" }
-func (s *stubConfig) SetUser(string)                 {}
-func (s *stubConfig) GetUsername() string            { return "alice" }
-func (s *stubConfig) SetUsername(string)             {}
-func (s *stubConfig) GetContext() zcontext.Context   { return zcontext.NewViperContext(s.v) }
-func (s *stubConfig) Write() error                   { return nil }
+func (s *stubConfig) GetTokenString() string       { return "" }
+func (s *stubConfig) SetTokenString(string)        {}
+func (s *stubConfig) GetUser() string              { return "" }
+func (s *stubConfig) SetUser(string)               {}
+func (s *stubConfig) GetUsername() string          { return "alice" }
+func (s *stubConfig) SetUsername(string)           {}
+func (s *stubConfig) GetContext() zcontext.Context { return zcontext.NewViperContext(s.v) }
+func (s *stubConfig) Write() error                 { return nil }
 
 var _ config.Config = (*stubConfig)(nil)
 
+// newFactory wires up the bare-minimum Factory needed to drive
+// `context set` end-to-end via NewCmdSet. Interactive is forced off so the
+// test exercises the deterministic non-interactive path (matches the
+// `context set --id <hex>` invocation in real use).
 func newFactory(t *testing.T, apiClient api.Client, persistedWorkspace *zcontext.Workspace) (*cmdutil.Factory, *stubConfig) {
 	t.Helper()
 	cfg := newStubConfig()
@@ -75,7 +80,21 @@ func newFactory(t *testing.T, apiClient api.Client, persistedWorkspace *zcontext
 		ApiClient: apiClient,
 		Log:       zap.NewNop().Sugar(),
 	}
+	f.Interactive = false
 	return f, cfg
+}
+
+// runSetProjectByID drives the real `context set project --id <id>` flow
+// through Cobra so the test exercises the same entry point a user does,
+// rather than reaching for the unexported setProject. Black-box on purpose
+// — that's also what the lint forces via the testpackage rule.
+func runSetProjectByID(t *testing.T, f *cmdutil.Factory, id string) error {
+	t.Helper()
+	cmd := set.NewCmdSet(f)
+	cmd.SetArgs([]string{"project", "--id", id})
+	cmd.SilenceUsage = true
+	cmd.SilenceErrors = true
+	return cmd.Execute()
 }
 
 // TestSetProject_ID_TeamWorkspace_AllowsOwnProject — the legitimate path.
@@ -91,8 +110,8 @@ func TestSetProject_ID_TeamWorkspace_AllowsOwnProject(t *testing.T) {
 	teamA := &zcontext.Workspace{ID: "65cc1230000000000000000a", Name: "team-A", Kind: zcontext.WorkspaceKindTeam}
 	f, cfg := newFactory(t, stub, teamA)
 
-	if err := setProject(f, target.ID, "", true); err != nil {
-		t.Fatalf("setProject: %v", err)
+	if err := runSetProjectByID(t, f, target.ID); err != nil {
+		t.Fatalf("set project: %v", err)
 	}
 	if !stub.listAllOwnerCalled || stub.listAllOwner != teamA.ID {
 		t.Fatalf("ListAllProjects called with owner=%q (called=%v), want %q", stub.listAllOwner, stub.listAllOwnerCalled, teamA.ID)
@@ -119,9 +138,9 @@ func TestSetProject_ID_TeamWorkspace_RejectsForeignProject(t *testing.T) {
 	teamA := &zcontext.Workspace{ID: "65cc1230000000000000000a", Name: "team-A", Kind: zcontext.WorkspaceKindTeam}
 	f, cfg := newFactory(t, stub, teamA)
 
-	err := setProject(f, teamBProject.ID, "", true)
+	err := runSetProjectByID(t, f, teamBProject.ID)
 	if err == nil {
-		t.Fatal("setProject must refuse cross-workspace --id, got nil error")
+		t.Fatal("set project must refuse cross-workspace --id, got nil error")
 	}
 	if !strings.Contains(err.Error(), "does not belong to workspace") {
 		t.Errorf("error should explain cross-workspace mismatch, got: %v", err)
@@ -146,7 +165,7 @@ func TestSetProject_ID_PersonalWorkspace_BypassesCheck(t *testing.T) {
 	// Personal workspace: persistedWorkspace nil.
 	f, cfg := newFactory(t, stub, nil)
 
-	if err := setProject(f, collaboratorProject.ID, "", true); err != nil {
+	if err := runSetProjectByID(t, f, collaboratorProject.ID); err != nil {
 		t.Fatalf("personal --id must not be gated, got: %v", err)
 	}
 	if stub.listAllOwnerCalled {
@@ -170,7 +189,7 @@ func TestSetProject_ID_TeamWorkspace_ListErr(t *testing.T) {
 	teamA := &zcontext.Workspace{ID: "65cc1230000000000000000a", Name: "team-A", Kind: zcontext.WorkspaceKindTeam}
 	f, cfg := newFactory(t, stub, teamA)
 
-	err := setProject(f, target.ID, "", true)
+	err := runSetProjectByID(t, f, target.ID)
 	if err == nil {
 		t.Fatal("ListAllProjects failure must propagate, not silently pass")
 	}

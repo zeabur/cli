@@ -31,18 +31,28 @@ func run(f *cmdutil.Factory) error {
 		return fmt.Errorf("list teams: %w", err)
 	}
 
-	// Use the effective workspace so the `*` marker tracks a `--workspace`
-	// flag override, not just the persisted state. Otherwise
-	// `--workspace foo workspace list` would print `*` on the persisted
-	// team rather than `foo`.
-	currentID := f.CurrentOwnerID()
+	// Two different IDs to keep two different concerns honest:
+	//   * effectiveID drives the `*` marker — it must reflect a
+	//     `--workspace` flag override so the user sees which workspace
+	//     this invocation is acting under.
+	//   * persistedID drives the stale-workspace warning — that warning
+	//     is about "your saved workspace is no longer valid", which is
+	//     a property of the persisted state, not of the override. Using
+	//     effectiveID for both would suppress the warning whenever a
+	//     valid override happens to be active, hiding a stale persisted
+	//     state from the user.
+	effectiveID := f.CurrentOwnerID()
+	persistedID := ""
+	if f.Config != nil {
+		persistedID = f.Config.GetContext().GetWorkspace().ID
+	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 
 	// Personal always renders first. The 24-space placeholder keeps the
 	// columns aligned with the team rows that follow.
 	personalMarker := " "
-	if currentID == "" {
+	if effectiveID == "" {
 		personalMarker = "*"
 	}
 	personalLabel := f.Config.GetUser()
@@ -56,7 +66,7 @@ func run(f *cmdutil.Factory) error {
 
 	for _, t := range teams {
 		marker := " "
-		if t.ID == currentID {
+		if t.ID == effectiveID {
 			marker = "*"
 		}
 		role := ""
@@ -70,14 +80,17 @@ func run(f *cmdutil.Factory) error {
 		return fmt.Errorf("render table: %w", err)
 	}
 
-	if currentID != "" {
+	if persistedID != "" {
 		// If the persisted workspace is no longer in the membership list
 		// (e.g. the team was deleted / the caller was removed), surface it
-		// so the user knows the next command may behave unexpectedly. We
-		// don't auto-clear here — that's the lazy-verify path in root.
+		// so the user knows the next command without `--workspace` may
+		// behave unexpectedly. We deliberately check persistedID, not
+		// effectiveID, so a transient `--workspace` override doesn't
+		// suppress the warning. We don't auto-clear here either — that's
+		// the lazy-verify path in root.
 		seen := false
 		for _, t := range teams {
-			if t.ID == currentID {
+			if t.ID == persistedID {
 				seen = true
 				break
 			}
@@ -85,7 +98,7 @@ func run(f *cmdutil.Factory) error {
 		if !seen {
 			fmt.Fprintf(os.Stderr,
 				"\nwarning: the persisted workspace %s is not in your memberships any more — run `zeabur workspace clear` or switch to another workspace.\n",
-				currentID,
+				persistedID,
 			)
 		}
 	}

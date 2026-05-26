@@ -189,8 +189,22 @@ func (f *Factory) EffectiveContext() zcontext.Context {
 		}
 		return f.Config.GetContext()
 	}
+	// Cache the ephemeral context but invalidate it if the override
+	// workspace changes mid-process. Today only `resolveWorkspaceFlag`
+	// in PersistentPreRunE calls SetWorkspaceOverride and it runs
+	// exactly once per invocation, so the cache match is the common
+	// path. The mismatch branch is purely defensive: a future caller
+	// that flips the override (e.g. an interactive command that lets
+	// the user switch teams mid-run) would otherwise see a stale
+	// in-memory project/service from the previous override.
+	ws := f.CurrentWorkspace()
 	if f.ephemeralCtx == nil {
-		f.ephemeralCtx = zcontext.NewEphemeralContext(f.CurrentWorkspace())
+		f.ephemeralCtx = zcontext.NewEphemeralContext(ws)
+		return f.ephemeralCtx
+	}
+	cachedWS := f.ephemeralCtx.GetWorkspace()
+	if cachedWS.ID != ws.ID || cachedWS.Name != ws.Name || cachedWS.Kind != ws.Kind {
+		f.ephemeralCtx = zcontext.NewEphemeralContext(ws)
 	}
 	return f.ephemeralCtx
 }
