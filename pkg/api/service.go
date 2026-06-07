@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/zeabur/cli/pkg/constant"
 	"github.com/zeabur/cli/pkg/model"
+	"github.com/zeabur/cli/pkg/util"
 )
 
 func (c *client) ListServices(ctx context.Context, projectID string, skip, limit int) (*model.Connection[model.Service], error) {
@@ -392,7 +393,7 @@ func (c *client) UploadZipToService(ctx context.Context, projectID string, servi
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("failed to create upload session: status code %d", resp.StatusCode)
+		return nil, util.FormatHTTPError("failed to create upload session", resp)
 	}
 
 	var uploadSession struct {
@@ -424,7 +425,7 @@ func (c *client) UploadZipToService(ctx context.Context, projectID string, servi
 	defer uploadResp.Body.Close()
 
 	if uploadResp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to upload to S3: status code %d", uploadResp.StatusCode)
+		return nil, util.FormatHTTPError("failed to upload to S3", uploadResp)
 	}
 
 	// Step 4: Prepare upload for deployment
@@ -460,7 +461,7 @@ func (c *client) UploadZipToService(ctx context.Context, projectID string, servi
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to prepare upload: status code %d", resp.StatusCode)
+		return nil, util.FormatHTTPError("failed to prepare upload", resp)
 	}
 
 	return nil, nil

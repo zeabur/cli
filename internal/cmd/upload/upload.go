@@ -17,6 +17,7 @@ import (
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
 	"github.com/zeabur/cli/pkg/constant"
+	pkgutil "github.com/zeabur/cli/pkg/util"
 )
 
 type Options struct{}
@@ -100,7 +101,7 @@ func UploadZipToService(ctx context.Context, zipBytes []byte) (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
-		return "", fmt.Errorf("failed to create upload session: status code %d", resp.StatusCode)
+		return "", pkgutil.FormatHTTPError("failed to create upload session", resp)
 	}
 
 	var uploadSession struct {
@@ -132,7 +133,7 @@ func UploadZipToService(ctx context.Context, zipBytes []byte) (string, error) {
 	defer uploadResp.Body.Close()
 
 	if uploadResp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("failed to upload to S3: status code %d", uploadResp.StatusCode)
+		return "", pkgutil.FormatHTTPError("failed to upload to S3", uploadResp)
 	}
 
 	// Step 4: Prepare upload for deployment
@@ -164,7 +165,7 @@ func UploadZipToService(ctx context.Context, zipBytes []byte) (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("failed to prepare upload: status code %d", resp.StatusCode)
+		return "", pkgutil.FormatHTTPError("failed to prepare upload", resp)
 	}
 
 	return uploadSession.UploadID, nil
