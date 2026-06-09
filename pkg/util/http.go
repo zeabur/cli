@@ -20,7 +20,10 @@ import (
 //
 // action is a short verb phrase describing what failed, e.g. "create upload session".
 func FormatHTTPError(action string, resp *http.Response) error {
-	body, _ := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	if err != nil {
+		return fmt.Errorf("%s: failed to read response body (status: %d): %w", action, resp.StatusCode, err)
+	}
 
 	var errResp struct {
 		Code  string `json:"code"`
