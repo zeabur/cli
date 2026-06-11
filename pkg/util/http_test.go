@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/zeabur/cli/pkg/util"
@@ -71,6 +72,29 @@ func TestFormatHTTPError(t *testing.T) {
 			for _, s := range tc.wantSubstr {
 				assert.Contains(t, err.Error(), s)
 			}
+		})
+	}
+}
+
+func TestUploadTimeout(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		size int64
+		want time.Duration
+	}{
+		{"zero size gets the 2min floor", 0, 2 * time.Minute},
+		{"tiny payload still gets the floor", 1024, 2 * time.Minute},
+		{"1 MiB adds 4s over the floor", 1 << 20, 2*time.Minute + 4*time.Second},
+		{"50 MiB scales to ~5.3 min", 50 << 20, 2*time.Minute + 200*time.Second},
+		{"1 GiB scales to ~70 min", 1 << 30, 2*time.Minute + 4096*time.Second},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tc.want, util.UploadTimeout(tc.size))
 		})
 	}
 }

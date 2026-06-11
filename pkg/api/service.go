@@ -410,7 +410,12 @@ func (c *client) UploadZipToService(ctx context.Context, projectID string, servi
 	}
 
 	// Step 3: Upload file to S3
-	uploadReq, err := http.NewRequestWithContext(ctx, uploadSession.PresignMethod, uploadSession.PresignURL, bytes.NewReader(zipBytes))
+	// The S3 PUT carries the whole zip, so the shared 30s client would cap
+	// uploads at ~14 Mbps. Give it its own deadline that scales with size.
+	uploadCtx, cancelUpload := context.WithTimeout(ctx, util.UploadTimeout(int64(len(zipBytes))))
+	defer cancelUpload()
+
+	uploadReq, err := http.NewRequestWithContext(uploadCtx, uploadSession.PresignMethod, uploadSession.PresignURL, bytes.NewReader(zipBytes))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create S3 upload request: %w", err)
 	}
@@ -418,7 +423,7 @@ func (c *client) UploadZipToService(ctx context.Context, projectID string, servi
 	uploadReq.Header.Set("Content-Type", uploadSession.PresignHeader.ContentType)
 	uploadReq.Header.Set("Content-Length", strconv.FormatInt(int64(len(zipBytes)), 10))
 
-	uploadResp, err := client.Do(uploadReq)
+	uploadResp, err := (&http.Client{}).Do(uploadReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload to S3: %w", err)
 	}
