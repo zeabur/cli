@@ -5,7 +5,19 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
+
+// UploadTimeout returns how long an upload of contentLength bytes is allowed
+// to take: a 2-minute floor plus one second per 256 KiB of payload.
+//
+// http.Client.Timeout covers the entire request including body transfer, so a
+// fixed timeout makes large uploads fail on slow links no matter how patient
+// the user is. The 256 KiB/s floor is deliberately conservative (~2 Mbps);
+// a 50 MiB zip gets ~5.3 minutes.
+func UploadTimeout(contentLength int64) time.Duration {
+	return 2*time.Minute + time.Duration(contentLength/(256*1024))*time.Second
+}
 
 // FormatHTTPError reads a non-2xx HTTP response and returns an error that
 // preserves whatever the server actually said.
