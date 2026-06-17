@@ -60,7 +60,7 @@ type (
 	}
 
 	ServerAPI interface {
-		ListServers(ctx context.Context) (model.ServerListItems, error)
+		ListServers(ctx context.Context, ownerID string) (model.ServerListItems, error)
 		GetServer(ctx context.Context, id string) (*model.ServerDetail, error)
 		RebootServer(ctx context.Context, id string) error
 		RenameServer(ctx context.Context, id, name string) error

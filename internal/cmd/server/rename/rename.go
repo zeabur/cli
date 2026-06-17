@@ -47,7 +47,7 @@ func runRename(f *cmdutil.Factory, opts *Options) error {
 
 func runRenameInteractive(f *cmdutil.Factory, opts *Options) error {
 	if opts.id == "" {
-		servers, err := f.ApiClient.ListServers(context.Background())
+		servers, err := f.ApiClient.ListServers(context.Background(), f.CurrentOwnerID())
 		if err != nil {
 			return fmt.Errorf("list servers failed: %w", err)
 		}
