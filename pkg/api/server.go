@@ -7,16 +7,25 @@ import (
 	"github.com/zeabur/cli/pkg/model"
 )
 
-func (c *client) ListServers(ctx context.Context) (model.ServerListItems, error) {
-	var query struct {
-		Servers model.ServerListItems `graphql:"servers"`
+func (c *client) ListServers(ctx context.Context, ownerID string) (model.ServerListItems, error) {
+	if ownerID == "" {
+		var query struct {
+			Servers model.ServerListItems `graphql:"servers"`
+		}
+		if err := c.Query(ctx, &query, nil); err != nil {
+			return nil, err
+		}
+		return query.Servers, nil
 	}
 
-	err := c.Query(ctx, &query, nil)
-	if err != nil {
+	var query struct {
+		Servers model.ServerListItems `graphql:"servers(ownerID: $ownerID)"`
+	}
+	if err := c.Query(ctx, &query, V{
+		"ownerID": ObjectID(ownerID),
+	}); err != nil {
 		return nil, err
 	}
-
 	return query.Servers, nil
 }
 

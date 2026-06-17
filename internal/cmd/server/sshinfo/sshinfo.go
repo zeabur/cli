@@ -51,7 +51,7 @@ func runSSHInfo(f *cmdutil.Factory, opts *Options) error {
 }
 
 func runSSHInfoInteractive(f *cmdutil.Factory, opts *Options) error {
-	servers, err := f.ApiClient.ListServers(context.Background())
+	servers, err := f.ApiClient.ListServers(context.Background(), f.CurrentOwnerID())
 	if err != nil {
 		return fmt.Errorf("list servers failed: %w", err)
 	}

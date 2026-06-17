@@ -23,7 +23,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 }
 
 func runList(f *cmdutil.Factory) error {
-	servers, err := f.ApiClient.ListServers(context.Background())
+	servers, err := f.ApiClient.ListServers(context.Background(), f.CurrentOwnerID())
 	if err != nil {
 		return fmt.Errorf("list servers failed: %w", err)
 	}
