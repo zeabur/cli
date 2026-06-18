@@ -125,6 +125,7 @@ func runCreateDomainInteractive(f *cmdutil.Factory, opts *Options) error {
 	s.Start()
 	existedDomains, err := f.ApiClient.ListDomains(context.Background(), opts.id, opts.environmentID)
 	if err != nil {
+		s.Stop()
 		return err
 	}
 	s.Stop()
@@ -162,6 +163,10 @@ func runCreateDomainNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return fmt.Errorf("--id or --name is required")
 	}
 
+	if opts.domainName == "" {
+		return fmt.Errorf("--domain is required in non-interactive mode")
+	}
+
 	if opts.environmentID == "" {
 		envID, err := util.ResolveEnvironmentIDByServiceID(f.ApiClient, opts.id)
 		if err != nil {
@@ -184,6 +189,7 @@ func runCreateDomainNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	if err != nil {
+		s.Stop()
 		return fmt.Errorf("add domain failed: %w", err)
 	}
 	s.Stop()
