@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/cobra"
 
 	serverCatalogCmd "github.com/zeabur/cli/internal/cmd/server/catalog"
+	serverExecCmd "github.com/zeabur/cli/internal/cmd/server/exec"
 	serverGetCmd "github.com/zeabur/cli/internal/cmd/server/get"
 	serverListCmd "github.com/zeabur/cli/internal/cmd/server/list"
 	serverPlanCmd "github.com/zeabur/cli/internal/cmd/server/plan"
@@ -33,6 +34,7 @@ func NewCmdServer(f *cmdutil.Factory) *cobra.Command {
 	cmd.AddCommand(serverRegionCmd.NewCmdRegion(f))
 	cmd.AddCommand(serverPlanCmd.NewCmdPlan(f))
 	cmd.AddCommand(serverSSHCmd.NewCmdSSH(f))
+	cmd.AddCommand(serverExecCmd.NewCmdExec(f))
 	cmd.AddCommand(serverSSHInfoCmd.NewCmdSSHInfo(f))
 
 	return cmd
