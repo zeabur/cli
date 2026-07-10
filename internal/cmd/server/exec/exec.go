@@ -78,12 +78,48 @@ argument to keep it intact.`,
 	return cmd
 }
 
-func runExec(f *cmdutil.Factory, opts *Options, remoteCmd string) error {
-	if opts.id == "" {
-		return fmt.Errorf("--id is required")
+// selectServer prompts the user to pick a server when no id was given (mirrors
+// `server ssh`). The remote command itself stays non-interactive.
+func selectServer(ctx context.Context, f *cmdutil.Factory) (string, error) {
+	servers, err := f.ApiClient.ListServers(ctx, f.CurrentOwnerID())
+	if err != nil {
+		return "", fmt.Errorf("list servers failed: %w", err)
+	}
+	if len(servers) == 0 {
+		return "", fmt.Errorf("no servers found")
 	}
 
+	options := make([]string, len(servers))
+	for i, s := range servers {
+		location := s.IP
+		if s.City != nil && s.Country != nil {
+			location = fmt.Sprintf("%s, %s", *s.City, *s.Country)
+		} else if s.Country != nil {
+			location = *s.Country
+		}
+		options[i] = fmt.Sprintf("%s (%s)", s.Name, location)
+	}
+
+	idx, err := f.Prompter.Select("Select a server", "", options)
+	if err != nil {
+		return "", err
+	}
+	return servers[idx].ID, nil
+}
+
+func runExec(f *cmdutil.Factory, opts *Options, remoteCmd string) error {
 	ctx := context.Background()
+
+	if opts.id == "" {
+		if !f.Interactive {
+			return fmt.Errorf("--id is required")
+		}
+		id, err := selectServer(ctx, f)
+		if err != nil {
+			return err
+		}
+		opts.id = id
+	}
 
 	server, err := f.ApiClient.GetServer(ctx, opts.id)
 	if err != nil {
@@ -98,7 +134,12 @@ func runExec(f *cmdutil.Factory, opts *Options, remoteCmd string) error {
 	var auth []ssh.AuthMethod
 	if server.IsManaged {
 		pw, err := f.ApiClient.RevealServerPassword(ctx, opts.id)
-		if err == nil && pw != "" {
+		if err != nil {
+			// Don't swallow an API/authorization failure as "no password" — that
+			// hides the real cause. Only an actually-empty password is unavailable.
+			return fmt.Errorf("reveal server password failed: %w", err)
+		}
+		if pw != "" {
 			auth = append(auth, ssh.Password(pw))
 		}
 	}
