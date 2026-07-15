@@ -15,6 +15,7 @@ type Options struct {
 	id            string
 	name          string
 	environmentID string
+	rawKeys       []string
 	keys          map[string]string
 	updatedKeys   []string // tracks only the keys the user explicitly changed
 	skipConfirm   bool
@@ -38,6 +39,13 @@ func NewCmdUpdateVariable(f *cmdutil.Factory) *cobra.Command {
 		Short: "update variable(s)",
 		Long:  `update variable(s) for a service`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if !f.Interactive {
+				keys, err := cmdutil.ParseKeyValuePairs(opts.rawKeys)
+				if err != nil {
+					return err
+				}
+				opts.keys = keys
+			}
 			return runUpdateVariable(f, opts)
 		},
 	}
@@ -45,7 +53,7 @@ func NewCmdUpdateVariable(f *cmdutil.Factory) *cobra.Command {
 	util.AddServiceParam(cmd, &opts.id, &opts.name)
 	util.AddEnvOfServiceParam(cmd, &opts.environmentID)
 	cmd.Flags().BoolVarP(&opts.skipConfirm, "yes", "y", false, "Skip confirmation")
-	cmd.Flags().StringToStringVarP(&opts.keys, "key", "k", nil, "Key value pair of the variable")
+	cmd.Flags().StringArrayVarP(&opts.rawKeys, "key", "k", nil, "Key value pair of the variable")
 
 	return cmd
 }
