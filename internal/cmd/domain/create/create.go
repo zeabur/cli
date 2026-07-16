@@ -3,6 +3,7 @@ package create
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
@@ -164,7 +165,7 @@ func runCreateDomainNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return fmt.Errorf("--id or --name is required")
 	}
 
-	if opts.domainName == "" {
+	if strings.TrimSpace(opts.domainName) == "" {
 		return fmt.Errorf("--domain is required in non-interactive mode")
 	}
 
