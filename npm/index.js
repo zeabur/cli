@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { execFileSync } from "child_process";
+import { spawnSync } from "child_process";
 import os from "os";
 import { fileURLToPath } from "url";
 
@@ -40,5 +40,14 @@ function getArch() {
     const pathToBinary = fileURLToPath(new URL(`./zeabur_${platform}_${arch}/zeabur${platform === "windows" ? ".exe" : ""}`, import.meta.url));
     const args = process.argv.slice(2);
 
-    execFileSync(pathToBinary, args, { stdio: "inherit" });
+    const result = spawnSync(pathToBinary, args, { stdio: "inherit" });
+
+    if (result.error) {
+        console.error(`Failed to run ${pathToBinary}: ${result.error.message}`);
+        process.exitCode = 1;
+        return;
+    }
+
+    // status is null when the binary was terminated by a signal.
+    process.exitCode = result.status === null ? 1 : result.status;
 })()
