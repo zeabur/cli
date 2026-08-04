@@ -22,6 +22,10 @@ var (
 )
 
 func main() {
+	os.Exit(run())
+}
+
+func run() int {
 	factory := initFactory()
 
 	rootCmd, err := root.NewCmdRoot(factory, version, commit, date)
@@ -33,14 +37,15 @@ func main() {
 		os.Args = append([]string{os.Args[0], "deploy"}, os.Args[1:]...)
 	}
 
-	// log errors
 	if err := rootCmd.Execute(); err != nil {
 		// when some errors occur(such as args dis-match), the log may not be initialized
 		if factory.Log == nil {
 			factory.Log = log.NewInfoLevel()
 		}
 		factory.Log.Error(err)
+		return 1
 	}
+	return 0
 }
 
 // init factory, including config, auth, etc.
