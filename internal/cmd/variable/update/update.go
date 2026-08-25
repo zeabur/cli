@@ -6,6 +6,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
+	variablevalue "github.com/zeabur/cli/internal/cmd/variable/value"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
 	"github.com/zeabur/cli/pkg/fill"
@@ -19,15 +20,6 @@ type Options struct {
 	updatedKeys   []string // tracks only the keys the user explicitly changed
 	skipConfirm   bool
 	inputDone     bool
-}
-
-// maskValue masks a variable value for display, showing only the first 3
-// characters followed by asterisks. Short values are fully masked.
-func maskValue(v string) string {
-	if len(v) <= 3 {
-		return "***"
-	}
-	return v[:3] + "***"
 }
 
 func NewCmdUpdateVariable(f *cmdutil.Factory) *cobra.Command {
@@ -86,7 +78,7 @@ func runUpdateVariableInteractive(f *cmdutil.Factory, opts *Options) error {
 	selectTable := make([]string, 0, len(varMap))
 	for k, v := range varMap {
 		keyTable = append(keyTable, k)
-		selectTable = append(selectTable, fmt.Sprintf("%s = %s", k, maskValue(v)))
+		selectTable = append(selectTable, fmt.Sprintf("%s = %s", k, variablevalue.Mask(v)))
 		opts.keys[k] = v
 	}
 

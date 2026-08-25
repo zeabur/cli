@@ -6,15 +6,18 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
+	variablevalue "github.com/zeabur/cli/internal/cmd/variable/value"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
 	"github.com/zeabur/cli/pkg/fill"
+	"github.com/zeabur/cli/pkg/model"
 )
 
 type Options struct {
 	id            string
 	name          string
 	environmentID string
+	showValues    bool
 }
 
 func NewCmdListVariables(f *cmdutil.Factory) *cobra.Command {
@@ -33,6 +36,7 @@ func NewCmdListVariables(f *cmdutil.Factory) *cobra.Command {
 
 	util.AddServiceParam(cmd, &opts.id, &opts.name)
 	util.AddEnvOfServiceParam(cmd, &opts.environmentID)
+	cmd.Flags().BoolVar(&opts.showValues, "show-values", false, "Show full variable values (may expose secrets)")
 
 	return cmd
 }
@@ -92,6 +96,10 @@ func runListVariablesNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return err
 	}
 	s.Stop()
+	if !opts.showValues {
+		variableList = maskVariables(variableList)
+		readonlyVariableList = maskVariables(readonlyVariableList)
+	}
 
 	if len(variableList) == 0 && len(readonlyVariableList) == 0 {
 		if f.JSON {
@@ -115,4 +123,14 @@ func runListVariablesNonInteractive(f *cmdutil.Factory, opts *Options) error {
 	}
 
 	return nil
+}
+
+func maskVariables(variables model.Variables) model.Variables {
+	masked := make(model.Variables, 0, len(variables))
+	for _, variable := range variables {
+		maskedVariable := *variable
+		maskedVariable.Value = variablevalue.Mask(variable.Value)
+		masked = append(masked, &maskedVariable)
+	}
+	return masked
 }
