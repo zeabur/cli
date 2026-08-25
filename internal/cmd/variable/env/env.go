@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/briandowns/spinner"
 	"github.com/hashicorp/go-envparse"
@@ -114,22 +115,27 @@ func runUpdateVariableNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return fmt.Errorf("failed to update variables of service: %s", opts.name)
 	}
 	s.Stop()
+	updatedKeys := make([]string, 0, len(envMap))
+	for key := range envMap {
+		updatedKeys = append(updatedKeys, key)
+	}
+	sort.Strings(updatedKeys)
 
 	if f.JSON {
-		out := make([]map[string]string, 0, len(envMap))
-		for k, v := range envMap {
-			out = append(out, map[string]string{"Key": k, "Value": v})
+		out := make([]map[string]string, 0, len(updatedKeys))
+		for _, key := range updatedKeys {
+			out = append(out, map[string]string{"Key": key})
 		}
 		return f.Printer.JSON(out)
 	}
 
 	f.Log.Infof("Successfully updated variables of service: %s\n\tRestart your service manually to apply the changes.\n", opts.name)
 
-	table := make([][]string, 0, len(envMap))
-	for k, v := range envMap {
-		table = append(table, []string{k, v})
+	table := make([][]string, 0, len(updatedKeys))
+	for _, key := range updatedKeys {
+		table = append(table, []string{key})
 	}
-	f.Printer.Table([]string{"Key", "Value"}, table)
+	f.Printer.Table([]string{"Key"}, table)
 
 	return nil
 }
