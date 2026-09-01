@@ -8,6 +8,7 @@ import (
 
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/pkg/api"
+	"github.com/zeabur/cli/pkg/auth"
 )
 
 // statusOptions contains the input to the status command.
@@ -56,6 +57,10 @@ func runStatus(f *cmdutil.Factory, opts *statusOptions) error {
 
 	f.Log.Infof("Logged in as %s (%s), email: %s, plan: %s, credit: $%.2f",
 		user.Name, user.Username, user.Email, user.Subscription.Plan, float64(user.Credit)/100)
+
+	if auth.IsLegacyAPIKey(f.Config.GetTokenString()) {
+		f.Log.Warn(auth.LegacyAPIKeyDeprecationMessage)
+	}
 
 	if opts.verbose {
 		f.Printer.Table(user.Header(), user.Rows())

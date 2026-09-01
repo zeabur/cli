@@ -13,6 +13,7 @@ import (
 
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/pkg/api"
+	"github.com/zeabur/cli/pkg/auth"
 	"github.com/zeabur/cli/pkg/config"
 )
 
@@ -56,23 +57,15 @@ func RunLogin(f *cmdutil.Factory, opts *Options) error {
 		f.Log.Debug("Running login in non-interactive mode")
 	}
 
+	storedToken := f.Config.GetTokenString()
 	if f.LoggedIn() {
-		f.ApiClient = opts.NewClient(f.Config.GetTokenString())
-		user, err := f.ApiClient.GetUserInfo(context.Background())
-		if err != nil {
-			var graphqlErrors graphql.Errors
-			if errors.As(err, &graphqlErrors) &&
-				len(graphqlErrors) > 0 &&
-				strings.HasPrefix(graphqlErrors[0].Message, "401 Unauthorized") {
-				f.Log.Debug("Token is expired or invalid, need to login again")
-			} else {
-				return fmt.Errorf("failed to get user info: %w", err)
-			}
+		if f.Interactive && auth.IsLegacyAPIKey(storedToken) {
+			f.Log.Info("Your stored credential is a deprecated legacy API key, logging in again to obtain an access token")
 		} else {
-			f.Log.Debugw("Already logged in", "token", f.Config.GetTokenString(), "user", user)
-			f.Log.Infof("Already logged in as %s, "+
-				"if you want to use a different account, please logout first", user.Name)
-			return nil
+			stillValid, err := reportExistingLogin(f, opts, storedToken)
+			if err != nil || stillValid {
+				return err
+			}
 		}
 	}
 
@@ -96,6 +89,9 @@ func RunLogin(f *cmdutil.Factory, opts *Options) error {
 		if tokenString = f.Config.GetTokenString(); tokenString == "" {
 			return fmt.Errorf("please set ZEABUR_TOKEN environment variable or use --token flag to set token")
 		}
+		if auth.IsLegacyAPIKey(tokenString) {
+			f.Log.Warn(auth.LegacyAPIKeyDeprecationMessage)
+		}
 	}
 
 	f.Log.Debugw("Token", "token", tokenString)
@@ -114,4 +110,33 @@ func RunLogin(f *cmdutil.Factory, opts *Options) error {
 	f.Log.Infow("Logged in as", "user", user.Name, "email", user.Email)
 
 	return nil
+}
+
+// reportExistingLogin validates the stored token and reports whether it can still be used.
+// An unauthorized response means the caller should proceed with a fresh login.
+func reportExistingLogin(f *cmdutil.Factory, opts *Options, token string) (bool, error) {
+	f.ApiClient = opts.NewClient(token)
+	user, err := f.ApiClient.GetUserInfo(context.Background())
+	if err != nil {
+		if isUnauthorized(err) {
+			f.Log.Debug("Token is expired or invalid, need to login again")
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to get user info: %w", err)
+	}
+
+	f.Log.Debugw("Already logged in", "token", token, "user", user)
+	f.Log.Infof("Already logged in as %s, "+
+		"if you want to use a different account, please logout first", user.Name)
+	if auth.IsLegacyAPIKey(token) {
+		f.Log.Warn(auth.LegacyAPIKeyDeprecationMessage)
+	}
+	return true, nil
+}
+
+func isUnauthorized(err error) bool {
+	var graphqlErrors graphql.Errors
+	return errors.As(err, &graphqlErrors) &&
+		len(graphqlErrors) > 0 &&
+		strings.HasPrefix(graphqlErrors[0].Message, "401 Unauthorized")
 }
