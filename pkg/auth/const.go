@@ -2,7 +2,10 @@ package auth
 
 import "github.com/zeabur/cli/pkg/constant"
 
-// Zeabur "API Key Confirmation" endpoint constants
 const (
-	ZeaburApiKeyConfirmEndpoint = constant.ZeaburDashURL + "/auth/api-key/confirm"
+	// ZeaburAccessTokenConfirmEndpoint is the dashboard page that mints an access token for the CLI.
+	// The path keeps its historical "api-key" name so older CLI builds continue to resolve it.
+	ZeaburAccessTokenConfirmEndpoint = constant.ZeaburDashURL + "/auth/api-key/confirm"
+
+	ZeaburAccessTokenSettingsURL = constant.ZeaburDashURL + "/account/api-keys"
 )

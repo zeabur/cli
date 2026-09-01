@@ -39,7 +39,7 @@ func (s *CallbackServer) Serve() error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /callback", func(w http.ResponseWriter, r *http.Request) {
 		s.tokenCh <- TokenResponse{
-			Token: r.FormValue("api_key"),
+			Token: tokenFromForm(r),
 			State: r.FormValue("state"),
 		}
 
@@ -50,6 +50,15 @@ func (s *CallbackServer) Serve() error {
 	})
 
 	return http.Serve(s.listener, mux)
+}
+
+// tokenFromForm accepts both the current `access_token` field and the `api_key`
+// field posted by dashboard builds that predate access tokens.
+func tokenFromForm(r *http.Request) string {
+	if token := r.FormValue("access_token"); token != "" {
+		return token
+	}
+	return r.FormValue("api_key")
 }
 
 func (s *CallbackServer) Close() error {

@@ -22,7 +22,7 @@ type ImplicitFlowClient struct {
 }
 
 func NewImplicitFlowClient(callbackServer *CallbackServer) *ImplicitFlowClient {
-	endpointURL, err := url.Parse(ZeaburApiKeyConfirmEndpoint)
+	endpointURL, err := url.Parse(ZeaburAccessTokenConfirmEndpoint)
 	if err != nil {
 		panic(fmt.Sprintf("failed to parse endpoint URL (internal error): %v", err))
 	}

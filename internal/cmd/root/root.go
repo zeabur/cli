@@ -32,6 +32,7 @@ import (
 	workspaceCmd "github.com/zeabur/cli/internal/cmd/workspace"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/pkg/api"
+	"github.com/zeabur/cli/pkg/auth"
 	"github.com/zeabur/cli/pkg/config"
 	"github.com/zeabur/cli/pkg/fill"
 	"github.com/zeabur/cli/pkg/log"
@@ -97,6 +98,9 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 						return fmt.Errorf("failed to login: %w", err)
 					}
 					f.Config.SetTokenString(tokenString)
+				}
+				if !f.JSON && auth.IsLegacyAPIKey(f.Config.GetTokenString()) {
+					f.Log.Warn(auth.LegacyAPIKeyDeprecationMessage)
 				}
 				// set up the client
 				f.ApiClient = api.New(f.Config.GetTokenString())

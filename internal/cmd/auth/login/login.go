@@ -13,6 +13,7 @@ import (
 
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/pkg/api"
+	"github.com/zeabur/cli/pkg/auth"
 	"github.com/zeabur/cli/pkg/config"
 )
 
@@ -56,7 +57,9 @@ func RunLogin(f *cmdutil.Factory, opts *Options) error {
 		f.Log.Debug("Running login in non-interactive mode")
 	}
 
-	if f.LoggedIn() {
+	if f.LoggedIn() && f.Interactive && auth.IsLegacyAPIKey(f.Config.GetTokenString()) {
+		f.Log.Info("Your stored credential is a deprecated legacy API key, logging in again to obtain an access token")
+	} else if f.LoggedIn() {
 		f.ApiClient = opts.NewClient(f.Config.GetTokenString())
 		user, err := f.ApiClient.GetUserInfo(context.Background())
 		if err != nil {
@@ -95,6 +98,9 @@ func RunLogin(f *cmdutil.Factory, opts *Options) error {
 		// get token from flag, env or config
 		if tokenString = f.Config.GetTokenString(); tokenString == "" {
 			return fmt.Errorf("please set ZEABUR_TOKEN environment variable or use --token flag to set token")
+		}
+		if auth.IsLegacyAPIKey(tokenString) {
+			f.Log.Warn(auth.LegacyAPIKeyDeprecationMessage)
 		}
 	}
 
