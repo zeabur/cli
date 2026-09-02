@@ -43,10 +43,28 @@ func NewCmdDeploy(f *cmdutil.Factory) *cobra.Command {
 }
 
 func runDeploy(f *cmdutil.Factory, opts *Options) error {
+	// Infer template from flags when not explicitly set
+	inferTemplate(opts)
+
 	if f.Interactive {
 		return runDeployInteractive(f, opts)
 	} else {
 		return runDeployNonInteractive(f, opts)
+	}
+}
+
+// inferTemplate automatically sets the template based on other provided flags.
+// If --marketplace-code is provided, the user clearly wants a PREBUILT deployment.
+// If --repo-id is provided, the user clearly wants a GIT deployment.
+func inferTemplate(opts *Options) {
+	if opts.template != "" {
+		return
+	}
+
+	if opts.marketplaceCode != "" {
+		opts.template = "PREBUILT"
+	} else if opts.repoID != 0 {
+		opts.template = "GIT"
 	}
 }
 
@@ -231,23 +249,30 @@ func runDeployInteractive(f *cmdutil.Factory, opts *Options) error {
 
 func paramCheck(opts *Options) error {
 	if opts.template == "" {
-		return fmt.Errorf("please specify service template with --template")
+		return fmt.Errorf("please specify service template with --template (PREBUILT or GIT)\n" +
+			"  Example: zeabur service deploy --template PREBUILT --marketplace-code postgresql --project-id <id>\n" +
+			"  Example: zeabur service deploy --template GIT --repo-id <id> --branch-name main --project-id <id>")
 	}
 
-	if strings.ToUpper(opts.template) != "PREBUILT" && strings.ToUpper(opts.template) != "GIT" {
-		return fmt.Errorf("unsupported service template %s, only support PREBUILT and GIT", opts.template)
+	template := strings.ToUpper(opts.template)
+
+	if template != "PREBUILT" && template != "GIT" {
+		return fmt.Errorf("unsupported service template %q, only PREBUILT and GIT are supported", opts.template)
 	}
 
-	if opts.template == "PREBUILT" && opts.marketplaceCode == "" {
-		return fmt.Errorf("please specify marketplace item code with --marketplace-code")
+	if template == "PREBUILT" && opts.marketplaceCode == "" {
+		return fmt.Errorf("--marketplace-code is required for PREBUILT template\n" +
+			"  Example: zeabur service deploy --template PREBUILT --marketplace-code postgresql --project-id <id>")
 	}
 
-	if opts.template == "GIT" && opts.repoID == 0 {
-		return fmt.Errorf("please specify git repository ID with --repo-id")
+	if template == "GIT" && opts.repoID == 0 {
+		return fmt.Errorf("--repo-id is required for GIT template\n" +
+			"  Example: zeabur service deploy --template GIT --repo-id <id> --branch-name main --project-id <id>")
 	}
 
-	if opts.template == "GIT" && opts.branchName == "" {
-		return fmt.Errorf("please specify git branch name with --branch-name")
+	if template == "GIT" && opts.branchName == "" {
+		return fmt.Errorf("--branch-name is required for GIT template\n" +
+			"  Example: zeabur service deploy --template GIT --repo-id <id> --branch-name main --project-id <id>")
 	}
 
 	return nil
