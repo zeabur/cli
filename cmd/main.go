@@ -33,13 +33,14 @@ func main() {
 		os.Args = append([]string{os.Args[0], "deploy"}, os.Args[1:]...)
 	}
 
-	// log errors
+	// log errors and exit non-zero so callers can tell a failure from success
 	if err := rootCmd.Execute(); err != nil {
 		// when some errors occur(such as args dis-match), the log may not be initialized
 		if factory.Log == nil {
 			factory.Log = log.NewInfoLevel()
 		}
 		factory.Log.Error(err)
+		os.Exit(1)
 	}
 }
 
