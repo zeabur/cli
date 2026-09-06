@@ -40,5 +40,21 @@ function getArch() {
     const pathToBinary = fileURLToPath(new URL(`./zeabur_${platform}_${arch}/zeabur${platform === "windows" ? ".exe" : ""}`, import.meta.url));
     const args = process.argv.slice(2);
 
-    execFileSync(pathToBinary, args, { stdio: "inherit" });
+    // This wrapper must be transparent: the binary already wrote its own
+    // stdout/stderr (stdio: "inherit"), so on failure we only mirror its exit
+    // status. Letting execFileSync throw would print a Node stack trace with
+    // `stdout: null, stderr: null` and replace the real exit code with 1.
+    try {
+        execFileSync(pathToBinary, args, { stdio: "inherit" });
+    } catch (e) {
+        if (typeof e.status === "number") {
+            process.exit(e.status);
+        }
+        if (e.signal) {
+            // Shell convention for a process killed by a signal.
+            process.exit(128 + (os.constants.signals[e.signal] ?? 0));
+        }
+        console.error(e.message ?? String(e));
+        process.exit(1);
+    }
 })()
