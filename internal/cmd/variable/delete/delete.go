@@ -6,6 +6,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
+	variablevalue "github.com/zeabur/cli/internal/cmd/variable/value"
 	"github.com/zeabur/cli/internal/cmdutil"
 	"github.com/zeabur/cli/internal/util"
 	"github.com/zeabur/cli/pkg/fill"
@@ -80,7 +81,7 @@ func runDeleteVariableInteractive(f *cmdutil.Factory, opts *Options) error {
 	selectTable := make([]string, 0, len(varMap))
 	for k, v := range varMap {
 		keyTable = append(keyTable, k)
-		selectTable = append(selectTable, fmt.Sprintf("%s = %s", k, v))
+		selectTable = append(selectTable, fmt.Sprintf("%s = %s", k, variablevalue.Mask(v)))
 		opts.keys[k] = v
 	}
 
@@ -170,11 +171,11 @@ func runDeleteVariableNonInteractive(f *cmdutil.Factory, opts *Options) error {
 
 	f.Log.Infof("Successfully deleted variables of service: %s\n", opts.name)
 
-	table := make([][]string, 0, len(opts.keys))
-	for k, v := range opts.keys {
-		table = append(table, []string{k, v})
+	table := make([][]string, 0, len(opts.deleteKeys))
+	for _, key := range opts.deleteKeys {
+		table = append(table, []string{key})
 	}
-	f.Printer.Table([]string{"Key", "Value"}, table)
+	f.Printer.Table([]string{"Key"}, table)
 
 	return nil
 }

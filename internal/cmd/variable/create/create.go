@@ -3,6 +3,7 @@ package create
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/briandowns/spinner"
@@ -135,22 +136,27 @@ func runCreateVariableNonInteractive(f *cmdutil.Factory, opts *Options) error {
 		return fmt.Errorf("failed to create variables of service: %s", opts.name)
 	}
 	s.Stop()
+	createdKeys := make([]string, 0, len(opts.keys))
+	for key := range opts.keys {
+		createdKeys = append(createdKeys, key)
+	}
+	sort.Strings(createdKeys)
 
 	if f.JSON {
-		out := make([]map[string]string, 0, len(varMap))
-		for k, v := range varMap {
-			out = append(out, map[string]string{"Key": k, "Value": v})
+		out := make([]map[string]string, 0, len(createdKeys))
+		for _, key := range createdKeys {
+			out = append(out, map[string]string{"Key": key})
 		}
 		return f.Printer.JSON(out)
 	}
 
 	f.Log.Infof("Successfully created variables of service: %s\n", opts.name)
 
-	table := make([][]string, 0, len(varMap))
-	for k, v := range varMap {
-		table = append(table, []string{k, v})
+	table := make([][]string, 0, len(createdKeys))
+	for _, key := range createdKeys {
+		table = append(table, []string{key})
 	}
-	f.Printer.Table([]string{"Key", "Value"}, table)
+	f.Printer.Table([]string{"Key"}, table)
 
 	return nil
 }
