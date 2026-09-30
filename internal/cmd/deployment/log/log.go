@@ -87,8 +87,22 @@ func runLogNonInteractive(f *cmdutil.Factory, opts *Options) (err error) {
 		opts.serviceID = service.ID
 	}
 
-	// When serviceID is available, resolve projectID and environmentID from the service
-	if opts.serviceID != "" {
+	if opts.deploymentID != "" && opts.serviceID == "" {
+		// A deployment ID already identifies its project, service and environment.
+		deployment, err := f.ApiClient.GetDeployment(context.Background(), opts.deploymentID)
+		if err != nil {
+			return fmt.Errorf("failed to get deployment: %w", err)
+		}
+		if deployment == nil {
+			return fmt.Errorf("deployment %s not found", opts.deploymentID)
+		}
+		opts.projectID = deployment.ProjectID
+		opts.serviceID = deployment.ServiceID
+		if opts.environmentID == "" {
+			opts.environmentID = deployment.EnvironmentID
+		}
+	} else if opts.serviceID != "" {
+		// When serviceID is available, resolve projectID and environmentID from the service
 		service, err := f.ApiClient.GetService(context.Background(), opts.serviceID, "", "", "")
 		if err != nil {
 			return fmt.Errorf("failed to get service: %w", err)
