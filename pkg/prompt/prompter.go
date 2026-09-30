@@ -4,11 +4,26 @@
 package prompt
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	"golang.org/x/term"
 )
+
+// ErrNonInteractive is returned when a prompt is needed but stdin is not a
+// terminal. survey blocks forever on an open pipe (CI, agent shells, cron),
+// so fail fast instead.
+var ErrNonInteractive = errors.New("stdin is not a terminal")
+
+func ensureTerminal(message string) error {
+	if term.IsTerminal(int(os.Stdin.Fd())) {
+		return nil
+	}
+	return fmt.Errorf("cannot prompt %q: %w; pass the required flags (see --help) or use -i=false", message, ErrNonInteractive)
+}
 
 type prompter struct{}
 
@@ -20,6 +35,10 @@ func New() Prompter {
 const defaultPageSize = 10
 
 func (p *prompter) Select(message string, defaultValue string, options []string) (result int, err error) {
+	if err := ensureTerminal(message); err != nil {
+		return 0, err
+	}
+
 	q := &survey.Select{
 		Message:  message,
 		Options:  options,
@@ -43,6 +62,10 @@ func (p *prompter) Select(message string, defaultValue string, options []string)
 }
 
 func (p *prompter) MultiSelect(message string, defaultValues, options []string) (results []int, err error) {
+	if err := ensureTerminal(message); err != nil {
+		return nil, err
+	}
+
 	q := &survey.MultiSelect{
 		Message:  message,
 		Options:  options,
@@ -72,6 +95,10 @@ func (p *prompter) MultiSelect(message string, defaultValues, options []string) 
 }
 
 func (p *prompter) Input(prompt, defaultValue string) (result string, err error) {
+	if err := ensureTerminal(prompt); err != nil {
+		return "", err
+	}
+
 	err = survey.AskOne(&survey.Input{
 		Message: prompt,
 		Default: defaultValue,
@@ -81,6 +108,10 @@ func (p *prompter) Input(prompt, defaultValue string) (result string, err error)
 }
 
 func (p *prompter) InputWithHelp(prompt, defaultValue, help string) (result string, err error) {
+	if err := ensureTerminal(prompt); err != nil {
+		return "", err
+	}
+
 	err = survey.AskOne(&survey.Input{
 		Message: prompt,
 		Default: defaultValue,
@@ -91,6 +122,10 @@ func (p *prompter) InputWithHelp(prompt, defaultValue, help string) (result stri
 }
 
 func (p *prompter) Confirm(prompt string, defaultValue bool) (bool, error) {
+	if err := ensureTerminal(prompt); err != nil {
+		return false, err
+	}
+
 	res := defaultValue
 	confirm := survey.Confirm{
 		Message: prompt,
@@ -108,6 +143,10 @@ func (p *prompter) ConfirmDeletion(requiredValue string) error {
 
 	input := &survey.Input{
 		Message: fmt.Sprintf("Type %s to confirm deletion:", requiredValue),
+	}
+
+	if err := ensureTerminal(input.Message); err != nil {
+		return err
 	}
 
 	validator := func(val interface{}) error {
