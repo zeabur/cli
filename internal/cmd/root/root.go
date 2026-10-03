@@ -79,9 +79,11 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 
 			// require that the user is authenticated before running most commands
 			if cmdutil.IsAuthCheckEnabled(cmd) {
-				// in JSON mode, fail fast if not authenticated instead of opening a browser
-				if f.JSON && !f.LoggedIn() {
-					return fmt.Errorf("not authenticated: run `zeabur auth login` before using --json")
+				// JSON, -i=false, non-TTY, and headless Linux cannot finish
+				// the browser callback. OpenURL can still "succeed" and then
+				// WaitForToken blocks forever.
+				if !f.LoggedIn() && (f.JSON || !f.Interactive || !auth.CanCompleteBrowserLogin()) {
+					return fmt.Errorf("not authenticated: set ZEABUR_TOKEN or use --token, or run `zeabur auth login` from a terminal with a browser")
 				}
 
 				// do not return error, guide user to login instead

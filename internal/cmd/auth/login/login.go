@@ -74,7 +74,7 @@ func RunLogin(f *cmdutil.Factory, opts *Options) error {
 		err         error
 	)
 
-	if f.Interactive {
+	if f.Interactive && auth.CanCompleteBrowserLogin() {
 		f.Log.Info("A browser window will be opened for you to login, please confirm")
 		// get token from web
 		token, err := f.AuthClient.GenerateToken(context.Background())

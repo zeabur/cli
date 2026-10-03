@@ -7,6 +7,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/url"
+	"os"
+	"time"
 
 	"github.com/cli/browser"
 )
@@ -60,10 +62,22 @@ func (c *ImplicitFlowClient) GenerateToken(ctx context.Context) (token string, e
 
 	endpoint.RawQuery = query.Encode()
 
+	// Always print the URL. On a headless Linux box OpenURL can return nil
+	// after launching a broken Chromium, then WaitForToken blocks forever.
+	fmt.Fprintf(os.Stderr, "Open this URL to log in: %s\n", endpoint.String())
+
+	if !CanCompleteBrowserLogin() {
+		return "", fmt.Errorf("cannot complete browser login (stdin is not a terminal); set ZEABUR_TOKEN or use --token (url=%s)", endpoint.String())
+	}
+
 	// Open the browser
 	if err := browser.OpenURL(endpoint.String()); err != nil {
 		return "", fmt.Errorf("failed to open browser (url=%s): %w", endpoint.String(), err)
 	}
+
+	// Bound the wait so a "successful" OpenURL on a broken display cannot hang.
+	ctx, stopWait := context.WithTimeout(ctx, 2*time.Minute)
+	defer stopWait()
 
 	// Wait for the token
 	tokenResponse, err := c.callbackServer.WaitForToken(ctx)

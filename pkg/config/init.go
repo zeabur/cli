@@ -41,11 +41,23 @@ func initViper(configPath string) {
 
 func createConfigFile(configPath string) {
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		if err := os.MkdirAll(filepath.Dir(configPath), 0o755); err != nil {
+		if err := os.MkdirAll(filepath.Dir(configPath), 0o700); err != nil {
 			panic(fmt.Errorf("could not create config directory: %w", err))
 		}
-		if _, err := os.Create(configPath); err != nil {
+		f, err := os.OpenFile(configPath, os.O_CREATE|os.O_WRONLY, 0o600)
+		if err != nil {
 			panic(fmt.Errorf("could not create config file: %w", err))
 		}
+		if cerr := f.Close(); cerr != nil {
+			panic(fmt.Errorf("could not close config file: %w", cerr))
+		}
+		return
+	} else if err != nil {
+		panic(fmt.Errorf("could not stat config file: %w", err))
+	}
+	// Existing files were created with os.Create (0666 & umask = 0644).
+	// The YAML holds the access token; tighten it on every start.
+	if err := os.Chmod(configPath, 0o600); err != nil {
+		panic(fmt.Errorf("could not restrict config file mode: %w", err))
 	}
 }
