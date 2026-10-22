@@ -21,7 +21,6 @@ type Client interface {
 	DomainAPI
 	VariableAPI
 	ServerAPI
-	AIHubAPI
 	ZSendAPI
 	RegisteredDomainAPI
 	FileAPI
@@ -147,16 +146,6 @@ type (
 		GetRepoID(repoOwner string, repoName string) (int, error)
 		GetRepoInfo() (string, string, error)
 		GetRepoBranchesByRepoID(repoID int) ([]string, error)
-	}
-
-	AIHubAPI interface {
-		GetAIHubTenant(ctx context.Context) (*model.AIHubTenant, error)
-		AddAIHubBalance(ctx context.Context, amount int, provider *string) (*model.AddAIHubBalanceResult, error)
-		CreateAIHubKey(ctx context.Context, alias *string) (*model.CreateAIHubKeyResult, error)
-		DeleteAIHubKey(ctx context.Context, keyID string) error
-		UpdateAIHubAutoRechargeSettings(ctx context.Context, threshold, amount int) (*model.UpdateAIHubAutoRechargeSettingsResult, error)
-		GetAIHubSpendLogs(ctx context.Context, startDate, endDate *time.Time) ([]model.AIHubSpendLog, error)
-		GetAIHubMonthlyUsage(ctx context.Context, month *string) (*model.AIHubMonthlyUsage, error)
 	}
 
 	TemplateAPI interface {
