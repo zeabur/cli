@@ -25,9 +25,17 @@ type Client interface {
 	ZSendAPI
 	RegisteredDomainAPI
 	FileAPI
+	RawAPI
 }
 
 type (
+	// RawAPI sends caller-supplied GraphQL requests (`zeabur api graphql`).
+	RawAPI interface {
+		// GraphQLRaw posts a JSON-encoded GraphQL request body and returns
+		// the response body verbatim.
+		GraphQLRaw(ctx context.Context, body []byte) ([]byte, error)
+	}
+
 	UserAPI interface {
 		GetUserInfo(ctx context.Context) (*model.User, error)
 	}

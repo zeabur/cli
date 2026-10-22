@@ -3,6 +3,7 @@ package api
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/zeabur/cli/pkg/constant"
 
@@ -19,24 +20,32 @@ const (
 type client struct {
 	*graphql.Client
 	sub *graphql.SubscriptionClient
+
+	// httpClient is the authenticated HTTP client shared with the GraphQL
+	// client; used by GraphQLRaw to send caller-supplied request bodies.
+	httpClient *http.Client
 }
 
 // New returns a new Zeabur API client.
 func New(token string) Client {
+	httpClient := newHTTPClientWithToken(token)
 	return &client{
-		NewGraphQLClientWithToken(token),
-		NewSubscriptionClient(token),
+		Client:     graphql.NewClient(ZeaburGraphQLAPIEndpoint, httpClient),
+		sub:        NewSubscriptionClient(token),
+		httpClient: httpClient,
 	}
 }
 
 // NewGraphQLClientWithToken returns a new GraphQL client with the given token.
 func NewGraphQLClientWithToken(token string) *graphql.Client {
+	return graphql.NewClient(ZeaburGraphQLAPIEndpoint, newHTTPClientWithToken(token))
+}
+
+func newHTTPClientWithToken(token string) *http.Client {
 	src := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
-	httpClient := oauth2.NewClient(context.Background(), src)
-
-	return graphql.NewClient(ZeaburGraphQLAPIEndpoint, httpClient)
+	return oauth2.NewClient(context.Background(), src)
 }
 
 func NewSubscriptionClient(token string) *graphql.SubscriptionClient {
