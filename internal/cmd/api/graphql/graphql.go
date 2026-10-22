@@ -3,6 +3,7 @@
 package graphql
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -146,8 +147,18 @@ func buildRequestBody(opts *Options) ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("read --input: %w", err)
 		}
-		if err := json.Unmarshal(raw, &req); err != nil {
+		// UseNumber keeps numeric tokens verbatim, so integers beyond
+		// float64 precision are forwarded unchanged.
+		dec := json.NewDecoder(bytes.NewReader(raw))
+		dec.UseNumber()
+		if err := dec.Decode(&req); err != nil {
 			return nil, fmt.Errorf("--input must be a JSON object: %w", err)
+		}
+		if dec.More() {
+			return nil, errors.New("--input must contain a single JSON object")
+		}
+		if req == nil {
+			return nil, errors.New("--input must be a JSON object, not null")
 		}
 		if v, ok := req["variables"]; ok && v != nil {
 			vars, ok := v.(map[string]any)

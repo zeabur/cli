@@ -128,6 +128,19 @@ func TestGraphQL_InputFromStdinMergesFields(t *testing.T) {
 	}
 }
 
+func TestGraphQL_InputPreservesLargeIntegers(t *testing.T) {
+	t.Parallel()
+
+	client := &stubClient{resp: []byte(`{"data":{}}`)}
+	stdin := `{"query":"query { me { _id } }","variables":{"n":9007199254740993}}`
+	if _, err := run(t, client, stdin, "--input", "-"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(string(client.gotBody), `"n":9007199254740993`) {
+		t.Fatalf("large integer was not preserved: %s", client.gotBody)
+	}
+}
+
 func TestGraphQL_GraphQLErrorsExitNonZero(t *testing.T) {
 	t.Parallel()
 
@@ -166,11 +179,18 @@ func TestGraphQL_InvalidInput(t *testing.T) {
 		"positional args":   {"extra"},
 		"missing file":      {"-F", "query=@/nonexistent/q.graphql"},
 		"variables not obj": {"--input", "-"},
+		"null input":        {"--input", "-", "-f", "query=query { me { _id } }"},
+		"trailing data":     {"--input", "-"},
 	}
 	for name, args := range cases {
 		stdin := `{"query":"query { me { _id } }"}`
-		if name == "variables not obj" {
+		switch name {
+		case "variables not obj":
 			stdin = `{"query":"query { me { _id } }","variables":[1]}`
+		case "null input":
+			stdin = `null`
+		case "trailing data":
+			stdin = `{"query":"query { me { _id } }"} {}`
 		}
 		client := &stubClient{}
 		if _, err := run(t, client, stdin, args...); err == nil {
