@@ -152,6 +152,25 @@ npx zeabur --workspace acme project list
 
 `switch personal` is **not** a way to return to personal — it always looks for a team literally named `personal` (team names are unconstrained). Use `workspace clear` to go back.
 
+## Raw GraphQL requests
+
+`zeabur api graphql` sends any GraphQL query to the Zeabur API with the credentials of the logged-in user and prints the raw JSON response — useful for fields that no dedicated command exposes yet, and for scripts or coding agents that should never handle the token themselves.
+
+```shell
+# the query is passed as the "query" field
+npx zeabur api graphql -f query='query { me { _id username } }'
+
+# every other field becomes a variable: -f adds a string, -F adds a typed value
+# (true / false / null / integers; @file or @- reads the value from a file / stdin)
+npx zeabur api graphql -f query='query($id: ObjectID!) { project(_id: $id) { name } }' -F id=<project-id>
+npx zeabur api graphql -F query=@query.graphql -F limit=10
+
+# or pass a complete JSON request body
+echo '{"query": "query { me { _id } }"}' | npx zeabur api graphql --input -
+```
+
+The command exits non-zero when the request fails or the response contains GraphQL errors; the response body is still printed. The request is sent as-is — `--workspace` and the saved context do not rewrite it, so pass team or project IDs as variables.
+
 ## Development Guide
 
 [Development Guide](docs/development_guide.md)

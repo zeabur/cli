@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/pflag"
 
 	aihubCmd "github.com/zeabur/cli/internal/cmd/ai-hub"
+	apiCmd "github.com/zeabur/cli/internal/cmd/api"
 	authCmd "github.com/zeabur/cli/internal/cmd/auth"
 	completionCmd "github.com/zeabur/cli/internal/cmd/completion"
 	helpCmd "github.com/zeabur/cli/internal/cmd/help"
@@ -187,6 +188,7 @@ func NewCmdRoot(f *cmdutil.Factory, version, commit, date string) (*cobra.Comman
 	cmd.AddCommand(fileCmd.NewCmdFile(f))
 	cmd.AddCommand(aihubCmd.NewCmdAIHub(f))
 	cmd.AddCommand(workspaceCmd.NewCmdWorkspace(f))
+	cmd.AddCommand(apiCmd.NewCmdAPI(f))
 
 	// replace default help command with our custom one that supports --all
 	cmd.SetHelpCommand(helpCmd.NewCmdHelp(cmd))
