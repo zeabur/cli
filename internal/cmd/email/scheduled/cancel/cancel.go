@@ -3,7 +3,6 @@ package cancel
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/briandowns/spinner"
@@ -28,7 +27,7 @@ func NewCmdCancel(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&opts.apiKey, "api-key", "", "Z-Send API key (or set ZSEND_API_KEY)")
+	cmd.Flags().StringVar(&opts.apiKey, "api-key", "", cmdutil.ZSendAPIKeyFlagUsage)
 	cmd.Flags().StringVar(&opts.id, "id", "", "Scheduled email ID")
 
 	return cmd
@@ -72,22 +71,18 @@ func runCancelNonInteractive(f *cmdutil.Factory, opts Options) error {
 }
 
 func doCancel(f *cmdutil.Factory, opts Options) error {
-	if opts.apiKey == "" {
-		opts.apiKey = os.Getenv("ZSEND_API_KEY")
+	apiKey, err := f.ResolveZSendAPIKey(opts.apiKey)
+	if err != nil {
+		return err
 	}
-	if opts.apiKey == "" {
-		return fmt.Errorf("Z-Send API key is required (--api-key or ZSEND_API_KEY)")
-	}
-	if !strings.HasPrefix(opts.apiKey, "zs_") {
-		return fmt.Errorf("invalid API key format: must start with zs_")
-	}
+	opts.apiKey = apiKey
 
 	s := spinner.New(cmdutil.SpinnerCharSet, cmdutil.SpinnerInterval,
 		spinner.WithColor(cmdutil.SpinnerColor),
 		spinner.WithSuffix(" Cancelling scheduled email..."),
 	)
 	s.Start()
-	err := f.ApiClient.CancelZSendScheduledEmail(context.Background(), opts.apiKey, opts.id)
+	err = f.ApiClient.CancelZSendScheduledEmail(context.Background(), opts.apiKey, opts.id)
 	s.Stop()
 	if err != nil {
 		return err

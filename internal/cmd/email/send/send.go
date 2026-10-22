@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
@@ -42,7 +41,8 @@ Modes:
   - --batch-file:   sends a batch from a JSON file (POST /emails/batch, max 100)
 
 Authentication:
-  Pass your Z-Send API key via --api-key or the ZSEND_API_KEY environment variable.
+  Pass a Z-Send API key (zs_...) via --api-key or the ZSEND_API_KEY environment
+  variable. When neither is set, the logged-in CLI token is used.
 
 Batch file format (JSON array):
   [
@@ -54,7 +54,7 @@ Batch file format (JSON array):
 		},
 	}
 
-	cmd.Flags().StringVar(&opts.apiKey, "api-key", "", "Z-Send API key (or set ZSEND_API_KEY)")
+	cmd.Flags().StringVar(&opts.apiKey, "api-key", "", cmdutil.ZSendAPIKeyFlagUsage)
 	cmd.Flags().StringVar(&opts.from, "from", "", "Sender address (required unless --batch-file)")
 	cmd.Flags().StringArrayVar(&opts.to, "to", nil, "Recipient(s), can be repeated")
 	cmd.Flags().StringArrayVar(&opts.cc, "cc", nil, "CC recipient(s)")
@@ -70,15 +70,11 @@ Batch file format (JSON array):
 }
 
 func runSend(f *cmdutil.Factory, opts Options) error {
-	if opts.apiKey == "" {
-		opts.apiKey = os.Getenv("ZSEND_API_KEY")
+	apiKey, err := f.ResolveZSendAPIKey(opts.apiKey)
+	if err != nil {
+		return err
 	}
-	if opts.apiKey == "" {
-		return fmt.Errorf("Z-Send API key is required (--api-key or ZSEND_API_KEY)")
-	}
-	if !strings.HasPrefix(opts.apiKey, "zs_") {
-		return fmt.Errorf("invalid API key format: must start with zs_")
-	}
+	opts.apiKey = apiKey
 
 	if opts.batchFile != "" {
 		return runBatch(f, opts)

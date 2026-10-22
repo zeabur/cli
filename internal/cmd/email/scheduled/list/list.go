@@ -3,8 +3,6 @@ package list
 import (
 	"context"
 	"fmt"
-	"os"
-	"strings"
 
 	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
@@ -32,7 +30,7 @@ func NewCmdList(f *cmdutil.Factory) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&opts.apiKey, "api-key", "", "Z-Send API key (or set ZSEND_API_KEY)")
+	cmd.Flags().StringVar(&opts.apiKey, "api-key", "", cmdutil.ZSendAPIKeyFlagUsage)
 	cmd.Flags().StringVar(&opts.status, "status", "", "Filter by status (scheduled/sent/cancelled/failed)")
 	cmd.Flags().IntVar(&opts.page, "page", 1, "Page number")
 	cmd.Flags().IntVar(&opts.perPage, "per-page", 20, "Items per page (max 100)")
@@ -48,15 +46,11 @@ func runList(f *cmdutil.Factory, opts Options) error {
 		return fmt.Errorf("per-page must be between 1 and 100")
 	}
 
-	if opts.apiKey == "" {
-		opts.apiKey = os.Getenv("ZSEND_API_KEY")
+	apiKey, err := f.ResolveZSendAPIKey(opts.apiKey)
+	if err != nil {
+		return err
 	}
-	if opts.apiKey == "" {
-		return fmt.Errorf("Z-Send API key is required (--api-key or ZSEND_API_KEY)")
-	}
-	if !strings.HasPrefix(opts.apiKey, "zs_") {
-		return fmt.Errorf("invalid API key format: must start with zs_")
-	}
+	opts.apiKey = apiKey
 
 	var status *string
 	if opts.status != "" {
