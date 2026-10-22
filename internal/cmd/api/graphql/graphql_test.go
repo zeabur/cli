@@ -73,6 +73,7 @@ func TestGraphQL_FieldsBuildRequest(t *testing.T) {
 		"-F", "flag=true",
 		"-F", "none=null",
 		"-F", "name=abc",
+		"-F", "zip=007",
 	)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -85,7 +86,7 @@ func TestGraphQL_FieldsBuildRequest(t *testing.T) {
 	if req.Query != "query($id: ObjectID!) { project(_id: $id) { name } }" || req.OperationName != "Q" {
 		t.Fatalf("unexpected query/operationName: %+v", req)
 	}
-	want := map[string]any{"id": "123", "limit": float64(10), "flag": true, "none": nil, "name": "abc"}
+	want := map[string]any{"id": "123", "limit": float64(10), "flag": true, "none": nil, "name": "abc", "zip": "007"}
 	if len(req.Variables) != len(want) {
 		t.Fatalf("unexpected variables: %#v", req.Variables)
 	}
@@ -138,6 +139,18 @@ func TestGraphQL_InputPreservesLargeIntegers(t *testing.T) {
 	}
 	if !strings.Contains(string(client.gotBody), `"n":9007199254740993`) {
 		t.Fatalf("large integer was not preserved: %s", client.gotBody)
+	}
+}
+
+func TestGraphQL_TypedFieldPreservesLargeIntegers(t *testing.T) {
+	t.Parallel()
+
+	client := &stubClient{resp: []byte(`{"data":{}}`)}
+	if _, err := run(t, client, "", "-f", "query=query { me { _id } }", "-F", "n=-92233720368547758080"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(string(client.gotBody), `"n":-92233720368547758080`) {
+		t.Fatalf("large integer was not sent as a number: %s", client.gotBody)
 	}
 }
 

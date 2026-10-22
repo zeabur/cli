@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
+	"regexp"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
@@ -18,6 +18,8 @@ import (
 
 	"github.com/zeabur/cli/internal/cmdutil"
 )
+
+var integerPattern = regexp.MustCompile(`^-?(0|[1-9][0-9]*)$`)
 
 type Options struct {
 	rawFields   []string
@@ -244,8 +246,9 @@ func parseTypedValue(value string, readStdin func(string) ([]byte, error)) (any,
 		return string(content), nil
 	}
 
-	if n, err := strconv.ParseInt(value, 10, 64); err == nil {
-		return n, nil
+	// Integers of any size are sent as JSON numbers, verbatim.
+	if integerPattern.MatchString(value) {
+		return json.Number(value), nil
 	}
 
 	return value, nil
